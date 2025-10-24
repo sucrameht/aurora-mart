@@ -1,0 +1,127 @@
+from django.shortcuts import render, redirect
+from django.contrib.auth.views import LoginView
+from django.views.generic import FormView
+from django.contrib import messages
+from django.contrib.auth import login, update_session_auth_hash
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.conf import settings
+from .models import UserProfile
+from .forms import RegistrationForm, onboardingForm, ChangePasswordForm
+from django.urls import reverse_lazy
+import os
+from joblib import load
+import pandas as pd
+import logging
+
+logger = logging.getLogger(__name__)
+
+# note that in CBVs, FormView helps to handle rendering via template_name
+# to make use of isStaff for redirection, change_password requirements
+class customLoginView(LoginView):
+    template_name = 'authentication/login.html'
+    redirect_authenticated_user = True
+
+    def form_invalid(self, form):
+        messages.error(self.request, "Invalid username or password.")
+        return super().form_invalid(form)
+
+    def get_success_url(self):
+        user = self.request.user
+        try:
+            user_profile =  UserProfile.objects.get(user=user)
+            if user_profile.is_initial_password:
+                return reverse_lazy("change_password") # dynamically builds the url and returns the string URL lazily 
+        
+        except UserProfile.DoesNotExist:
+            # create the user to redirect to onboarding
+            user_profile = UserProfile.objects.create(user=user, is_initial_password=False) # since it will be set by user
+            return reverse_lazy("onboarding")
+        
+        if user_profile.isStaff:
+            return reverse_lazy("admin_dashboard") # for admins - yet to create
+        
+        return reverse_lazy("storefront_home") # for customers - yet to create
+
+# comes here from the login page    
+class RegisterView(FormView):
+    template_name = "authentication/register.html"
+    form_class = RegistrationForm
+    # for navigation -> to the next page (onboarding)
+    # reverse_lazy is used instead of reverse to avoid circular imports, reverse_lazy delays resolution until the view is instantiated
+    success_url = reverse_lazy('onboarding')
+
+    def form_valid(self, form):
+        user = form.save()  # Save the new user in the Django User model records
+        login(self.request, user) # starts a session, prevents the user from having to re log in from the log in page - Django login function
+        return super().form_valid(form)
+
+class OnboardingView(LoginRequiredMixin, FormView):
+    template_name = "authentication/onboarding.html"
+    form_class = onboardingForm
+    success_url = reverse_lazy('storefront_home')
+
+    # modify the FormView form instantiation process to ensure that the onboarding form uses the specific instance (which contains the UserProfile if previously inputted)
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        user = self.request.user
+        user_profile, created = UserProfile.objects.get_or_create(user=user)
+        kwargs['instance'] = user_profile
+        return kwargs
+    
+    # validate all the fields in the form and generate preferred category using ai model
+    def form_valid(self, form):
+        form.save()
+        profile = UserProfile.objects.get(user=self.request.user)
+
+        try:
+            model_path = os.path.join(settings.BASE_DIR, 'models', 'b2c_customers_100.joblib')
+            model = load(model_path)
+            gender_code = 0 if profile.gender == 'Male' else 1 if profile.gender == 'Female' else 2
+            employment_status_code = {
+                'Full-time': 1,
+                'Part-time': 1,
+                'Self-employed': 1,
+                'Unemployed': 0,
+                'Student': 1,
+                'Retired': 0,
+                'Others': 0
+            }.get(profile.employment_status, 0)
+            input_df = pd.DataFrame([
+                [profile.age, gender_code, employment_status_code, profile.monthly_income_sgd]
+            ])
+            predicted_category = model.predict(input_df)[0]
+            profile.preferred_category = predicted_category
+            profile.save()
+        except Exception as e:
+            logger.error(f"ML prediction failed for user {profile.user.username}: {str(e)}")
+            # create a fall back for the category
+            profile.preferred_category = "General"
+            profile.save()
+        return super().form_valid(form)
+    
+class ChangePasswordView(LoginRequiredMixin, FormView):
+    template_name = "authentication/change_password.html"
+    form_class = ChangePasswordForm     
+    success_url = reverse_lazy('storefront_home')
+
+    # inititalise the form with request data, returns a changepasswordform instance with a POST req or empty form w GET
+    def get_form(self, form_class=None):
+        if form_class==None:
+            form_class = self.get_form_class()
+        return form_class(self.request.POST or None)
+
+    def form_valid(self, form):
+        # save the new password
+        self.request.user.set_password(form.cleaned_data['new_password'])
+        self.request.user.save()
+        profile = UserProfile.objects.get(user=self.request.user)
+        if profile.is_initial_password:
+            profile.is_initial_password = False
+            profile.save()
+        # update the user's session data, prevents the user from getting logged out immediately after the pw update
+        update_session_auth_hash(self.request, self.request.user)
+        # check if the user is a staff, redirect to the admin page
+        if self.request.user.is_staff:
+            return_url = reverse_lazy("admin_dashboard")
+            return redirect(return_url)
+        return super().form_valid(form)
