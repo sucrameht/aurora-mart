@@ -34,7 +34,6 @@ class customLoginView(LoginView):
         
         except UserProfile.DoesNotExist:
             # create the user to redirect to onboarding
-            user_profile = UserProfile.objects.create(user=user, is_initial_password=False) # since it will be set by user
             return reverse_lazy("onboarding")
         
         if user_profile.isStaff:
@@ -64,7 +63,12 @@ class OnboardingView(LoginRequiredMixin, FormView):
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         user = self.request.user
-        user_profile, created = UserProfile.objects.get_or_create(user=user)
+        try:
+            # might lead to a not null constraint we were to force feed into the instance attribute
+            user_profile = UserProfile.objects.get(user=user)
+        except UserProfile.DoesNotExist:
+            # provide an unsaved instance for population by the user
+            user_profile = UserProfile(user=user)
         kwargs['instance'] = user_profile
         return kwargs
     
