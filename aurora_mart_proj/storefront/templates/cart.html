@@ -11,7 +11,7 @@
 <body>
 
     <div class="header">
-        <div class="logo" onclick="window.location.href='{% url 'storefront' %}'">
+        <div class="logo" onclick="window.location.href='{% url 'storefront_home' %}'">
             <img src="{% static 'storefront/images/AuroraMartLogo.png' %}" alt="AuroraMart Logo" class="logo-img">
             <span class="logo-text">AuroraMart</span>
         </div>
@@ -28,13 +28,13 @@
                 <div class="cart-empty-icon">🛒</div>
                 <h2>Your cart is empty</h2>
                 <p>Add some products to get started!</p>
-                <a href="{% url 'storefront' %}" class="continue-shopping-btn">
+                <a href="{% url 'storefront_home' %}" class="continue-shopping-btn">
                     ← Continue Shopping
                 </a>
             </div>
 
         {% else %}
-            <a href="{% url 'storefront' %}" class="continue-shopping-link">← Continue Shopping</a>
+            <a href="{% url 'storefront_home' %}" class="continue-shopping-link">← Continue Shopping</a>
             <h1 class="cart-title">Shopping Cart</h1>
 
             <div class="cart-layout">
