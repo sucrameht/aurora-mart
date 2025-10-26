@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 # to make use of isStaff for redirection, change_password requirements
 class customLoginView(LoginView):
     template_name = 'authentication/login.html'
-    redirect_authenticated_user = True
+    redirect_authenticated_user = False
 
     def form_invalid(self, form):
         messages.error(self.request, "Invalid username or password.")
@@ -36,7 +36,7 @@ class customLoginView(LoginView):
             # create the user to redirect to onboarding
             return reverse_lazy("onboarding")
         
-        if user_profile.isStaff:
+        if user.is_staff:
             return reverse_lazy("admin_dashboard") # for admins - yet to create
         
         return reverse_lazy("storefront_home") # for customers - yet to create
@@ -104,7 +104,7 @@ class OnboardingView(LoginRequiredMixin, FormView):
         return super().form_valid(form)
     
 class ChangePasswordView(LoginRequiredMixin, FormView):
-    template_name = "authentication/change_password.html"
+    template_name = "authentication/changepassword.html"
     form_class = ChangePasswordForm     
     success_url = reverse_lazy('storefront_home')
 
