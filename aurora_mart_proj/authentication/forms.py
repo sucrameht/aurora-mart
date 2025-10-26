@@ -14,7 +14,6 @@ class RegistrationForm(UserCreationForm):
         user.is_staff = False # all need onboarding users are not considered to be stuff
         if commit:
             user.save()
-            UserProfile.objects.get_or_create(user=user)
         return user
     
 class onboardingForm(forms.ModelForm):
@@ -54,6 +53,14 @@ class onboardingForm(forms.ModelForm):
             'employment_status': forms.Select(choices=EMPLOYMENT_STATUS),
             'education': forms.Select(choices=EDUCATION),
         }
+
+    def save(self, commit = True, user=None):
+        user_profile = super().save(commit=False)
+        if user:
+            user_profile.user = user
+        if commit:
+            user_profile.save()
+        return user_profile
 
 class ChangePasswordForm(forms.Form):
     old_password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control'}), label="Old Password", required=True)

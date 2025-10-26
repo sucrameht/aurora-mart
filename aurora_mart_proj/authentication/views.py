@@ -66,15 +66,14 @@ class OnboardingView(LoginRequiredMixin, FormView):
         try:
             # might lead to a not null constraint we were to force feed into the instance attribute
             user_profile = UserProfile.objects.get(user=user)
+            kwargs['instance'] = user_profile
         except UserProfile.DoesNotExist:
-            # provide an unsaved instance for population by the user
-            user_profile = UserProfile(user=user)
-        kwargs['instance'] = user_profile
+            pass
         return kwargs
     
     # validate all the fields in the form and generate preferred category using ai model
     def form_valid(self, form):
-        form.save()
+        form.save(commit=True, user=self.request.user)
         profile = UserProfile.objects.get(user=self.request.user)
 
         try:
