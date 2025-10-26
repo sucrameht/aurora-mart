@@ -2,7 +2,7 @@ import csv
 from storefront.models import Product
 
 def run():
-    with open('data/b2c_products_500.csv', newline='', encoding='utf-8') as f:
+    with open('data/b2c_products_500.csv', newline='', encoding='cp1252') as f:
         reader = csv.DictReader(f)
         for row in reader:
             Product.objects.create(

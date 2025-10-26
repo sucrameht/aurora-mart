@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AuroraMart Storefront</title>
-    <link rel="stylesheet" href="{% static 'storefront/css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'storefront/css/storefront.css' %}">
 </head>
 <body>
     <div class="header">
@@ -17,7 +17,12 @@
             <input type="search" name="query" class="search-bar" placeholder="Search products..." value="{{ request.GET.query }}">
         </form>
         <div class="icons">
-            <a href="#" class="icon">🛒</a> <a href="#" class="icon">👤</a> </div>
+            <a href="{% url 'view_cart' %}" class="icon icon-cart">
+                🛒
+                <span id="cart-count">{{ cart_item_count|default:0 }}</span>
+            </a>
+            <a href="#" class="icon">👤</a>
+        </div>
     </div>
 
     <div class="banner">
@@ -34,9 +39,21 @@
             {{ category }}
         </div>
         {% endfor %}
+
+        <div class="sort-bar">
+            <label for="sort-options">Sort by:</label>
+            <select id="sort-options">
+                <option value="name-asc">Name (A–Z)</option>
+                <option value="name-desc">Name (Z–A)</option>
+                <option value="price-asc">Price (Low → High)</option>
+                <option value="price-desc">Price (High → Low)</option>
+                <option value="rating-desc">Rating (High → Low)</option>
+                <option value="rating-asc">Rating (Low → High)</option>
+            </select>
+        </div>
     </div>
 
-    <div class="product-grid">
+    <div class="product-grid" data-add-cart-url="{% url 'add_to_cart' %}">
         {% for product in products %}
             <div class="product-card" 
                  onclick="openModal(this)"
@@ -64,13 +81,19 @@
     
                 <div class="buttons">
                     <button class="buy-now">⚡️ Buy Now</button>
-                    <button class="add-cart">🛒 Add</button>
+                    <button class="add-cart" 
+                            data-sku="{{ product.sku_code }}" 
+                            onclick="event.stopPropagation();">
+                        🛒 Add
+                    </button>
                 </div>
             </div>
         {% empty %}
             <p>No products found.</p>
         {% endfor %}
-    </div>    
+    </div>
+    
+    <div id="toast-notification"></div>
 
     <div id="modal" class="modal">
         <div class="modal-content">
@@ -86,7 +109,7 @@
         </div>
     </div>
 
-    <script src="{% static 'storefront/js/script.js' %}"></script>
+    <script src="{% static 'storefront/js/storefront.js' %}"></script>
 
 </body>
 </html>

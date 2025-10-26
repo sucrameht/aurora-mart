@@ -1,0 +1,99 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Shopping Cart</title>
+    <link rel="stylesheet" href="{% static 'storefront/css/cart.css' %}">
+    <link rel="stylesheet" href="{% static 'storefront/css/storefront.css' %}">
+</head>
+<body>
+
+    <div class="header">
+        <div class="logo" onclick="window.location.href='{% url 'storefront' %}'">
+            <img src="{% static 'storefront/images/AuroraMartLogo.png' %}" alt="AuroraMart Logo" class="logo-img">
+            <span class="logo-text">AuroraMart</span>
+        </div>
+        <div class="icons">
+            <a href="{% url 'view_cart' %}" class="icon icon-cart">🛒</a>
+            <a href="#" class="icon">👤</a>
+        </div>
+    </div>
+
+    <div class="cart-page-container">
+
+        {% if not cart_items %}
+            <div class="cart-empty">
+                <div class="cart-empty-icon">🛒</div>
+                <h2>Your cart is empty</h2>
+                <p>Add some products to get started!</p>
+                <a href="{% url 'storefront' %}" class="continue-shopping-btn">
+                    ← Continue Shopping
+                </a>
+            </div>
+
+        {% else %}
+            <a href="{% url 'storefront' %}" class="continue-shopping-link">← Continue Shopping</a>
+            <h1 class="cart-title">Shopping Cart</h1>
+
+            <div class="cart-layout">
+                <div class="cart-items-list">
+                    {% for item in cart_items %}
+                    <div class="cart-item-card">
+                        <img src="https://nus.edu.sg/images/default-source/identity-images/NUS_logo_full-horizontal.jpg" alt="{{ item.product.product_name }}" class="cart-item-img">
+                        <div class="cart-item-details">
+                            <span class="cart-item-name">{{ item.product.product_name }}</span>
+                            <span class="cart-item-category">{{ item.product.product_category }}</span>
+                            <span class="cart-item-price">${{ item.product.unit_price }}</span>
+                        </div>
+                        
+                        <form action="{% url 'update_cart' %}" method="POST" class="cart-item-quantity">
+                            {% csrf_token %}
+                            <input type="hidden" name="sku_code" value="{{ item.product.sku_code }}">
+                            <button type="submit" name="quantity" value="{{ item.quantity|add:'-1' }}" class="qty-btn">-</button>
+                            <span class="qty-value">{{ item.quantity }}</span>
+                            <button type="submit" name="quantity" value="{{ item.quantity|add:'1' }}" class="qty-btn">+</button>
+                        </form>
+                        
+                        <span class="cart-item-total-price">${{ item.total_price }}</span>
+
+                        <form action="{% url 'remove_from_cart' %}" method="POST" class="cart-item-remove">
+                            {% csrf_token %}
+                            <input type="hidden" name="sku_code" value="{{ item.product.sku_code }}">
+                            <button type="submit" class="remove-btn">x</button>
+                        </form>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="order-summary">
+                    <h2>Order Summary</h2>
+                    
+                    <form class="voucher-form">
+                        <label for="voucher">Voucher Code</label>
+                        <div class="voucher-input">
+                            <input type="text" id="voucher" name="voucher" placeholder="Enter code">
+                            <button type="submit" class="apply-btn">Apply</button>
+                        </div>
+                    </form>
+
+                    <div class="summary-line">
+                        <span>Subtotal</span>
+                        <span>${{ subtotal }}</span>
+                    </div>
+                    <div class="summary-line total">
+                        <span>Total</span>
+                        <span>${{ total }}</span>
+                    </div>
+
+                    <button class="checkout-btn">Proceed to Checkout</button>
+                    <p class="voucher-info">Try vouchers: WELCOME10, SAVE20, or FREESHIP</p>
+                </div>
+            </div>
+        {% endif %}
+
+    </div>
+
+</body>
+</html>

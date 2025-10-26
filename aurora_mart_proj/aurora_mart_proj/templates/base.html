@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>AuroraMart - {% block title %}{% endblock %}</title> <!--Must be defined in the child class-->
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                margin: 0;
+                padding: 0;
+                background-color: #f4f4f4;
+            }
+            .content {
+                padding: 20px;
+                min-height: 80vh;
+            }
+            .footer {
+                background-color: #333;
+                color: #fff;
+                text-align: center;
+                padding: 10px 0;
+                width: 100%;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="content">
+            {% block content %}
+            {% endblock %}
+        </div>
+        <div class="footer">
+            {% block footer %}
+            <footer>
+                <p>&copy; 2025 AuroraMart. All rights reserved.</p>
+            </footer>
+            {% endblock %}
+        </div>
+    </body>
+</html>
