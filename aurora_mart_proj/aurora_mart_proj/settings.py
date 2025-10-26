@@ -39,7 +39,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'storefront',
     'AImodels',
-    'admin'
 ]
 
 MIDDLEWARE = [
