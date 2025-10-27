@@ -12,4 +12,4 @@ class UserProfile(models.Model):
     has_children = models.BooleanField(default=False)
     monthly_income_sgd = models.DecimalField(max_digits=20, decimal_places=11) # no restrictions on the decimal places due to the formatting type of the data inputs
     preferred_category = models.CharField(max_length=200, blank=True, null=True)
-    is_initial_password = models.BooleanField(default=True) # for setting of initial password
+    is_initial_password = models.BooleanField(default=False) # for setting of initial password
