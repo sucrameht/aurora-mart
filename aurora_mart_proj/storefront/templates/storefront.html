@@ -1,0 +1,115 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AuroraMart Storefront</title>
+    <link rel="stylesheet" href="{% static 'storefront/css/storefront.css' %}">
+</head>
+<body>
+    <div class="header">
+        <div class="logo" onclick="window.location.href='/storefront'">
+            <img src="{% static 'storefront/images/AuroraMartLogo.png' %}" alt="AuroraMart Logo" class="logo-img">
+            <span class="logo-text">AuroraMart</span>
+        </div>
+        <form action="" method="GET" class="search-form">
+            <input type="search" name="query" class="search-bar" placeholder="Search products..." value="{{ request.GET.query }}">
+        </form>
+        <div class="icons">
+            <a href="{% url 'view_cart' %}" class="icon icon-cart">
+                🛒
+                <span id="cart-count">{{ cart_item_count|default:0 }}</span>
+            </a>
+            <a href="#" class="icon">👤</a>
+        </div>
+    </div>
+
+    <div class="banner">
+        <p>Personalized for you.</p>
+        <h2>Based on your interests, we recommend {{ active_category|default:'Electronics' }}</h2>
+    </div>
+
+    <div class="nav-tabs">
+        <div class="tab {% if not active_category %}active{% endif %}" data-category="All">
+            <span class="tab-icon">🌐</span> All
+        </div>
+        {% for category in categories %}
+        <div class="tab {% if category == active_category %}active{% endif %}" data-category="{{ category }}">
+            {{ category }}
+        </div>
+        {% endfor %}
+
+        <div class="sort-bar">
+            <label for="sort-options">Sort by:</label>
+            <select id="sort-options">
+                <option value="name-asc">Name (A–Z)</option>
+                <option value="name-desc">Name (Z–A)</option>
+                <option value="price-asc">Price (Low → High)</option>
+                <option value="price-desc">Price (High → Low)</option>
+                <option value="rating-desc">Rating (High → Low)</option>
+                <option value="rating-asc">Rating (Low → High)</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="product-grid" data-add-cart-url="{% url 'add_to_cart' %}">
+        {% for product in products %}
+            <div class="product-card" 
+                 onclick="openModal(this)"
+                 data-category="{{ product.product_category }}"
+                 data-name="{{ product.product_name }}"
+                 data-image-url="https://nus.edu.sg/images/default-source/identity-images/NUS_logo_full-horizontal.jpg"
+                 data-description="{{ product.product_description }}"
+                 data-price="{{ product.unit_price }}"
+                 data-rating="{{ product.product_rating }}"
+                 data-stock="{{ product.quantity_on_hand }}"
+            >
+                <div class="product-image">
+                    <img src="https://nus.edu.sg/images/default-source/identity-images/NUS_logo_full-horizontal.jpg" 
+                         alt="{{ product.product_name }}">
+                </div>
+    
+                <div class="product-title">{{ product.product_name }}</div>
+                
+                <div class="product-meta">
+                    <div class="rating">★ {{ product.product_rating }}</div>
+                    <div class="stock">{{ product.quantity_on_hand }} left</div>
+                </div>
+
+                <div class="price">${{ product.unit_price }}</div>
+    
+                <div class="buttons">
+                    <button class="buy-now">⚡️ Buy Now</button>
+                    <button class="add-cart" 
+                            data-sku="{{ product.sku_code }}" 
+                            onclick="event.stopPropagation();">
+                        🛒 Add
+                    </button>
+                </div>
+            </div>
+        {% empty %}
+            <p>No products found.</p>
+        {% endfor %}
+    </div>
+    
+    <div id="toast-notification"></div>
+
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2 id="modal-title"></h2>
+            <img id="modal-image" src="" alt="" style="max-width: 100%; height: auto; margin-bottom: 15px; border-radius: 8px;">
+            <p id="modal-description" style="margin-bottom: 15px;"></p>
+            <div class="product-meta" style="margin-bottom: 10px;">
+                <div id="modal-rating" class="rating"></div>
+                <div id="modal-stock" class="stock"></div>
+            </div>
+            <div id="modal-price" class="price"></div>
+        </div>
+    </div>
+
+    <script src="{% static 'storefront/js/storefront.js' %}"></script>
+
+</body>
+</html>
