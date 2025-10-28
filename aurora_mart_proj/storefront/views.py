@@ -9,6 +9,7 @@ from decimal import Decimal
 from django.contrib import messages
 from django.views.generic import ListView, View
 from .forms import CartActionForm
+from datetime import date
 
 
 class StorefrontView(ListView):
@@ -92,15 +93,50 @@ class CartView(View):
                 'total_price': total_item_price
             })
             subtotal += total_item_price
+        
+        applied_voucher, discount = self.get_voucher(request, subtotal)
 
-        total = subtotal
+        total = subtotal - discount
+
+        current_voucher_code = (
+            request.POST.get('voucher_code') or
+            request.session.get('applied_voucher', '')
+        )
 
         context = {
             'cart_items': cart_items,
             'subtotal': subtotal,
-            'total': total
+            'total': total,
+            'applied_voucher': applied_voucher,
+            'discount': discount,
+            'current_voucher_code': current_voucher_code,
         }
         return render(request, self.template_name, context)
+    
+    def get_voucher(self, request, subtotal):
+        discount = Decimal('0.00')
+        applied_voucher = None
+        voucher_code = request.session.get('applied_voucher')
+        if voucher_code:
+            try:
+                voucher = Voucher.objects.get(code=voucher_code)
+                if voucher.is_active and (not voucher.expiry_date or voucher.expiry_date >= date.today()):
+                    applied_voucher = voucher
+                    if voucher.discount_type == 'percent':
+                        discount = subtotal * (voucher.discount_value / Decimal('100'))
+                    else:  # 'amount'
+                        discount = voucher.discount_value
+                    # Cap discount at subtotal to avoid negative totals
+                    discount = min(discount, subtotal)
+                else:
+                    # Invalid/expired: remove from session
+                    del request.session['applied_voucher']
+                    messages.error(request, "Applied voucher is no longer valid.")
+            except Voucher.DoesNotExist:
+                del request.session['applied_voucher']
+                messages.error(request, "Applied voucher not found.")
+        return applied_voucher, round(discount, 2)
+        
 
     def post(self, request, *args, **kwargs):
         form = CartActionForm(request.POST)
@@ -109,6 +145,7 @@ class CartView(View):
             sku = form.cleaned_data['sku_code']
             quantity = form.cleaned_data['quantity']
             cart = request.session.get('cart', {})
+            voucher_code = form.cleaned_data['voucher_code']
 
             if action == 'update':
                 sku = request.POST.get('sku_code')
@@ -123,7 +160,31 @@ class CartView(View):
                 sku = request.POST.get('sku_code')
                 if sku in cart:
                     del cart[sku]
+            elif action == 'apply_voucher':
+                if voucher_code:
+                    try:
+                        # Check voucher validity
+                        voucher = Voucher.objects.get(code=voucher_code)
+                        if voucher.is_active and (not voucher.expiry_date or voucher.expiry_date >= date.today()):
+                            request.session['applied_voucher'] = voucher.code
+                            messages.success(request, f"Voucher '{voucher.code}' applied.")
+                        elif not voucher.is_active:
+                            messages.error(request, "Voucher is not active.")
+                        else: # Expired
+                            messages.error(request, "Voucher is expired.")
+                    except Voucher.DoesNotExist:
+                        messages.error(request, "Invalid voucher code.")
+                else:
+                    messages.error(request, "Please enter a voucher code.")
+            elif action == 'remove_voucher':
+                if 'applied_voucher' in request.session:
+                    del request.session['applied_voucher']
+                    messages.success(request, "Voucher removed.")
+
         else:
-            return self.get(request, form=form)
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
+        
         request.session['cart'] = cart
         return redirect('view_cart')

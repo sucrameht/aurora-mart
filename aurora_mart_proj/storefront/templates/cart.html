@@ -23,6 +23,14 @@
 
     <div class="cart-page-container">
 
+        {% if messages %}
+            <div class="messages-container">
+                {% for message in messages %}
+                    <div class="message {{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
         {% if not cart_items %}
             <div class="cart-empty">
                 <div class="cart-empty-icon">🛒</div>
@@ -72,18 +80,37 @@
                 <div class="order-summary">
                     <h2>Order Summary</h2>
                     
-                    <form class="voucher-form">
-                        <label for="voucher">Voucher Code</label>
+                    <form class="voucher-form" action = "{% url 'view_cart' %}" method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="apply_voucher">
+                        <label for="voucher_code">Voucher Code</label>
                         <div class="voucher-input">
-                            <input type="text" id="voucher" name="voucher" placeholder="Enter code">
+                            <input type="text" id="voucher_code" name="voucher_code" placeholder="Enter code" value="{{ current_voucher_code|default:'' }}">
                             <button type="submit" class="apply-btn">Apply</button>
                         </div>
                     </form>
+
+                    {% if applied_voucher %}
+                        <div class="applied-voucher">
+                            <span>Applied: {{ applied_voucher.code }} ({{ applied_voucher.discount_type|title }}: {{ applied_voucher.discount_value }}{% if applied_voucher.discount_type == 'percent' %}%{% endif %})</span>
+                            <form action="{% url 'view_cart' %}" method="POST">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="remove_voucher">
+                                <button type="submit" class="remove-btn">Remove</button>
+                            </form>
+                        </div>
+                    {% endif %}
 
                     <div class="summary-line">
                         <span>Subtotal</span>
                         <span>${{ subtotal }}</span>
                     </div>
+                    {% if discount > 0 %}
+                        <div class="summary-line discount">
+                            <span>Discount</span>
+                            <span>-${{ discount }}</span>
+                        </div>
+                    {% endif %}
                     <div class="summary-line total">
                         <span>Total</span>
                         <span>${{ total }}</span>

@@ -9,6 +9,46 @@ body {
     padding: 0 20px;
 }
 
+.messages-container {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.message {
+    padding: 15px 20px;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: 500;
+    list-style: none;
+    border: 1px solid;
+}
+
+.message.success {
+    color: #155724;
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+}
+
+.message.error {
+    color: #721c24;
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+.message.info {
+    color: #004085;
+    background-color: #cce5ff;
+    border-color: #b8daff;
+}
+
+.message.warning {
+    color: #856404;
+    background-color: #fff3cd;
+    border-color: #ffeeba;
+}
+
 .cart-empty {
     text-align: center;
     padding: 60px 20px;
@@ -253,4 +293,42 @@ body {
     color: #888;
     text-align: center;
     margin-top: 15px;
+}
+
+.applied-voucher {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #e6f7ff; /* A light blue to show success */
+    border: 1px solid #b3e0ff;
+    padding: 10px 15px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+.applied-voucher span {
+    color: #0056b3;
+    font-weight: 600;
+}
+
+.applied-voucher form {
+    margin: 0;
+}
+
+.remove-voucher-btn {
+    background: none;
+    border: 1px solid #ff4d4d;
+    color: #ff4d4d;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.remove-voucher-btn:hover {
+    background-color: #ff4d4d;
+    color: white;
 }
