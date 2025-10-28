@@ -86,8 +86,9 @@
     
                 <div class="buttons">
                     <button class="buy-now">⚡️ Buy Now</button>
-                    <form action="{% url 'add_to_cart' %}" method="POST" style="display:inline;">
+                    <form action="{% url 'storefront_home' %}" method="POST" style="display:inline;">
                         {% csrf_token %}
+                        <input type="hidden" name="action" value="add">
                         <input type="hidden" name="sku_code" value="{{ product.sku_code }}">
                         <button type="submit" class="add-cart">🛒 Add</button>
                     </form>
@@ -105,8 +106,9 @@
                     <p>{{ product.product_description }}</p>
                     <p>★ {{ product.product_rating }} | {{ product.quantity_on_hand }} left</p>
     
-                    <form action="{% url 'add_to_cart' %}" method="POST">
+                    <form action="{% url 'storefront_home' %}" method="POST">
                         {% csrf_token %}
+                        <input type="hidden" name="action" value="add">
                         <input type="hidden" name="sku_code" value="{{ product.sku_code }}">
                         <button type="submit" class="add-cart">🛒 Add to Cart</button>
                     </form>
