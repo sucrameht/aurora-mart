@@ -7,6 +7,7 @@ from django.apps import apps
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from decimal import Decimal
+from django.contrib import messages
 
 # Create your views here.
 def storefront(request):
@@ -14,6 +15,7 @@ def storefront(request):
     query = request.GET.get('query', '')
     active_category = request.GET.get('category')
     categories = Product.objects.values_list('product_category', flat=True).distinct().order_by('product_category')
+    sort = request.GET.get('sort', 'name-asc')
     cart = request.session.get('cart', {})
     cart_item_count = sum(cart.values())
 
@@ -24,41 +26,40 @@ def storefront(request):
 
     if query:
         products = products.filter(Q(product_name__icontains=query) | Q(product_category__icontains=query))
+
+    if sort == 'name-asc':
+        products = products.order_by('product_name')
+    elif sort == 'name-desc':
+        products = products.order_by('-product_name')
+    elif sort == 'price-asc':
+        products = products.order_by('unit_price')
+    elif sort == 'price-desc':
+        products = products.order_by('-unit_price')
+    elif sort == 'rating-asc':
+        products = products.order_by('product_rating')
+    elif sort == 'rating-desc':
+        products = products.order_by('-product_rating')
     
     context = {
         'products': products,
         'categories': categories,
         'active_category': active_category,
         'query': query,
-        'cart_item_count': cart_item_count
+        'cart_item_count': cart_item_count,
+        'sort': sort,
     }
     return render(request, 'storefront.html', context)
 
-@require_POST
 def add_to_cart(request):
-    sku = request.POST.get('sku_code')
-    product = get_object_or_404(Product, sku_code=sku)
-    
-    # Get the cart from the session, or create an empty one
-    cart = request.session.get('cart', {})
-    
-    # Get current quantity, default to 0, then add 1
-    quantity = cart.get(sku, 0) + 1
-    
-    # Basic check against stock
-    if quantity > product.quantity_on_hand:
-        return JsonResponse({'status': 'error', 'message': 'Not enough stock'}, status=400)
-        
-    cart[sku] = quantity
-    request.session['cart'] = cart
-    
-    # Return success and new total item count
-    cart_item_count = sum(cart.values())
-    return JsonResponse({
-        'status': 'success',
-        'message': f'Added {product.product_name} to cart.',
-        'cart_item_count': cart_item_count
-    })
+    if request.method == "POST":
+        sku = request.POST.get("sku_code")
+        cart = request.session.get("cart", {})
+
+        cart[sku] = cart.get(sku, 0) + 1
+        request.session["cart"] = cart
+
+        messages.success(request, "Item added to cart!")
+        return redirect(request.META.get("HTTP_REFERER", "storefront_home"))
 
 def view_cart(request):
     cart = request.session.get('cart', {})
