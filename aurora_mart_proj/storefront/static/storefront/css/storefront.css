@@ -169,6 +169,18 @@ body {
     flex-direction: column;
 }
 
+.product-card a,
+.product-card-link {
+    text-decoration: none;
+    color: inherit;
+}
+
+.product-card a:hover,
+.product-card-link:hover {
+    text-decoration: none;
+    color: inherit;
+}
+
 .product-image {
     height: 200px;
     margin-bottom: 16px;
