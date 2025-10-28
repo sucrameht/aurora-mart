@@ -11,7 +11,7 @@
 <body>
 
     <div class="header">
-        <div class="logo" onclick="window.location.href='{% url 'storefront_home' %}'">
+        <div class="logo" onclick="window.location.href='{% url 'storefront_home' %}?category=All'">
             <img src="{% static 'storefront/images/AuroraMartLogo.png' %}" alt="AuroraMart Logo" class="logo-img">
             <span class="logo-text">AuroraMart</span>
         </div>
@@ -48,8 +48,9 @@
                             <span class="cart-item-price">${{ item.product.unit_price }}</span>
                         </div>
                         
-                        <form action="{% url 'update_cart' %}" method="POST" class="cart-item-quantity">
+                        <form action="{% url 'view_cart' %}" method="POST" class="cart-item-quantity">
                             {% csrf_token %}
+                            <input type="hidden" name="action" value="update">
                             <input type="hidden" name="sku_code" value="{{ item.product.sku_code }}">
                             <button type="submit" name="quantity" value="{{ item.quantity|add:'-1' }}" class="qty-btn">-</button>
                             <span class="qty-value">{{ item.quantity }}</span>
@@ -58,8 +59,9 @@
                         
                         <span class="cart-item-total-price">${{ item.total_price }}</span>
 
-                        <form action="{% url 'remove_from_cart' %}" method="POST" class="cart-item-remove">
+                        <form action="{% url 'view_cart' %}" method="POST" class="cart-item-remove">
                             {% csrf_token %}
+                            <input type="hidden" name="action" value="remove">
                             <input type="hidden" name="sku_code" value="{{ item.product.sku_code }}">
                             <button type="submit" class="remove-btn">x</button>
                         </form>
