@@ -13,5 +13,4 @@ class ProductCreateForm(forms.ModelForm):
             'quantity_on_hand',
             'reorder_quantity',
             'unit_price',
-            'product_rating'
         ]

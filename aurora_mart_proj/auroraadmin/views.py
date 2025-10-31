@@ -134,7 +134,11 @@ class AddProductView(View):
             form.fields['product_subcategory'] = forms.ChoiceField(choices=[('', '---')] + sub_choices, required=True)
 
         if form.is_valid():
-            form.save()
+            # such that we can create an instance without commiting, such that we can set user defined fields
+            product = form.save(commit=False)
+            if hasattr(product, "product_rating"):
+                product.product_rating = 0.0
+            product.save()
             messages.success(request, 'Product added successfully.')
             return redirect(reverse('auroraadmin:product'))
         
