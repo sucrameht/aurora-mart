@@ -37,7 +37,7 @@ class customLoginView(LoginView):
             return reverse_lazy("onboarding")
         
         if user.is_staff:
-            return reverse_lazy("admin_dashboard") # for admins - yet to create
+            return reverse_lazy("auroraadmin:admin_dashboard") # for admins - yet to create
         
         return reverse_lazy("storefront_home") # for customers - yet to create
 
@@ -125,6 +125,6 @@ class ChangePasswordView(LoginRequiredMixin, FormView):
         update_session_auth_hash(self.request, self.request.user)
         # check if the user is a staff, redirect to the admin page
         if self.request.user.is_staff:
-            return_url = reverse_lazy("admin_dashboard")
+            return_url = reverse_lazy("auroraadmin:admin_dashboard")
             return redirect(return_url)
         return super().form_valid(form)

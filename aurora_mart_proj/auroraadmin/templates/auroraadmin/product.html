@@ -1,0 +1,293 @@
+{% extends 'auroraadmin/base.html' %}
+{% block title %}Product Inventory{% endblock %}
+{% block main_content %}
+
+<style>
+    /* --- Custom Styles for Product Inventory Table --- */
+
+    /* Container for the whole page content */
+    .inventory-container {
+        padding: 20px;
+        background-color: #ffffff; /* Use a white background for the table area */
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); /* Soft shadow for the card effect */
+    }
+
+    /* Header for the product page */
+    .inventory-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .inventory-title {
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: #333;
+    }
+
+    .row-control {
+        display: flex;
+        gap: 10px;
+        align-items: right;
+    }
+
+    /* Search and Filter Area */
+    .search-filter-group {
+        display: flex;
+        gap: 10px;
+    }
+
+    .search-input {
+        padding: 8px 15px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        width: 250px;
+    }
+
+    .filter-button {
+        padding: 8px 15px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        background-color: #f7f7f7;
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: #555;
+    }
+
+    .filter-button:hover {
+        background-color: #eee;
+    }
+    
+    /* Table Styles */
+    .product-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .product-table th, .product-table td {
+        padding: 15px;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+    }
+
+    .product-table thead th {
+        background-color: #f7f9fc;
+        color: #555;
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+    
+    /* Light hover effect */
+    .product-table tbody tr:hover {
+        background-color: #f0f8ff; 
+    }
+
+    /* Category Badge Style */
+    .category-badge {
+        display: inline-block;
+        padding: 4px 8px;
+        background-color: #e9ecef;
+        color: #495057;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    /* Status Badges */
+    .status-badge {
+        display: flex;
+        align-items: center;
+        width: fit-content;
+        padding: 6px 12px;
+        border-radius: 20px;
+        color: white;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+    .status-icon {
+        margin-right: 5px;
+        font-weight: bold;
+    }
+
+    .status-active {
+        background-color: #28a745; /* Green */
+    }
+
+    .status-low {
+        background-color: #dc3545; /* Red */
+    }
+
+    .status-inactive {
+        background-color: #6c757d; /* Gray */
+    }
+
+    /* Action Buttons */
+    .action-button {
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+        margin-left: 5px;
+    }
+
+    .edit-button {
+        background-color: #00bfff;
+        color: white;
+        border: 1px solid #00bfff;
+    }
+
+    .view-button {
+        background-color: #f0f8ff;
+        color: #00bfff;
+        border: 1px solid #00bfff;
+    }
+
+    .inline-edit-form { 
+        display: flex; 
+        align-items: center; 
+        gap: 5px; 
+        margin: 0; 
+    }
+    
+    .inline-edit-input { 
+        width: 60px; 
+        padding: 5px; 
+        border: 1px solid #00bfff; 
+        border-radius: 4px; 
+        text-align: center; 
+    }
+    
+    .inline-save-btn { 
+        background-color: #28a745; 
+        color: white; 
+        border: none; 
+        padding: 6px 8px; 
+        border-radius: 4px; 
+        font-size: 0.85rem; 
+        cursor: pointer; 
+    }
+    
+    .inline-cancel-btn { 
+        background-color: #6c757d; 
+        color: white; 
+        border: none; 
+        padding: 6px 8px; 
+        border-radius: 4px; 
+        font-size: 0.85rem; 
+        cursor: pointer; 
+        text-decoration: none; 
+        display: inline-block; 
+    }
+    
+    .edit-button:hover { background-color: #009acd; border-color: #009acd; }
+    .view-button:hover { background-color: #e6f6ff; }
+    
+</style>
+
+<div class="inventory-container">
+    <div class="inventory-header">
+        <h1 class="inventory-title">Product Inventory</h1>
+        <div class="row-control">
+            <form method="GET" action="{% url 'auroraadmin:product' %}" class="search-filter-group">
+                <input type="text" name="q" class="search-input" placeholder="Search products..." value="{{ search_query|default:'' }}">
+                <button tpe="submit" class="filter-button">Check</button>
+            </form>
+            {% if search_query %}
+                <form method="GET" action="{% url 'auroraadmin:product' %}" >
+                    <button type="submit" class="filter-button">Clear</button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <div style="margin-bottom: 20px;">
+        <form method="GET" action="{% url 'auroraadmin:product' %}" style="display:inline-block">
+            <!-- preserve exisiting search querty -->
+            <input type="hidden" name="q" value="{{ search_query|default:'' }}">
+            <label for="category-select" style="font-weight:600; margin-right:8px;">Category:</label>
+            <select id="category-filter" name="category" onchange="this.form.submit()" style="padding:6px 10px; border-radius:6px; border:1px solid #ddd;">
+                <option value="All">All Categories</option>
+                {% for category in categories %}
+                    <option value="{{ category }}" {% if selected_category == category %}selected{% endif %}>{{ category }}</option>
+                {% endfor %}
+            </select>
+        </form>
+
+        {% if selected_category and selected_category != 'All' %}
+            <a href="{% url 'auroraadmin:product' %}" class="filter-button" style="text-decoration: none; margin-left: 10px;">Clear Filters</a>
+        {% endif %}
+
+        <!--Add Product Button-->
+        <a href="{% url 'auroraadmin:product_add' %}" class="filter-button" style="float:right; background-color:#00bfff; color:white; border:none; text-decoration:none;">
+            + Add Product
+        </a>
+    </div>
+
+    <table class="product-table">
+        <thead>
+            <tr>
+                <th>SKU</th>
+                <th>Product Name</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Stock</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in products %}
+            <tr>
+                <td>{{ product.sku_code }}</td>
+                <td><a href="#" style="color:#00bfff; text-decoration:none;">{{ product.product_name }}</a></td>
+                <td><span class="category-badge">{{ product.product_category }}</span></td>
+                <td>${{ product.unit_price|floatformat:2 }}</td>
+                <td>{{ product.quantity_on_hand }}</td>
+                <td>
+                    {% if product.quantity_on_hand > 50  %}
+                        <span class="status-badge status-active">
+                            <span class="status-icon">✓</span> In Stock
+                        </span>
+                    {% elif product.quantity_on_hand <= 50 %}
+                        <span class="status-badge status-low">
+                            <span class="status-icon">!</span> Low Stock
+                        </span>
+                    {% endif %}
+                </td>
+                <td>
+                    <!--Reorder Button: visible only when low stock-->
+                    {% if product.quantity_on_hand <= 50 %}
+                        <form method="post" action="{% url 'auroraadmin:product' %}" style="display:inline">
+                            {% csrf_token %}
+                            <!--action and pk values tells the view which action to perform and which user to update respectively-->
+                            <input type="hidden" name="pk" value="{{ product.sku_code }}">
+                            <input type="hidden" name="action" value="reorder">
+                            <!--q/category - preserves the current search/filter state so after the {POST + redirect}, we can get back the same state -->
+                            <input type="hidden"name="q" value="{{ search_query | default:'' }}">
+                            <input type="hidden" name="category" value="{{ selected_category | default:'' }}">
+                            <button type="submit" class="action-button" style="background: orange; color: whitesmoke; border: 1px solid orange;">
+                                Reorder +{{ product.reorder_quantity }}
+                            </button>
+                        </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" style="text-align:center; padding: 40px;">No products found in the inventory.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock main_content %}

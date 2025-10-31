@@ -1,0 +1,136 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>AuroraMart Admin - Dashboard</title>
+        <style>
+            body {
+                font-family: Arial, Helvetica, sans-serif;
+                margin: 0;
+                padding: 0;
+                background-color: #f0f8ff;
+                display: flex;
+                height: 100vh;
+            }
+            .header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 10px 20px;
+                background-color: #ffffff;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                position: fixed;
+                z-index:9999;
+                width: 100%;
+            }
+            .header-left {
+                display: flex;
+                align-items: center;
+                width: 25%;
+                min-width: 0;
+            }
+            .logo {
+                display: flex;
+                align-items: center;
+                text-decoration: none;
+            }
+            .logo-image {
+                height: 40px;
+                margin-right: 10px;
+            }
+            .logo-text {
+                margin-top: 0;
+                font-size: 1.5rem;
+                font-weight: bold;
+                color: #333;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .logo:hover {
+                opacity: .75;
+            }
+            .header-right {
+                display: flex;
+                align-items: center;
+                gap: 15px;
+                padding-right: 50px;
+            }
+            .storefront-button, .logout-button {
+                text-decoration: none;
+                color: white;
+                background-color: #00bfff;
+                padding: 8px 12px;
+                border-radius: 6px;
+                font-weight: 600;
+            }
+            .storefront-button:hover, .logout-button:hover {
+                background-color: #009acd;
+            }
+            .sidebar {
+                width: 220px;
+                background-color: #ffffff;
+                box-shadow: 2px 0 4px rgba(0,0,0,0.1);
+                padding-top: 70px;
+                position: fixed;
+                height: 100%;
+            }
+            .sidebar-nav ul {
+                list-style-type: none;
+                padding: 0;
+            }
+            .sidebar-nav ul li {
+                margin: 15px 20px;
+            }
+            .sidebar-nav ul li a {
+                text-decoration: none;
+                color: #333;
+                font-weight: 600;
+            }
+            .sidebar-nav ul li a:hover {
+                color: #00bfff;
+            }
+            .main-content {
+                margin-left: 220px;
+                padding: 80px 20px 20px 20px;
+                flex-grow: 1;
+                background-color: #f9f9f9;
+                height: 100vh;
+                overflow-y: auto;
+            }
+        </style>
+    <body>
+        <div class="header">
+            <div class="header-left">
+                <a href="{% url 'auroraadmin:admin_dashboard' %}" class="logo"> <!--Redirects to the analytics page-->
+                    <img src="{% static 'AuroraMartLogo.png' %}" alt="auroramart-logo" class="logo-image"/>
+                    <span class="logo-text">AuroraMart Admin</span>
+                </a>
+            </div>
+            <div class="header-right">
+                <a href="/storefront/" class="storefront-button">Navigate to Storefront</a>
+                <form id="logout-form" method="post" action="{% url 'auroraadmin:logout' %}" style="display:inline">
+                    {% csrf_token %}
+                    <button type="submit" class="logout-button">Logout</button>
+                </form>
+            </div>
+        </div>
+        <div class="sidebar">
+            {% block sidebar %}
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="{% url 'auroraadmin:admin_dashboard' %}">Analytics</a></li>
+                    <li><a href="{% url 'auroraadmin:product' %}">Product Inventory</a></li>
+                </ul>
+            </nav>
+            {% endblock %}
+        </div>
+        <div class="main-content">
+            {% block main_content %}
+            <!-- Main content goes here -->
+            {% endblock %}
+        </div>
+    </body>
+</html>
