@@ -149,3 +149,19 @@ class AddProductView(View):
         }
         # if there are errors
         return render(request, self.template_name, context)
+    
+class DeleteProductView(View):
+    template_name = 'auroraadmin/product_confirm_del.html'
+
+    def get(self, request, sku_code, *args, **kwargs):
+        product = get_object_or_404(Product,sku_code=sku_code)
+        context = {
+            'product': product
+        }
+        return render(request, self.template_name, context)
+    
+    def post(self, request, sku_code, *args, **kwargs):
+        product = get_object_or_404(Product,sku_code=sku_code)
+        product_name = product.product_name
+        product.delete()
+        return redirect(reverse('auroraadmin:product'))

@@ -279,6 +279,13 @@
                             </button>
                         </form>
                     {% endif %}
+
+                    <!-- Delete button -->
+                    <a href="{% url 'auroraadmin:product_delete' product.sku_code %}" 
+                        class="action-button" 
+                        style="margin-left:8px; background:#d9534f; color:#fff; border:1px solid #d9534f; text-decoration:none; padding:6px 8px; border-radius:6px;">
+                        Delete
+                    </a>
                 </td>
             </tr>
             {% empty %}
