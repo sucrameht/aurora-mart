@@ -12,6 +12,59 @@ from .forms import CartActionForm
 from datetime import date
 from django.contrib.auth.mixins import LoginRequiredMixin
 from authentication.models import UserProfile
+import joblib
+import pandas as pd
+from django.apps import apps
+
+APP_PATH = apps.get_app_config('storefront').path
+
+classifier_model_path = os.path.join(APP_PATH, 'mlmodels', 'b2c_customers_100.joblib')
+rules_model_path = os.path.join(APP_PATH, 'mlmodels', 'b2c_products_500_transactions_50k.joblib')
+
+try:
+    CLASSIFIER_MODEL = joblib.load(classifier_model_path)
+    ASSOCIATION_RULES_MODEL = joblib.load(rules_model_path)
+    print("ML Models loaded successfully from storefront/mlmodels.")
+except FileNotFoundError:
+    print(f"ERROR: Could not find ML models. Check 'mlmodels' folder in '{APP_PATH}'")
+    CLASSIFIER_MODEL = None
+    ASSOCIATION_RULES_MODEL = None
+
+
+def predict_preferred_category(model, customer_data):
+    # This is the list of all columns the model was trained on
+    columns = {
+        'age':'int64', 'household_size':'int64', 'has_children':'int64', 'monthly_income_sgd':'float64',
+        'gender_Female':'bool', 'gender_Male':'bool', 'employment_status_Full-time':'bool',
+        'employment_status_Part-time':'bool', 'employment_status_Retired':'bool',
+        'employment_status_Self-employed':'bool', 'employment_status_Student':'bool',
+        'occupation_Admin':'bool', 'occupation_Education':'bool', 'occupation_Sales':'bool',
+        'occupation_Service':'bool', 'occupation_Skilled Trades':'bool', 'occupation_Tech':'bool',
+        'education_Bachelor':'bool', 'education_Diploma':'bool', 'education_Doctorate':'bool',
+        'education_Master':'bool', 'education_Secondary':'bool'
+    }
+    
+    # Create an empty DataFrame with the correct columns and types
+    df = pd.DataFrame({col: pd.Series(dtype=dtype) for col, dtype in columns.items()})
+    
+    # Convert new customer data to a DataFrame and encode it
+    customer_df = pd.DataFrame([customer_data])
+    customer_encoded = pd.get_dummies(customer_df, columns=['gender', 'employment_status', 'occupation', 'education'])    
+
+    # Fill the empty DataFrame with the new customer's encoded data
+    for col in df.columns:
+        if col not in customer_encoded.columns:
+            # Use False for bool columns, 0 for numeric
+            if df[col].dtype == bool:
+                df[col] = False
+            else:
+                df[col] = 0
+        else:
+            df[col] = customer_encoded[col]
+    
+    # Make the prediction
+    prediction = model.predict(df)    
+    return prediction
 
 
 class StorefrontView(ListView):
@@ -19,10 +72,39 @@ class StorefrontView(ListView):
 
     def get(self, request, *args, **kwargs):
         query = request.GET.get('query', '')
-        active_category = request.GET.get('category')
+        user_clicked_category = request.GET.get('category')
+        # active_category = request.GET.get('category')
         sort = request.GET.get('sort', 'name-asc')
 
         queryset = Product.objects.all()
+
+        # Get the recommended category for the user
+        recommended_category = "All"
+        if CLASSIFIER_MODEL and request.user.is_authenticated:
+            try:
+                profile = UserProfile.objects.get(user=request.user)
+                customer_data = {
+                    'age': profile.age,
+                    'household_size': profile.household_size,
+                    'has_children': profile.has_children,
+                    'monthly_income_sgd': float(profile.monthly_income_sgd),
+                    'gender': profile.gender,
+                    'employment_status': profile.employment_status,
+                    'occupation': profile.occupation,
+                    'education': profile.education
+                }
+                print(f"Customer data for prediction: {customer_data}")
+                # Call the prediction function
+                prediction = predict_preferred_category(CLASSIFIER_MODEL, customer_data)
+                recommended_category = prediction[0]
+                print(f"Predicted preferred category: {recommended_category}")
+            except Exception as e:
+                print(f"Prediction failed: {e}")
+        
+        if user_clicked_category:
+            active_category = user_clicked_category
+        else:
+            active_category = recommended_category
 
         if active_category and active_category != 'All':
             queryset = queryset.filter(product_category=active_category)
@@ -54,6 +136,7 @@ class StorefrontView(ListView):
             'query': query,
             'cart_item_count': cart_item_count,
             'sort': sort,
+            'recommended_category': recommended_category,
         }
         return render(request, self.template_name, context)
 
