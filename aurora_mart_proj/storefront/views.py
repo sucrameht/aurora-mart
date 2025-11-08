@@ -10,6 +10,8 @@ from django.contrib import messages
 from django.views.generic import ListView, View
 from .forms import CartActionForm
 from datetime import date
+from django.contrib.auth.mixins import LoginRequiredMixin
+from authentication.models import UserProfile
 
 
 class StorefrontView(ListView):
@@ -188,3 +190,40 @@ class CartView(View):
         
         request.session['cart'] = cart
         return redirect('view_cart')
+
+
+class ProfileView(LoginRequiredMixin, View):
+    template_name = 'profile.html'
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        try:
+            profile = user.userprofile
+        except UserProfile.DoesNotExist:
+            profile = None
+
+        # Try to fetch orders if an 'orders' app exists (adjust model name/fields to match your project)
+        Order = None
+        recent_orders = []
+        total_orders = 0
+        completed_orders = 0
+        if apps.is_installed('orders'):
+            try:
+                Order = apps.get_model('orders', 'Order')
+            except LookupError:
+                Order = None
+
+        if Order:
+            qs = Order.objects.filter(user=user)
+            total_orders = qs.count()
+            completed_orders = qs.filter(status__iexact='completed').count()
+            recent_orders = qs.order_by('-created_at')[:5]
+        # Fallback placeholders if no Order model
+        context = {
+            'profile': profile,
+            'user': user,
+            'total_orders': total_orders,
+            'completed_orders': completed_orders,
+            'recent_orders': recent_orders,
+        }
+        return render(request, self.template_name, context)

@@ -1,0 +1,81 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>My Profile - AuroraMart</title>
+    <link rel="stylesheet" href="{% static 'storefront/css/storefront.css' %}">
+    <link rel="stylesheet" href="{% static 'storefront/css/profile.css' %}">
+</head>
+<body>
+    <div class="header">
+        <div class="logo" onclick="window.location.href='{% url 'storefront_home' %}?category=All'">
+            <img src="{% static 'storefront/images/AuroraMartLogo.png' %}" alt="AuroraMart Logo" class="logo-img">
+            <span class="logo-text">AuroraMart</span>
+        </div>
+        <div class="icons">
+            <a href="{% url 'view_cart' %}" class="icon icon-cart">🛒</a>
+            <a href="{% url 'profile' %}" class="icon">👤</a>
+        </div>
+    </div>
+
+    <div class="profile-container">
+        <h1 class="profile-title">My Profile</h1>
+        <div class="profile-grid">
+            <aside class="account-card">
+                <div class="avatar">👤</div>
+                <div class="account-info">
+                    <h3>{{ user.get_full_name|default:user.username }}</h3>
+                    <p class="muted">Member since {{ user.date_joined|date:"Y" }}</p>
+                    <hr>
+                    <p>📧 {{ user.email }}</p>
+                    {% if profile %}
+                        <p>📞 {{ profile.phone_number|default:"—" }}</p>
+                        <p>🏠 {{ profile.preferred_category|default:"—" }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="account-stats">
+                    <div class="stat">
+                        <div class="stat-number">{{ total_orders }}</div>
+                        <div class="stat-label">Total Orders</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">{{ completed_orders }}</div>
+                        <div class="stat-label">Completed</div>
+                    </div>
+                </div>
+            </aside>
+
+            <section class="orders-panel">
+                <div class="tabs">
+                    <button class="tab-button active">Active Orders</button>
+                    <button class="tab-button">Completed</button>
+                </div>
+
+                <div class="orders-list">
+                    {% if recent_orders %}
+                        {% for order in recent_orders %}
+                        <div class="order-card">
+                            <div class="order-left">
+                                <div class="order-id">Order #{{ order.id }}</div>
+                                <div class="order-date">{{ order.created_at|date:"Y-m-d" }}</div>
+                                <div class="order-items">{{ order.items_summary|default:"1 item" }}</div>
+                            </div>
+                            <div class="order-right">
+                                <div class="order-total">${{ order.total_price|default:"0.00" }}</div>
+                                <div class="order-status">{{ order.status }}</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-order">No recent orders to show.</div>
+                    {% endif %}
+                </div>
+            </section>
+        </div>
+    </div>
+
+</body>
+</html>
