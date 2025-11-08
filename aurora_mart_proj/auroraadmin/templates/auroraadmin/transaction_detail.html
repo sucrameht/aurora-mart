@@ -1,0 +1,194 @@
+{% extends 'auroraadmin/base.html' %}
+
+{% block title %}
+Transaction {{ transaction.id }}
+{% endblock %}
+
+{% block main_content %}
+
+<style>
+    /* --- Custom Styles for Transaction Detail --- */
+    .detail-container {
+        padding: 20px;
+        background-color: #f0f8ff; /* Light blue background */
+    }
+
+    /* Back link */
+    .back-link {
+        display: inline-block;
+        margin-bottom: 20px;
+        color: #007ca5; /* Blue */
+        font-weight: 600;
+        text-decoration: none;
+    }
+    .back-link:hover {
+        text-decoration: underline;
+    }
+
+    /* Main content card */
+    .detail-card {
+        background-color: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        overflow: hidden; /* Ensures table radius is respected */
+    }
+
+    /* Header section with main details */
+    .detail-header {
+        padding: 25px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .detail-title {
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: #007ca5; /* Blue */
+        margin-bottom: 15px;
+    }
+
+    /* Grid for summary fields */
+    .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+    }
+
+    .summary-item {
+        font-size: 0.9rem;
+    }
+    .summary-label {
+        color: #777;
+        font-weight: 600;
+        display: block;
+        margin-bottom: 4px;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+    }
+    .summary-value {
+        color: #333;
+        font-size: 1rem;
+    }
+    .summary-value.username {
+        font-weight: 600;
+    }
+
+
+    /* Item details table */
+    .items-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .items-table th,
+    .items-table td {
+        padding: 12px 25px; /* More padding */
+        border-bottom: 1px solid #e0e0e0;
+        text-align: left;
+    }
+
+    .items-table th {
+        background-color: #f0f8ff; /* Light blue header */
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #007ca5; /* Blue text */
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .items-table td {
+        font-size: 0.9rem;
+        color: #333;
+    }
+    .items-table .product-name {
+        font-weight: 600;
+        color: #111;
+    }
+
+    /* Column alignments */
+    .text-center { text-align: center; }
+    .text-right { text-align: right; }
+
+    /* Footer for totals */
+    .items-footer {
+        padding: 20px 25px;
+        text-align: right;
+        background-color: #f9f9f9;
+    }
+    .total-label {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #555;
+    }
+    .total-value {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #007ca5; /* Blue */
+        margin-left: 15px;
+    }
+
+</style>
+
+<div class="detail-container">
+    
+    <!-- Link to go back to the list -->
+    <a href="{% url 'auroraadmin:transactions_list' %}" class="back-link">
+        &larr; Back to all transactions
+    </a>
+
+    <div class="detail-card">
+        
+        <!-- Header with Transaction Info -->
+        <div class="detail-header">
+            <h1 class="detail-title">Transaction #{{ transaction.id }}</h1>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <span class="summary-label">Customer</span>
+                    <span class="summary-value username">{{ transaction.user.username }} (ID: {{ transaction.user.id }})</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Date</span>
+                    <span class="summary-value">{{ transaction.transaction_datetime|date:"d M Y, P" }}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Total Items</span>
+                    <span class="summary-value">{{ transaction.num_of_products }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table of Items -->
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th>Product SKU</th>
+                    <th>Product Name</th>
+                    <th class="text-center">Quantity</th>
+                    <th class="text-right">Unit Price</th>
+                    <th class="text-right">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Loop through all the order items attached to this transaction -->
+                {% for item in transaction.items.all %}
+                <tr>
+                    <td>{{ item.product.sku_code }}</td>
+                    <td class="product-name">{{ item.product.product_name }}</td>
+                    <td class="text-center">{{ item.quantity_purchased }}</td>
+                    <td class="text-right">S${{ item.product.unit_price|floatformat:2 }}</td>
+                    <!-- Use the subtotal property from the OrderItem model -->
+                    <td class="text-right">S${{ item.subtotal_products_bought|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Footer with Grand Total -->
+        <div class="items-footer">
+            <span class="total-label">Grand Total:</span>
+            <span class="total-value">S${{ transaction.total_spent|floatformat:2 }}</span>
+        </div>
+
+    </div>
+</div>
+
+{% endblock main_content %}

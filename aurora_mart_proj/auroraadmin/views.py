@@ -6,6 +6,9 @@ from .forms import ProductCreateForm
 from django.urls import reverse
 from django.contrib import messages
 from django import forms
+from storefront.models import Transactions
+from django.views.generic import ListView, DetailView
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 
 # Create your views here.
 def analytics_view(request):
@@ -165,3 +168,32 @@ class DeleteProductView(View):
         product_name = product.product_name
         product.delete()
         return redirect(reverse('auroraadmin:product'))
+    
+class TransactionListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    model = Transactions
+    template_name = 'auroraadmin/transactions_list.html'
+    context_object_name = 'transactions'
+
+    login_url ='/authentication/login/'
+
+    def test_func(self):
+        return self.request.user.is_staff
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = 'Transactions'
+        return context
+    
+class TransactionDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
+    model = Transactions
+    template_name = 'auroraadmin/transaction_detail.html'
+    context_object_name = 'transaction'
+    login_url ='/authentication/login/'
+
+    def test_func(self):
+        return self.request.user.is_staff
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = f'Transaction {self.object.id}'
+        return context
