@@ -9,6 +9,8 @@ from django import forms
 from storefront.models import Transactions
 from django.views.generic import ListView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.db.models import Sum, F, DecimalField
+from decimal import Decimal
 
 # Create your views here.
 def analytics_view(request):
@@ -175,13 +177,58 @@ class TransactionListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     context_object_name = 'transactions'
 
     login_url ='/authentication/login/'
+    paginate_by = 50
 
     def test_func(self):
         return self.request.user.is_staff
     
+    # optimisation (avoid slow load time by loading the dataset only once instead on multiple calls)
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        # join the user table
+        queryset = queryset.select_related('user')
+
+        # use the annotate func to calc the num of products and total spent in the view
+        queryset = queryset.annotate(
+            viewcal_num_of_products = Sum('items__quantity_purchased', default=0),
+            viewcal_total_spent = Sum(F('items__quantity_purchased') * F('items__product__unit_price'), default=Decimal(0.0), output_field=DecimalField())
+        )
+
+        # implementing the search logic
+        search_query = self.request.GET.get('q')
+        if search_query:
+            search_filters = Q(user__username__icontains=search_query)
+            if search_query.isdigit():
+                # adds the user_id that matches to the search
+                search_filters |= Q(user_id=int(search_query))
+            queryset = queryset.filter(search_filters)
+
+        # implementing the sorting logic
+        sort_by = self.request.GET.get('sort', '-transaction_datetime')
+
+        # defining the fields that are sortable
+        valid_sort_fields = [
+            'user__id', '-user__id',
+            'transaction_datetime', '-transaction_datetime',
+            'viewcal_num_of_products', '-viewcal_num_of_products',
+            'viewcal_total_spent', '-viewcal_total_spent'
+        ]
+
+        # apply valid sort_key if any, order by will clear default
+        if sort_by in valid_sort_fields:
+            queryset = queryset.order_by(sort_by)
+
+        return queryset
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['page_title'] = 'Transactions'
+
+        # pass search and sort state from the tmplate
+        context['search_query'] = self.request.GET.get('q', '')
+        context['current_sort'] = self.request.GET.get('sort', '-transaction_datetime')
+        
         return context
     
 class TransactionDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):

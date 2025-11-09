@@ -34,7 +34,8 @@ class Transactions(models.Model):
         return sum(item.quantity_purchased for item in self.items.all())
     
 class OrderItem(models.Model):
-    transactions = models.ForeignKey(Transactions, on_delete=models.RESTRICT, related_name="items")
+    # to allow for transactions to be deleted
+    transactions = models.ForeignKey(Transactions, on_delete=models.CASCADE, related_name="items")
     product = models.ForeignKey(Product, on_delete=models.RESTRICT)
     quantity_purchased = models.IntegerField()
 
