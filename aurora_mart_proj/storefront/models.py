@@ -42,3 +42,12 @@ class OrderItem(models.Model):
     @property
     def subtotal_products_bought(self):
         return self.quantity_purchased * self.product.unit_price
+class Voucher(models.Model):
+    code = models.CharField(max_length=50, unique=True)
+    discount_type = models.CharField(
+        max_length=10,
+        choices=[('percent', 'Percentage'), ('amount', 'Fixed Amount')]
+    )
+    discount_value = models.DecimalField(max_digits=10, decimal_places=2)
+    is_active = models.BooleanField(default=True)
+    expiry_date = models.DateField(null=True, blank=True)

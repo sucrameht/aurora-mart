@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Product, Transactions, OrderItem
+from .models import Product, Transactions, OrderItem, Voucher
 
 # Register your models here.
 class OrderItemInline(admin.TabularInline):
@@ -35,3 +35,5 @@ class ProductAdmin(admin.ModelAdmin):
     list_display = ('sku_code', 'product_name', 'product_category', 'product_subcategory', 'unit_price', 'quantity_on_hand', 'product_rating')
     list_filter = ['product_category', 'product_subcategory']
     search_fields = ['sku_code', 'product_name']
+
+admin.site.register(Voucher)
