@@ -9,4 +9,5 @@ urlpatterns = [
     path('add-shipping-address/', AddShippingAddressView.as_view(), name='add_shipping_address'),
     path('profile/edit-profile/', EditProfileView.as_view(), name='edit_profile'),
     path('wallet/', WalletView.as_view(), name='wallet'),
+    path('orders/<int:pk>/', CustomerTransactionDetailView.as_view(), name='customer_order_detail'),
 ]

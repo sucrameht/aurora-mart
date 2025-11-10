@@ -56,10 +56,6 @@ class Voucher(models.Model):
 class Transactions(models.Model):
     user = models.ForeignKey(User, on_delete=models.RESTRICT, related_name="transactions")
     transaction_datetime = models.DateTimeField()
-    subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    discount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    total = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    payment_method = models.CharField(max_length=50, blank=True)
 
     shipping_first_name = models.CharField(max_length=100, blank=True)
     shipping_last_name = models.CharField(max_length=100, blank=True)

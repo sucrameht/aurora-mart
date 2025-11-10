@@ -7,7 +7,7 @@ import os
 from django.apps import apps
 from decimal import Decimal
 from django.contrib import messages
-from django.views.generic import ListView, View
+from django.views.generic import ListView, View, DetailView
 from .forms import CartActionForm
 from datetime import date
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -601,3 +601,19 @@ class WalletView(LoginRequiredMixin, View):
             messages.error(request, "Invalid amount entered. Please enter a number.")
             
         return redirect('wallet') # Redirect back to the same page
+
+class CustomerTransactionDetailView(LoginRequiredMixin, DetailView):
+    model = Transactions
+    template_name = 'transaction_detail.html'
+    context_object_name = 'transaction'
+    login_url ='/authentication/login/'
+
+    def get_queryset(self):
+        """Ensure user can only see their own transactions."""
+        queryset = super().get_queryset()
+        return queryset.filter(user=self.request.user)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = f'Order Details'
+        return context
