@@ -42,6 +42,7 @@ class OrderItem(models.Model):
     @property
     def subtotal_products_bought(self):
         return self.quantity_purchased * self.product.unit_price
+
 class Voucher(models.Model):
     code = models.CharField(max_length=50, unique=True)
     discount_type = models.CharField(

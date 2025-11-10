@@ -100,6 +100,39 @@
                 height: 100vh;
                 overflow-y: auto;
             }
+
+            /* adding messages */
+            .messages {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 20px 0; /* Space below messages */
+        }
+        .message {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            animation: fadeIn 0.3s ease;
+        }
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .message.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
         </style>
     <body>
         <div class="header">
@@ -124,11 +157,23 @@
                     <li><a href="{% url 'auroraadmin:admin_dashboard' %}">Analytics</a></li>
                     <li><a href="{% url 'auroraadmin:product' %}">Product Inventory</a></li>
                     <li><a href="{% url 'auroraadmin:transactions_list' %}">Transactions</a></li>
+                    <li><a href="{% url 'auroraadmin:voucher_list' %}">Voucher Management</a></li>
                 </ul>
             </nav>
             {% endblock %}
         </div>
         <div class="main-content">
+            {% if messages %}
+                <ul class="messages">
+                    {% for message in messages %}
+                        <!-- The 'message.tags' will be 'success' or 'error' -->
+                        <li class="message {{ message.tags }}">
+                            {{ message }}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
             {% block main_content %}
             <!-- Main content goes here -->
             {% endblock %}

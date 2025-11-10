@@ -1,21 +1,32 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from storefront.models import Product
+from storefront.models import Product, Voucher
 from django.db.models import Q
 from django.views import View
-from .forms import ProductCreateForm
+from .forms import ProductCreateForm, VoucherForm
 from django.urls import reverse
 from django.contrib import messages
 from django import forms
 from storefront.models import Transactions
 from django.views.generic import ListView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.utils.decorators import method_decorator
 from django.db.models import Sum, F, DecimalField
 from decimal import Decimal
+from django.core.paginator import Paginator
+from authentication.models import UserProfile
+from django.contrib.auth.models import User
 
-# Create your views here.
+# helper function for decorator functions
+def is_staff(user):
+    return user.is_staff
+
 def analytics_view(request):
     return render(request, 'auroraadmin/analytics.html')
 
+# dispatch is the method that redirects to the right functions after all the checks have been cleared
+@method_decorator(login_required(login_url='/authentication/login/'), name='dispatch')
+@method_decorator(user_passes_test(is_staff, login_url='/authentication/login/'), name='dispatch')
 class ProductInventoryView(View):
     template_name = 'auroraadmin/product.html'
     def get(self, request, *args, **kwargs):
@@ -86,6 +97,8 @@ class ProductInventoryView(View):
                 pass
             return redirect(redirect_url)
         
+@method_decorator(login_required(login_url='/authentication/login/'), name='dispatch')
+@method_decorator(user_passes_test(is_staff, login_url='/authentication/login/'), name='dispatch')
 class AddProductView(View):
     template_name = 'auroraadmin/add_product.html'
 
@@ -155,6 +168,8 @@ class AddProductView(View):
         # if there are errors
         return render(request, self.template_name, context)
     
+@method_decorator(login_required(login_url='/authentication/login/'), name='dispatch')
+@method_decorator(user_passes_test(is_staff, login_url='/authentication/login/'), name='dispatch')
 class DeleteProductView(View):
     template_name = 'auroraadmin/product_confirm_del.html'
 
@@ -244,3 +259,71 @@ class TransactionDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView)
         context = super().get_context_data(**kwargs)
         context['page_title'] = f'Transaction {self.object.id}'
         return context
+
+@method_decorator(login_required(login_url='/authentication/login/'), name='dispatch')
+@method_decorator(user_passes_test(is_staff, login_url='/authentication/login/'), name='dispatch')
+class VoucherManagementView(View):
+    template_name = 'auroraadmin/vouchers.html'
+    paginate_by = 10
+
+    def get(self, request, *args, **kwargs):
+        form = VoucherForm()
+        voucher_list = Voucher.objects.all().order_by('code')
+
+        paginator = Paginator(voucher_list, self.paginate_by)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+
+        context = {
+            'form': form,
+            'vouchers': page_obj, # for rendering the list
+            'page_obj': page_obj,  # for pagination controls, allows for better differentiation
+        }
+
+        return render(request, self.template_name, context)
+    
+    # for both create and delete (KIV) new voucher
+    def post(self, request, *args, **kwargs):
+        action = request.POST.get('action')
+        if action == "create":
+            form = VoucherForm(request.POST)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Voucher created successfully.')
+            else:
+                voucher_list = Voucher.objects.all().order_by('code')
+                paginator = Paginator(voucher_list, self.paginate_by)
+                page_number = request.GET.get('page')
+                page_obj = paginator.get_page(page_number)
+                context = {
+                    'form': form,
+                    'vouchers': page_obj, # for rendering the list
+                    'page_obj': page_obj,  # for pagination controls, allows for better differentiation
+                }
+                messages.error(request, 'Failed to save form, please correct the errors.')
+                return render(request, self.template_name, context)
+        
+        elif action == 'toggle_status':
+            voucher_pk = request.POST.get('voucher_pk')
+            voucher = get_object_or_404(Voucher, id=voucher_pk)
+            voucher.is_active = not voucher.is_active
+            voucher.save()
+            status = 'activated' if voucher.is_active else 'deactivated'
+            messages.success(request, f'Voucher {voucher.code} has been successfully {status}')
+
+        elif action == 'mass_assign':
+            voucher_pk = request.POST.get('voucher_pk')
+            voucher = get_object_or_404(Voucher, id=voucher_pk)
+
+            # find all non-staff users who do not have the given voucher
+            user_to_add_voucher = User.objects.filter(is_staff=False).exclude(userprofile__vouchers=voucher)
+
+            count = 0
+            for user in user_to_add_voucher:
+                user_profile = UserProfile.objects.get(user=user)
+                user_profile.vouchers.add(voucher)
+                count += 1
+
+            messages.success(request, f'Voucher assigned to {count} users successfully.')
+        
+        return redirect('auroraadmin:voucher_list')
