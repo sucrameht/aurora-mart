@@ -11,7 +11,7 @@ from django.views.generic import ListView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.utils.decorators import method_decorator
-from django.db.models import Sum, F, DecimalField
+from django.db.models import Sum, F, DecimalField, Max, Count
 from decimal import Decimal
 from django.core.paginator import Paginator
 from authentication.models import UserProfile
@@ -210,9 +210,15 @@ class TransactionListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
             viewcal_total_spent = Sum(F('items__quantity_purchased') * F('items__product__unit_price'), default=Decimal(0.0), output_field=DecimalField())
         )
 
+        # check for specific user id first
+        user_id_filter = self.request.GET.get('user_id')
+
         # implementing the search logic
-        search_query = self.request.GET.get('q')
-        if search_query:
+        search_query = self.request.GET.get('q', '')
+
+        if user_id_filter:
+            queryset = queryset.filter(user__id=int(user_id_filter))
+        elif search_query:
             search_filters = Q(user__username__icontains=search_query)
             if search_query.isdigit():
                 # adds the user_id that matches to the search
@@ -282,7 +288,7 @@ class VoucherManagementView(View):
 
         return render(request, self.template_name, context)
     
-    # for both create and delete (KIV) new voucher
+    # for both creating new voucher and activate/deactivate
     def post(self, request, *args, **kwargs):
         action = request.POST.get('action')
         if action == "create":
@@ -327,3 +333,66 @@ class VoucherManagementView(View):
             messages.success(request, f'Voucher assigned to {count} users successfully.')
         
         return redirect('auroraadmin:voucher_list')
+
+@method_decorator(login_required(login_url='/authentication/login/'), name='dispatch')
+@method_decorator(user_passes_test(is_staff, login_url='/authentication/login/'), name='dispatch')
+class CustomerListView(View):
+    template_name = 'auroraadmin/customer.html'
+    paginate_by = 40
+
+    def get(self, request, *args, **kwargs):
+        # list of none-staff users
+        customer_list = User.objects.filter(is_staff=False)
+
+        # searching logic
+        search_query = request.GET.get('q', '')
+        if search_query:
+            # check if only digits present
+            if search_query.isdigit():
+                search_filters = Q(id=int(search_query))
+            else: # check for username
+                search_filters = (
+                    Q(username__icontains=search_query)
+                )
+            customer_list = customer_list.filter(search_filters)
+
+        # join userprofile and fetch the vouchers
+        customer_list = customer_list.select_related('userprofile').prefetch_related('userprofile__vouchers')
+
+        # use annotation to improve the speed of rendering (calculated fields)
+        customer_list = customer_list.annotate(
+            total_transactions=Count('transactions', distinct=True),
+            total_spent=Sum(
+                F('transactions__items__quantity_purchased') * F('transactions__items__product__unit_price'),
+                default=Decimal('0.0'),
+                output_field=DecimalField()
+            ),
+            last_transaction_date=Max('transactions__transaction_datetime')
+        )
+
+        # sorting
+        sort_by = request.GET.get('sort', 'id') # default is id, if sort is not defined
+        valid_sort_fields = [
+            'username', '-username',
+            'id', '-id',
+            'email', '-email',
+            'userprofile__preferred_category', '-userprofile__preferred_category',
+            'total_transactions', '-total_transactions',
+            'total_spent', '-total_spent',
+            'last_transaction_date', '-last_transaction_date',
+        ]
+
+        if sort_by in valid_sort_fields:
+            customer_list = customer_list.order_by(sort_by)
+
+        paginator = Paginator(customer_list, self.paginate_by)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+
+        context = {
+            'customers': page_obj, # for looping to view the list
+            'page_obj': page_obj, # for page control
+            'search_query': search_query,
+            'current_sort': sort_by,
+        }
+        return render(request, self.template_name, context)

@@ -1,0 +1,273 @@
+{% extends 'auroraadmin/base.html' %}
+
+{% block title %} Customers List {% endblock %}
+
+{% block main_content %}
+
+<style>
+    .customer-container {
+        padding: 20px;
+        background-color: #f0f8ff;
+    }
+    .customer-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #ccc;
+    }
+    .customer-title {
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: #007ca5;
+    }
+    
+    /* Search Bar */
+    .search-form { display: flex; align-items: center; }
+    .search-input {
+        padding: 8px 12px;
+        border: 1px solid #ccc;
+        border-radius: 4px 0 0 4px;
+        min-width: 300px; /* enlarged for pageholder */
+    }
+    .search-button {
+        padding: 8px 12px;
+        border: 1px solid #007ca5;
+        background-color: #007ca5;
+        color: white;
+        border-radius: 0 4px 4px 0;
+        cursor: pointer;
+    }
+    .search-button:hover { background-color: #005f80; }
+
+    /* List Container */
+    .customer-list-container {
+        background-color: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+    }
+    .list-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: #333;
+        padding: 15px 20px;
+        border-bottom: 1px solid #eee;
+    }
+
+    /* Table Styles */
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .data-table th, .data-table td {
+        padding: 12px 20px;
+        border-bottom: 1px solid #e0e0e0;
+        text-align: left;
+        word-break: break-word;
+    }
+    .data-table th {
+        background-color: #f9f9f9;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #007ca5;
+        text-transform: uppercase;
+    }
+    .data-table tbody tr:last-child td { border-bottom: none; }
+    .data-table tbody tr:hover { background-color: #fdfdfd; }
+    
+    .text-right { text-align: right; }
+    .text-center { text-align: center; }
+
+    /* Sorting Links */
+    .data-table th.sortable a {
+        color: #007ca5;
+        text-decoration: none !important;
+        display: block;
+    }
+    .data-table th.sortable a:hover { color: #005f80; }
+    .data-table th.sortable a.active-sort {
+        color: #333;
+        font-weight: 700;
+    }
+    .sort-arrow { font-size: 0.8em; margin-left: 4px; }
+    .data-table th.sortable a.active-sort .sort-arrow { color: #333; }
+
+    /* Action Buttons */
+    .action-button {
+        padding: 6px 10px;
+        border-radius: 4px;
+        text-decoration: none;
+        font-size: 0.9em;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        display: inline-block;
+    }
+    .btn-assign {
+        background-color: #007ca5;
+        color: white;
+    }
+    .btn-assign:hover { background-color: #005f80; }
+    .details-link {
+        color: #007ca5;
+        font-weight: 600;
+        text-decoration: none;
+    }
+    .details-link:hover { text-decoration: underline; }
+
+    /* Pagination */
+    .pagination-row {
+        padding: 15px 20px;
+        text-align: center;
+        font-size: 0.9rem;
+        border-top: 1px solid #eee;
+    }
+    .step-links a, .step-links .current_page, .step-links .disabled {
+        padding: 5px 10px;
+        margin: 0 2px;
+        border-radius: 4px;
+        text-decoration: none;
+    }
+    .step-links a {
+        background: #fff;
+        border: 1px solid #ddd;
+        color: #007ca5;
+    }
+    .step-links a:hover { background: #f0f8ff; }
+    .step-links .current_page {
+        background: #007ca5;
+        color: #fff;
+        border: 1px solid #007ca5;
+        font-weight: 600;
+    }
+    .step-links .disabled {
+        color: #aaa;
+        border: 1px solid #ddd;
+    }
+</style>
+
+<div class="customer-container">
+    <div class="customer-header">
+        <h1 class="customer-title">{{ page_title }}</h1>
+        
+        <form method="GET" action="{% url 'auroraadmin:customers_list' %}" class="search-form">
+            <input type="hidden" name="sort" value="{{ current_sort }}">
+            <input type="search" name="q" value="{{ search_query }}" 
+                   placeholder="Search by ID or Username" class="search-input">
+            <button type="submit" class="search-button">Search</button>
+        </form>
+    </div>
+
+    <div class="customer-list-container">
+        <h2 class="list-title">All Customers ({{ page_obj.paginator.count }})</h2>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th class="sortable">
+                        <a href="?sort={% if current_sort == 'id' %}-id{% else %}id{% endif %}&q={{ search_query }}"
+                           class="{% if 'id' in current_sort %}active-sort{% endif %}">
+                            User ID
+                            <span class="sort-arrow">{% if current_sort == 'id' %}▲{% elif current_sort == '-id' %}▼{% endif %}</span>
+                        </a>
+                    </th>
+                    <th class="sortable">
+                        <a href="?sort={% if current_sort == 'username' %}-username{% else %}username{% endif %}&q={{ search_query }}"
+                           class="{% if 'username' in current_sort %}active-sort{% endif %}">
+                            Username
+                            <span class="sort-arrow">{% if current_sort == 'username' %}▲{% elif current_sort == '-username' %}▼{% endif %}</span>
+                        </a>
+                    </th>
+                    <th>Email</th>
+                    <th class="sortable">
+                        <a href="?sort={% if current_sort == 'userprofile__preferred_category' %}-userprofile__preferred_category{% else %}userprofile__preferred_category{% endif %}&q={{ search_query }}"
+                           class="{% if 'userprofile__preferred_category' in current_sort %}active-sort{% endif %}">
+                            Preferred Category
+                            <span class="sort-arrow">{% if current_sort == 'userprofile__preferred_category' %}▲{% elif current_sort == '-userprofile__preferred_category' %}▼{% endif %}</span>
+                        </a>
+                    </th>
+                    <th class="sortable text-center">
+                        <a href="?sort={% if current_sort == 'total_transactions' %}-total_transactions{% else %}total_transactions{% endif %}&q={{ search_query }}"
+                           class="{% if 'total_transactions' in current_sort %}active-sort{% endif %}">
+                            Total Transactions
+                            <span class="sort-arrow">{% if current_sort == 'total_transactions' %}▲{% elif current_sort == '-total_transactions' %}▼{% endif %}</span>
+                        </a>
+                    </th>
+                    <th class="sortable text-right">
+                        <a href="?sort={% if current_sort == 'total_spent' %}-total_spent{% else %}total_spent{% endif %}&q={{ search_query }}"
+                           class="{% if 'total_spent' in current_sort %}active-sort{% endif %}">
+                            Total Spent
+                            <span class="sort-arrow">{% if current_sort == 'total_spent' %}▲{% elif current_sort == '-total_spent' %}▼{% endif %}</span>
+                        </a>
+                    </th>
+                    <th class="sortable">
+                        <a href="?sort={% if current_sort == 'last_transaction_date' %}-last_transaction_date{% else %}last_transaction_date{% endif %}&q={{ search_query }}"
+                           class="{% if 'last_transaction_date' in current_sort %}active-sort{% endif %}">
+                            Last Transaction
+                            <span class="sort-arrow">{% if current_sort == 'last_transaction_date' %}▲{% elif current_sort == '-last_transaction_date' %}▼{% endif %}</span>
+                        </a>
+                    </th>
+                    <th>Add Vouchers</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for customer in customers %}
+                <tr>
+                    <td>{{ customer.id }}</td>
+                    <td>{{ customer.username }}</td>
+                    <td>{{ customer.email }}</td>
+                    <td>{{ customer.userprofile.preferred_category|default:"N/A" }}</td> <!-- NEW DATA CELL -->
+                    <td class="text-center">
+                        <!-- Link to filtered transaction list -->
+                        <a href="{% url 'auroraadmin:transactions_list' %}?user_id={{ customer.id }}" class="details-link">
+                            {{ customer.total_transactions }}
+                        </a>
+                    </td>
+                    <td class="text-right">${{ customer.total_spent|floatformat:2 }}</td>
+                    <td>{{ customer.last_transaction_date|date:"d M Y"|default:"--" }}</td>
+                    <td>
+                        <!-- This link will go to Phase 2. We'll build this next. -->
+                        <a href="#" class="action-button btn-assign">
+                            Add Vouchers
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <!-- UPDATED COLSPAN TO 8 -->
+                    <td colspan="8" style="text-align:center; padding: 20px;">No customers found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <!-- Pagination -->
+        {% if page_obj.paginator.num_pages > 1 %}
+        <div class="pagination-row">
+            <span class="step-links">
+                {% if page_obj.has_previous %}
+                    <a href="?page=1&sort={{ current_sort }}&q={{ search_query }}">&laquo; First</a>
+                    <a href="?page={{ page_obj.previous_page_number }}&sort={{ current_sort }}&q={{ search_query }}">&lsaquo; Prev</a>
+                {% else %}
+                    <span class="disabled">First</span>
+                    <span class="disabled">Prev</span>
+                {% endif %}
+
+                <span class="current_page">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                </span>
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}&sort={{ current_sort }}&q={{ search_query }}"> Next &rsaquo;</a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}&sort={{ current_sort }}&q={{ search_query }}">Last &raquo;</a>
+                {% else %}
+                    <span class="disabled">Next</span>
+                    <span class="disabled">Last</span>
+                {% endif %}
+            </span>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock main_content %}
