@@ -111,12 +111,6 @@
                     </div>
                     
                     <div class="payment-option">
-                        <input type="radio" id="paylater" name="payment_method" value="paylater"
-                               {% if selected_payment_method == 'paylater' %}checked{% endif %}>
-                        <label for="paylater">PayLater</label>
-                    </div>
-                    
-                    <div class="payment-option">
                         <input type="radio" id="wallet" name="payment_method" value="wallet"
                                {% if selected_payment_method == 'wallet' %}checked{% endif %}>
                         <label for="wallet">AuroraMart Wallet (Balance: ${{ profile.wallet_balance|default:'0.00' }})</label>

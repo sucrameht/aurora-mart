@@ -431,13 +431,6 @@ class CheckoutView(LoginRequiredMixin, View):
                 profile.wallet_balance -= total
                 profile.save()
             
-            elif payment_method == 'paylater':
-                if (profile.paylater_used + total) > profile.paylater_limit:
-                    messages.error(request, "This purchase exceeds your PayLater limit.")
-                    return self.get(request)
-                profile.paylater_used += total
-                profile.save()
-            
             elif payment_method == 'card':
                 print("Processing credit card (simulation)...")
         
