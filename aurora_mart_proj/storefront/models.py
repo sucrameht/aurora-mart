@@ -56,6 +56,19 @@ class Voucher(models.Model):
 class Transactions(models.Model):
     user = models.ForeignKey(User, on_delete=models.RESTRICT, related_name="transactions")
     transaction_datetime = models.DateTimeField()
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    discount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    total = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    payment_method = models.CharField(max_length=50, blank=True)
+
+    shipping_first_name = models.CharField(max_length=100, blank=True)
+    shipping_last_name = models.CharField(max_length=100, blank=True)
+    shipping_phone = models.CharField(max_length=20, blank=True)
+    shipping_address = models.CharField(max_length=255, blank=True)
+    shipping_city = models.CharField(max_length=100, blank=True)
+    shipping_state = models.CharField(max_length=100, blank=True)
+    shipping_postal_code = models.CharField(max_length=20, blank=True)
+
     class Meta:
         # in order to sort by latest first
         ordering = ['-transaction_datetime']
@@ -74,10 +87,11 @@ class OrderItem(models.Model):
     transactions = models.ForeignKey(Transactions, on_delete=models.RESTRICT, related_name="items")
     product = models.ForeignKey(Product, on_delete=models.RESTRICT)
     quantity_purchased = models.IntegerField()
+    price_at_purchase = models.DecimalField(max_digits=10, decimal_places=2)
 
     @property
     def subtotal_products_bought(self):
-        return self.quantity_purchased * self.product.unit_price
+        return self.quantity_purchased * self.price_at_purchase
     
 class ShippingAddress(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
