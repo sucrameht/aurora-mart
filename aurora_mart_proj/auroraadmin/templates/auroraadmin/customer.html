@@ -228,7 +228,7 @@
                     <td>{{ customer.last_transaction_date|date:"d M Y"|default:"--" }}</td>
                     <td>
                         <!-- This link will go to Phase 2. We'll build this next. -->
-                        <a href="#" class="action-button btn-assign">
+                        <a href="{% url 'auroraadmin:customer_add_vouchers' customer.id %}" class="action-button btn-assign">
                             Add Vouchers
                         </a>
                     </td>

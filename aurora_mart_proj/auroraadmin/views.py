@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from storefront.models import Product, Voucher
 from django.db.models import Q
 from django.views import View
-from .forms import ProductCreateForm, VoucherForm
+from .forms import ProductCreateForm, VoucherForm, CustomerVoucherAssignForm
 from django.urls import reverse
 from django.contrib import messages
 from django import forms
@@ -394,5 +394,43 @@ class CustomerListView(View):
             'page_obj': page_obj, # for page control
             'search_query': search_query,
             'current_sort': sort_by,
+        }
+        return render(request, self.template_name, context)
+    
+@method_decorator(login_required(login_url='/authentication/login/'), name='dispatch')
+@method_decorator(user_passes_test(is_staff, login_url='/authentication/login/'), name='dispatch')
+class CustomerVoucherAssignView(View):
+    template_name  = 'auroraadmin/customer_add_vouchers.html'
+
+    def get(self, request, *args, **kwargs):
+        user_id = kwargs.get('user_id')
+        user = get_object_or_404(User, id=user_id, is_staff=False)
+        form = CustomerVoucherAssignForm(user=user)
+        current_vouchers = user.userprofile.vouchers.all().order_by('code')
+
+        context = {
+            'title': f'Assign Vouchers to {user.username}',
+            'form': form,
+            'customer': user,
+            'current_vouchers': current_vouchers,
+        }
+        return render(request, self.template_name, context)
+    
+    def post(self, request, *args, **kwargs):
+        user_id = kwargs.get('user_id')
+        user = get_object_or_404(User, id=user_id, is_staff=False)
+        form = CustomerVoucherAssignForm(request.POST, user=user)
+        current_vouchers = user.userprofile.vouchers.all().order_by('code')
+
+        if form.is_valid():
+            num_assigned = form.save()
+            messages.success(request, f'Successfully assigned {num_assigned} vouchers to {user.username}.')
+            return redirect('auroraadmin:customers_list')
+        
+        context = {
+            'title': f'Assign Vouchers to {user.username}',
+            'form': form,
+            'customer': user,
+            'current_vouchers': current_vouchers,
         }
         return render(request, self.template_name, context)

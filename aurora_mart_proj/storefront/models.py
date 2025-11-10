@@ -52,3 +52,6 @@ class Voucher(models.Model):
     discount_value = models.DecimalField(max_digits=10, decimal_places=2)
     is_active = models.BooleanField(default=True)
     expiry_date = models.DateField(null=True, blank=True)
+
+    def __str__(self): # for the displaying of voucher code name in customer add voucher
+        return self.code

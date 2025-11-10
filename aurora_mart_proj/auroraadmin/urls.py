@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import analytics_view, ProductInventoryView, AddProductView, DeleteProductView, TransactionListView, TransactionDetailView, VoucherManagementView, CustomerListView
+from .views import analytics_view, ProductInventoryView, AddProductView, DeleteProductView, TransactionListView, TransactionDetailView, VoucherManagementView, CustomerListView, CustomerVoucherAssignView
 from django.contrib.auth.views import LogoutView
 
 app_name = 'auroraadmin'
@@ -13,5 +13,6 @@ urlpatterns = [
     path('transactions/<int:pk>/', TransactionDetailView.as_view(), name='transaction_detail'),
     path('vouchers/', VoucherManagementView.as_view(), name="voucher_list"),
     path('customers/', CustomerListView.as_view(), name="customers_list"),
+    path('customer/<int:user_id>/add-vouchers/', CustomerVoucherAssignView.as_view(), name="customer_add_vouchers"),
     path('logout/', LogoutView.as_view(next_page='login'), name='logout'),
 ]
