@@ -1,0 +1,54 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Profile</title>
+    <link rel="stylesheet" href="{% static 'storefront/css/storefront.css' %}">
+    <link rel="stylesheet" href="{% static 'storefront/css/checkout.css' %}">
+</head>
+<body>
+    <div class="header">
+        <div class="logo" onclick="window.location.href='{% url 'storefront_home' %}'">
+            <img src="{% static 'storefront/images/AuroraMartLogo.png' %}" alt="AuroraMart Logo" class="logo-img">
+            <span class="logo-text">AuroraMart</span>
+        </div>
+    </div>
+
+    <div class="checkout-container">
+        <form class="checkout-forms" method="POST" action="{% url 'edit_profile' %}">
+            {% csrf_token %}
+            
+            <div class="form-card">
+                <h2>Edit Profile</h2>
+                
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label for="first_name">First Name</label>
+                        <input type="text" id="first_name" name="first_name" value="{{ user.first_name }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="last_name">Last Name</label>
+                        <input type="text" id="last_name" name="last_name" value="{{ user.last_name }}" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" value="{{ user.email }}" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="phone_number">Phone Number</label>
+                    <input type="tel" id="phone_number" name="phone_number" value="{{ profile.phone_number|default:'' }}">
+                </div>
+                
+                <button type="submit" class="complete-payment-btn">Save Changes</button>
+                <br><br>
+                <a href="{% url 'profile' %}" class="cancel-link">Cancel and go back</a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

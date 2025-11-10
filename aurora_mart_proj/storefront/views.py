@@ -1,10 +1,10 @@
+from urllib import request
 from django.shortcuts import render, redirect
 from django.db.models import Q
-from .models import Product, Voucher
+from .models import *
 import joblib
 import os
 from django.apps import apps
-from django.http import JsonResponse
 from decimal import Decimal
 from django.contrib import messages
 from django.views.generic import ListView, View
@@ -15,6 +15,8 @@ from authentication.models import UserProfile
 import joblib
 import pandas as pd
 from django.apps import apps
+from django.db import transaction
+from datetime import datetime
 
 APP_PATH = apps.get_app_config('storefront').path
 
@@ -285,23 +287,19 @@ class ProfileView(LoginRequiredMixin, View):
         except UserProfile.DoesNotExist:
             profile = None
 
-        # Try to fetch orders if an 'orders' app exists (adjust model name/fields to match your project)
-        Order = None
-        recent_orders = []
-        total_orders = 0
-        completed_orders = 0
-        if apps.is_installed('orders'):
-            try:
-                Order = apps.get_model('orders', 'Order')
-            except LookupError:
-                Order = None
+        userTransactions = Transactions.objects.filter(user=user)
+        
+        total_orders = userTransactions.count()
+        
+        # Your Transactions model doesn't have a 'status' field yet
+        # So we will count all orders as "completed" for now
+        # You can change this later if you add a status field.
+        completed_orders = userTransactions.count() 
+        
+        # Order by the correct field 'transaction_datetime'
+        recent_orders = userTransactions.order_by('-transaction_datetime')[:5] 
+        # --- END OF CORRECTION ---
 
-        if Order:
-            qs = Order.objects.filter(user=user)
-            total_orders = qs.count()
-            completed_orders = qs.filter(status__iexact='completed').count()
-            recent_orders = qs.order_by('-created_at')[:5]
-        # Fallback placeholders if no Order model
         context = {
             'profile': profile,
             'user': user,
@@ -310,3 +308,278 @@ class ProfileView(LoginRequiredMixin, View):
             'recent_orders': recent_orders,
         }
         return render(request, self.template_name, context)
+
+class CheckoutView(LoginRequiredMixin, View):
+    template_name = 'checkout.html'
+
+    def get(self, request, *args, **kwargs):
+        cart = request.session.get('cart', {})
+        cart_items = []
+        subtotal = Decimal('0.00')
+        products_in_cart = Product.objects.filter(sku_code__in=cart.keys())
+
+        for product in products_in_cart:
+            sku = product.sku_code
+            quantity = cart.get(sku, 0)
+            total_item_price = product.unit_price * quantity
+            cart_items.append({
+                'product': product,
+                'quantity': quantity,
+                'total_price': total_item_price
+            })
+            subtotal += total_item_price
+        
+        # (This logic is from CartView's get_voucher method)
+        discount = Decimal('0.00')
+        voucher_code = request.session.get('applied_voucher')
+        if voucher_code:
+            try:
+                voucher = Voucher.objects.get(code=voucher_code, is_active=True)
+                if not voucher.expiry_date or voucher.expiry_date >= date.today():
+                    if voucher.discount_type == 'percent':
+                        discount = subtotal * (voucher.discount_value / Decimal('100'))
+                    else:
+                        discount = voucher.discount_value
+                    discount = min(discount, subtotal)
+                else:
+                    del request.session['applied_voucher']
+            except Voucher.DoesNotExist:
+                del request.session['applied_voucher']
+
+        total = subtotal - discount
+
+        try:
+            profile = UserProfile.objects.get(user=request.user)
+        except UserProfile.DoesNotExist:
+            profile = None
+
+        saved_addresses = ShippingAddress.objects.filter(user=request.user)
+
+        selected_address = None
+        load_address_id = request.GET.get('load_address_id')
+
+        if load_address_id:
+            try:
+                selected_address = ShippingAddress.objects.get(id=load_address_id, user=request.user)
+            except ShippingAddress.DoesNotExist:
+                pass
+        
+        selected_payment_method = request.GET.get('payment_method', 'card')
+
+        context = {
+            'cart_items': cart_items,
+            'subtotal': subtotal,
+            'discount': discount,
+            'total': total,
+            'profile': profile,
+            'user': request.user,
+            'saved_addresses': saved_addresses,
+            'selected_address': selected_address,
+            'selected_payment_method': selected_payment_method,
+        }
+        return render(request, self.template_name, context)
+
+    @transaction.atomic # all or nothing
+    def post(self, request, *args, **kwargs):
+        
+        cart = request.session.get('cart', {})
+        cart_items = []
+        subtotal = Decimal('0.00')
+        if not cart:
+            messages.error(request, "Your cart is empty.")
+            return redirect('view_cart')
+
+        products_in_cart = Product.objects.filter(sku_code__in=cart.keys())
+        for product in products_in_cart:
+            sku = product.sku_code
+            quantity = cart.get(sku, 0)
+            subtotal += product.unit_price * quantity
+            cart_items.append({'product': product, 'quantity': quantity})
+
+        discount = Decimal('0.00')
+        voucher_code = request.session.get('applied_voucher')
+        if voucher_code:
+            try:
+                voucher = Voucher.objects.get(code=voucher_code, is_active=True)
+                if not voucher.expiry_date or voucher.expiry_date >= date.today():
+                    if voucher.discount_type == 'percent':
+                        discount = subtotal * (voucher.discount_value / Decimal('100'))
+                    else:
+                        discount = voucher.discount_value
+                    discount = min(discount, subtotal)
+                else:
+                    del request.session['applied_voucher']
+            except Voucher.DoesNotExist:
+                del request.session['applied_voucher']
+        
+        total = subtotal - discount
+
+        payment_method = request.POST.get('payment_method')
+        shipping_first_name = request.POST.get('first_name')
+        shipping_last_name = request.POST.get('last_name')
+        shipping_phone = request.POST.get('phone')
+        shipping_address = request.POST.get('address')
+        shipping_city = request.POST.get('city')
+        shipping_state = request.POST.get('state')
+        shipping_postal_code = request.POST.get('postal_code')
+
+        if not all([payment_method, shipping_first_name, shipping_address, shipping_city, shipping_postal_code]):
+            messages.error(request, "Please fill out all required shipping and payment fields.")
+            return self.get(request)
+        
+        try:
+            profile = UserProfile.objects.get(user=request.user)
+            
+            if payment_method == 'wallet':
+                if profile.wallet_balance < total:
+                    messages.error(request, f"Insufficient wallet balance. You need ${total}, but only have ${profile.wallet_balance}.")
+                    return self.get(request)
+                profile.wallet_balance -= total
+                profile.save()
+            
+            elif payment_method == 'paylater':
+                if (profile.paylater_used + total) > profile.paylater_limit:
+                    messages.error(request, "This purchase exceeds your PayLater limit.")
+                    return self.get(request)
+                profile.paylater_used += total
+                profile.save()
+            
+            elif payment_method == 'card':
+                print("Processing credit card (simulation)...")
+        
+        except UserProfile.DoesNotExist:
+            messages.error(request, "User profile not found.")
+            return self.get(request)
+        except Exception as e:
+            messages.error(request, f"An error occurred during payment: {e}")
+            return self.get(request)
+
+        if request.POST.get('save_address') == 'on':
+            nickname = request.POST.get('address_nickname')
+            if nickname:
+                ShippingAddress.objects.update_or_create(
+                    user=request.user,
+                    nickname=nickname,
+                    defaults={
+                        'first_name': shipping_first_name,
+                        'last_name': shipping_last_name,
+                        'phone': shipping_phone,
+                        'address': shipping_address,
+                        'city': shipping_city,
+                        'state': shipping_state,
+                        'postal_code': shipping_postal_code,
+                    }
+                )
+
+        new_transaction = Transactions.objects.create(
+            user=request.user,
+            transaction_datetime=datetime.now()
+            # TODO: Add total, discount, shipping info to Transactions model
+        )
+
+        items_to_create = []
+        for item in cart_items:
+            items_to_create.append(
+                OrderItem(
+                    transactions=new_transaction,
+                    product=item['product'],
+                    quantity_purchased=item['quantity']
+                )
+            )
+        OrderItem.objects.bulk_create(items_to_create)
+
+        request.session['cart'] = {}
+        if 'applied_voucher' in request.session:
+            del request.session['applied_voucher']
+            
+        messages.success(request, f"Your order #{new_transaction.id} has been placed!")
+        return redirect('profile')
+    
+class AddShippingAddressView(LoginRequiredMixin, View):
+    template_name = 'add_shipping_address.html'
+    
+    def get(self, request, *args, **kwargs):
+        # Just show the blank form
+        return render(request, self.template_name)
+
+    def post(self, request, *args, **kwargs):
+        # 1. Get the form data
+        nickname = request.POST.get('nickname')
+        
+        # 2. Check for a nickname (it's required for this to work)
+        if not nickname:
+            messages.error(request, "You must provide a nickname (e.g., 'Home' or 'Work').")
+            return render(request, self.template_name)
+            
+        # 3. Create and save the new address object
+        try:
+            ShippingAddress.objects.create(
+                user=request.user,
+                nickname=nickname,
+                first_name=request.POST.get('first_name'),
+                last_name=request.POST.get('last_name'),
+                phone=request.POST.get('phone'),
+                address=request.POST.get('address'),
+                city=request.POST.get('city'),
+                state=request.POST.get('state'),
+                postal_code=request.POST.get('postal_code'),
+            )
+            messages.success(request, f"Address '{nickname}' saved!")
+        
+        except Exception as e:
+            # Handle error, e.g., if nickname is not unique for this user
+            messages.error(request, f"Could not save address: {e}")
+            return render(request, self.template_name)
+
+        # 4. Redirect back to the checkout page
+        #    We check the 'next' parameter to be safe.
+        next_url = request.GET.get('next')
+        if next_url == 'checkout':
+            return redirect('checkout')
+        
+        # Default fallback
+        return redirect('profile')
+
+class EditProfileView(LoginRequiredMixin, View):
+    template_name = 'edit_profile.html'
+
+    def get(self, request, *args, **kwargs):
+        try:
+            profile = UserProfile.objects.get(user=request.user)
+        except UserProfile.DoesNotExist:
+            messages.error(request, "User profile not found.")
+            return redirect('profile')
+        
+        context = {
+            'user': request.user,
+            'profile': profile
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        # We can safely assume the profile exists now because of the get method
+        profile = UserProfile.objects.get(user=request.user)
+        
+        # Get data from the POST form
+        first_name = request.POST.get('first_name')
+        last_name = request.POST.get('last_name')
+        email = request.POST.get('email')
+        
+        # Get profile-specific data (add any other fields you have)
+        phone_number = request.POST.get('phone_number') # Assumes 'phone_number' on UserProfile
+        
+        # Update the User model
+        user.first_name = first_name
+        user.last_name = last_name
+        user.email = email
+        user.save()
+        
+        # Update the UserProfile model
+        profile.phone_number = phone_number
+        # profile.age = request.POST.get('age') # Example
+        # profile.household_size = request.POST.get('household_size') # Example
+        profile.save()
+        
+        messages.success(request, "Your profile has been updated.")
+        return redirect('profile') # Redirect back to the profile page

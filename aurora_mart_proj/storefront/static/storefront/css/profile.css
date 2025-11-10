@@ -4,7 +4,7 @@ body {
 }
 
 .profile-container { 
-    max-width: 90%; /* Matches storefront product-grid max-width */
+    max-width: 90%;
     margin: 28px auto; 
     padding: 0 20px; 
 }
@@ -22,74 +22,175 @@ body {
     align-items: start; 
 }
 
-/* Updated to match .product-card styles */
+.profile-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
 .account-card,
-.orders-panel { 
+.orders-panel,
+.wallet-card,
+.paylater-card { 
     background: #fff; 
-    padding: 24px; /* Standardized padding */
-    border-radius: 12px; /* Matches .product-card */
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); /* Matches .product-card */
+    padding: 24px; 
+    border-radius: 12px; 
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    position: relative;
 }
 
-/* This gradient matches the storefront banner, which is great! */
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+.card-header h2 {
+    margin: 0;
+    font-size: 18px;
+    color: #333;
+}
+
+.card-header-icons {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    display: flex;
+    gap: 12px; /* Adds space between icons */
+}
+
+/* Renamed from .card-edit-link */
+.card-icon-link {
+    font-size: 20px;
+    color: #888;
+    text-decoration: none;
+    font-weight: bold;
+}
+.card-icon-link:hover {
+    color: #007ca5;
+}
+
+.account-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
 .avatar { 
-    width:72px; 
-    height:72px; 
-    border-radius:50%; 
+    width: 60px; 
+    height: 60px; 
+    border-radius: 50%; 
     background: linear-gradient(135deg,#00b2c7,#007ca5); 
-    color:#fff; 
-    display:flex; 
-    align-items:center; 
-    justify-content:center; 
-    font-size:30px; 
-    margin-bottom:10px; 
+    color: #fff; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    font-size: 28px; 
+    flex-shrink: 0;
+}
+.info-text h3 { 
+    margin: 0; 
+    font-size: 18px; 
+}
+.info-text .muted { 
+    color: #7f8c8d; 
+    font-size: 13px; 
+    margin: 0;
 }
 
-.account-info h3 { 
-    margin:0; 
-    font-size:18px; 
+.contact-details {
+    border-top: 1px solid #f0f0f0;
+    padding-top: 15px;
 }
-.account-info .muted { 
-    color:#7f8c8d; 
-    font-size:13px; 
-    margin-bottom:10px; 
-}
-.account-info p { 
-    margin:6px 0; 
-    color:#455a64; 
-    font-size:14px; 
+.contact-details p { 
+    margin: 8px 0; 
+    color: #455a64; 
+    font-size: 14px; 
 }
 
 .account-stats { 
-    display:flex; 
-    gap:12px; 
-    margin-top:16px; 
+    display: flex; 
+    gap: 12px; 
+    margin-top: 20px; 
+    border-top: 1px solid #f0f0f0;
+    padding-top: 20px;
 }
 .stat { 
-    background:#f1fbff;
-    padding:12px; 
-    border-radius:8px; 
-    flex:1; 
-    text-align:center; 
+    background: #f1fbff;
+    padding: 12px; 
+    border-radius: 8px; 
+    flex: 1; 
+    text-align: center; 
 }
-
 .stat-number { 
-    font-size:18px; 
-    color:#007ca5; 
-    font-weight:700; 
+    font-size: 18px; 
+    color: #007ca5; 
+    font-weight: 700; 
 }
 .stat-label { 
-    font-size:13px; 
-    color:#607d8b; 
+    font-size: 13px; 
+    color: #607d8b; 
 }
 
+
+.wallet-balance, .paylater-balance {
+    text-align: center;
+    margin-bottom: 20px;
+}
+.wallet-label, .paylater-label {
+    display: block;
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 5px;
+}
+.wallet-amount, .paylater-amount {
+    font-size: 28px;
+    font-weight: 700;
+    color: #333;
+}
+.paylater-amount {
+    color: #007ca5;
+}
+.wallet-amount {
+    color: #007ca5;
+}
+.wallet-card .wallet-balance {
+    background-color: #007ca5;
+    color: white;
+    padding: 15px;
+    border-radius: 8px;
+}
+.wallet-card .wallet-label {
+    color: #f0f8ff;
+    opacity: 0.9;
+}
+.wallet-card .wallet-amount {
+    color: white;
+}
+
+.btn-top-up {
+    display: block;
+    width: 90%;
+    background-color: #ff7f50; /* Orange from your image */
+    color: white;
+    text-align: center;
+    padding: 12px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 15px;
+}
+.btn-top-up:hover {
+    background-color: #e06c40;
+}
+
+
+/* --- Orders Panel (Unchanged) --- */
 .tabs { 
-    display:flex; 
-    gap:8px; 
-    margin-bottom:12px; 
+    display: flex; 
+    gap: 8px; 
+    margin-bottom: 12px; 
 }
-
-
 .tab-button { 
     border: none; 
     background: #f5f5f5;
@@ -99,50 +200,45 @@ body {
     color: #333;
     font-weight: 500;
 }
-
 .tab-button.active { 
     background: #00bfff;
     color: #fff; 
     border: none;
     font-weight: 700; 
 }
-
 .order-card { 
-    display:flex; 
-    justify-content:space-between; 
-    align-items:center; 
-    padding:12px 14px; 
-    border-radius:8px; 
-    border:1px solid #f0f5f6; 
-    margin-bottom:10px; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    padding: 12px 14px; 
+    border-radius: 8px; 
+    border: 1px solid #f0f5f6; 
+    margin-bottom: 10px; 
 }
 .order-left .order-id { 
-    font-weight:700; 
-    color:#263238; 
+    font-weight: 700; 
+    color: #263238; 
 }
-
 .order-right .order-total { 
-    color:#0091ff; 
-    font-weight:700; 
+    color: #0091ff; 
+    font-weight: 700; 
 }
-
 .order-status { 
-    font-size:12px; 
+    font-size: 12px; 
     color: #ff7f50;
     background: #fff0e6;
     padding: 6px 8px; 
     border-radius: 12px; 
-    display:inline-block; 
+    display: inline-block; 
 }
-
 .empty-order { 
-    color:#78909c; 
-    padding:20px; 
-    text-align:center; 
+    color: #78909c; 
+    padding: 20px; 
+    text-align: center; 
 }
 
-@media (max-width:900px){
+@media (max-width: 900px){
   .profile-grid { grid-template-columns: 1fr; }
-  .account-card { order:2; }
-  .orders-panel { order:1; }
+  .profile-sidebar { order: 1; }
+  .orders-panel { order: 2; }
 }

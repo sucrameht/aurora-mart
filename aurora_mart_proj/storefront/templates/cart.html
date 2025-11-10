@@ -16,7 +16,6 @@
             <span class="logo-text">AuroraMart</span>
         </div>
         <div class="icons">
-            <a href="{% url 'view_cart' %}" class="icon icon-cart">🛒</a>
             <a href="{% url 'profile' %}" class="icon">👤</a>
         </div>
     </div>
@@ -116,7 +115,7 @@
                         <span>${{ total }}</span>
                     </div>
 
-                    <button class="checkout-btn">Proceed to Checkout</button>
+                    <button class="checkout-btn" onclick="window.location.href='{% url 'checkout' %}'">Proceed to Checkout</button>
                     <p class="voucher-info">Try vouchers: WELCOME10, SAVE20, or FREESHIP</p>
                 </div>
             </div>

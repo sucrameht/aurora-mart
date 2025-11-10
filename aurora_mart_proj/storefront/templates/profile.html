@@ -23,27 +23,63 @@
     <div class="profile-container">
         <h1 class="profile-title">My Profile</h1>
         <div class="profile-grid">
-            <aside class="account-card">
-                <div class="avatar">👤</div>
-                <div class="account-info">
-                    <h3>{{ user.get_full_name|default:user.username }}</h3>
-                    <p class="muted">Member since {{ user.date_joined|date:"Y" }}</p>
-                    <hr>
-                    <p>📧 {{ user.email }}</p>
-                    {% if profile %}
-                        <p>📞 {{ profile.phone_number|default:"—" }}</p>
-                        <p>🏠 {{ profile.preferred_category|default:"—" }}</p>
-                    {% endif %}
+            <aside class="profile-sidebar">
+
+                <div class="account-card">
+                    <div class="card-header">
+                        <h2>Account Info</h2>
+                        <div class="card-header-icons">
+                            <a href="{% url 'edit_profile' %}" class="card-icon-link" title="Edit Profile">✎</a>
+                            <a href="{% url 'add_shipping_address' %}?next=profile" class="card-icon-link" title="Add New Address">📍</a>
+                        </div>
+                    </div>
+                    
+                    <div class="account-info">
+                        <div class="avatar">👤</div>
+                        <div class="info-text">
+                            <h3>{{ user.get_full_name|default:user.username }}</h3>
+                            <p class="muted">Member since {{ user.date_joined|date:"Y" }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-details">
+                        <p>📧 {{ user.email }}</p>
+                        {% if profile %}
+                            <p>📞 {{ profile.phone_number|default:"—" }}</p>
+                            <p>🏠 123 Orchard Road, Singapore 238858</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="account-stats">
+                        <div class="stat">
+                            <div class="stat-number">{{ total_orders }}</div>
+                            <div class="stat-label">Total Orders</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-number">{{ completed_orders }}</div>
+                            <div class="stat-label">Completed</div>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="account-stats">
-                    <div class="stat">
-                        <div class="stat-number">{{ total_orders }}</div>
-                        <div class="stat-label">Total Orders</div>
+                <div class="wallet-card">
+                    <div class="card-header">
+                        <h2>AuroraMart Wallet</h2>
                     </div>
-                    <div class="stat">
-                        <div class="stat-number">{{ completed_orders }}</div>
-                        <div class="stat-label">Completed</div>
+                    <div class="wallet-balance">
+                        <span class="wallet-label">Current Balance</span>
+                        <span class="wallet-amount">${{ profile.wallet_balance|default:'0.00' }}</span>
+                    </div>
+                    <a href="#" class="btn-top-up">+ Top Up Wallet</a>
+                </div>
+
+                <div class="paylater-card">
+                    <div class="card-header">
+                        <h2>PayLater Limit</h2>
+                    </div>
+                    <div class="paylater-balance">
+                        <span class="paylater-label">Current Limit</span>
+                        <span class="paylater-amount">${{ profile.paylater_limit|default:'0.00' }}</span>
                     </div>
                 </div>
             </aside>
@@ -76,6 +112,5 @@
             </section>
         </div>
     </div>
-
 </body>
 </html>
