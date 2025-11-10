@@ -291,14 +291,8 @@ class ProfileView(LoginRequiredMixin, View):
         
         total_orders = userTransactions.count()
         
-        # Your Transactions model doesn't have a 'status' field yet
-        # So we will count all orders as "completed" for now
-        # You can change this later if you add a status field.
         completed_orders = userTransactions.count() 
-        
-        # Order by the correct field 'transaction_datetime'
         recent_orders = userTransactions.order_by('-transaction_datetime')[:5] 
-        # --- END OF CORRECTION ---
 
         context = {
             'profile': profile,
@@ -454,27 +448,21 @@ class CheckoutView(LoginRequiredMixin, View):
             messages.error(request, f"An error occurred during payment: {e}")
             return self.get(request)
 
-        if request.POST.get('save_address') == 'on':
-            nickname = request.POST.get('address_nickname')
-            if nickname:
-                ShippingAddress.objects.update_or_create(
-                    user=request.user,
-                    nickname=nickname,
-                    defaults={
-                        'first_name': shipping_first_name,
-                        'last_name': shipping_last_name,
-                        'phone': shipping_phone,
-                        'address': shipping_address,
-                        'city': shipping_city,
-                        'state': shipping_state,
-                        'postal_code': shipping_postal_code,
-                    }
-                )
-
         new_transaction = Transactions.objects.create(
             user=request.user,
-            transaction_datetime=datetime.now()
-            # TODO: Add total, discount, shipping info to Transactions model
+            transaction_datetime=datetime.now(),
+
+            subtotal=subtotal,
+            discount=discount,
+            total=total,
+            payment_method=payment_method,
+            shipping_first_name=shipping_first_name,
+            shipping_last_name=shipping_last_name,
+            shipping_phone=shipping_phone,
+            shipping_address=shipping_address,
+            shipping_city=shipping_city,
+            shipping_state=shipping_state,
+            shipping_postal_code=shipping_postal_code
         )
 
         items_to_create = []
@@ -483,7 +471,8 @@ class CheckoutView(LoginRequiredMixin, View):
                 OrderItem(
                     transactions=new_transaction,
                     product=item['product'],
-                    quantity_purchased=item['quantity']
+                    quantity_purchased=item['quantity'],
+                    price_at_purchase=item['product'].unit_price 
                 )
             )
         OrderItem.objects.bulk_create(items_to_create)
@@ -583,3 +572,32 @@ class EditProfileView(LoginRequiredMixin, View):
         
         messages.success(request, "Your profile has been updated.")
         return redirect('profile') # Redirect back to the profile page
+
+class WalletView(LoginRequiredMixin, View):
+    template_name = 'wallet.html'
+    
+    def get(self, request, *args, **kwargs):
+        # Get profile, or create it if it doesn't exist
+        profile, created = UserProfile.objects.get_or_create(user=request.user)
+        context = {
+            'profile': profile
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+        profile = UserProfile.objects.get(user=request.user)
+        try:
+            # Get the amount from the form
+            top_up_amount = Decimal(request.POST.get('top_up_amount'))
+            
+            if top_up_amount <= 0:
+                messages.error(request, "Top-up amount must be positive.")
+            else:
+                profile.wallet_balance += top_up_amount
+                profile.save()
+                messages.success(request, f"Successfully added ${top_up_amount} to your wallet.")
+        
+        except:
+            messages.error(request, "Invalid amount entered. Please enter a number.")
+            
+        return redirect('wallet') # Redirect back to the same page
