@@ -17,6 +17,7 @@ import pandas as pd
 from django.apps import apps
 from django.db import transaction
 from datetime import datetime
+from django.db.models import Sum, F, DecimalField
 
 APP_PATH = apps.get_app_config('storefront').path
 
@@ -288,6 +289,8 @@ class ProfileView(LoginRequiredMixin, View):
             profile = None
 
         userTransactions = Transactions.objects.filter(user=user)
+        cart = request.session.get('cart', {})
+        cart_item_count = sum(cart.values())
         
         total_orders = userTransactions.count()
         
@@ -300,6 +303,7 @@ class ProfileView(LoginRequiredMixin, View):
             'total_orders': total_orders,
             'completed_orders': completed_orders,
             'recent_orders': recent_orders,
+            'cart_item_count': cart_item_count,
         }
         return render(request, self.template_name, context)
 
@@ -445,10 +449,10 @@ class CheckoutView(LoginRequiredMixin, View):
             user=request.user,
             transaction_datetime=datetime.now(),
 
-            subtotal=subtotal,
-            discount=discount,
-            total=total,
-            payment_method=payment_method,
+            # subtotal=subtotal,
+            # discount=discount,
+            # total=total,
+            # payment_method=payment_method,
             shipping_first_name=shipping_first_name,
             shipping_last_name=shipping_last_name,
             shipping_phone=shipping_phone,

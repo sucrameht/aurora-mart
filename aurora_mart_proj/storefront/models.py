@@ -19,43 +19,6 @@ class Product(models.Model):
 class Transactions(models.Model):
     user = models.ForeignKey(User, on_delete=models.RESTRICT, related_name="transactions")
     transaction_datetime = models.DateTimeField()
-    class Meta:
-        # in order to sort by latest first
-        ordering = ['-transaction_datetime']
-
-    @property
-    def total_spent(self): # for admin view list
-        # total value of transaction
-        return sum(item.subtotal_products_bought for item in self.items.all())
-    
-    @property
-    def num_of_products(self): # for admin view list
-        # total number of products in transaction
-        return sum(item.quantity_purchased for item in self.items.all())
-    
-class OrderItem(models.Model):
-    # to allow for transactions to be deleted
-    transactions = models.ForeignKey(Transactions, on_delete=models.CASCADE, related_name="items")
-    product = models.ForeignKey(Product, on_delete=models.RESTRICT)
-    quantity_purchased = models.IntegerField()
-
-    @property
-    def subtotal_products_bought(self):
-        return self.quantity_purchased * self.product.unit_price
-
-class Voucher(models.Model):
-    code = models.CharField(max_length=50, unique=True)
-    discount_type = models.CharField(
-        max_length=10,
-        choices=[('percent', 'Percentage'), ('amount', 'Fixed Amount')]
-    )
-    discount_value = models.DecimalField(max_digits=10, decimal_places=2)
-    is_active = models.BooleanField(default=True)
-    expiry_date = models.DateField(null=True, blank=True)
-
-class Transactions(models.Model):
-    user = models.ForeignKey(User, on_delete=models.RESTRICT, related_name="transactions")
-    transaction_datetime = models.DateTimeField()
 
     shipping_first_name = models.CharField(max_length=100, blank=True)
     shipping_last_name = models.CharField(max_length=100, blank=True)
@@ -80,7 +43,8 @@ class Transactions(models.Model):
         return sum(item.quantity_purchased for item in self.items.all())
     
 class OrderItem(models.Model):
-    transactions = models.ForeignKey(Transactions, on_delete=models.RESTRICT, related_name="items")
+    # to allow for transactions to be deleted
+    transactions = models.ForeignKey(Transactions, on_delete=models.CASCADE, related_name="items")
     product = models.ForeignKey(Product, on_delete=models.RESTRICT)
     quantity_purchased = models.IntegerField()
     price_at_purchase = models.DecimalField(max_digits=10, decimal_places=2)
@@ -88,6 +52,16 @@ class OrderItem(models.Model):
     @property
     def subtotal_products_bought(self):
         return self.quantity_purchased * self.price_at_purchase
+    
+class Voucher(models.Model):
+    code = models.CharField(max_length=50, unique=True)
+    discount_type = models.CharField(
+        max_length=10,
+        choices=[('percent', 'Percentage'), ('amount', 'Fixed Amount')]
+    )
+    discount_value = models.DecimalField(max_digits=10, decimal_places=2)
+    is_active = models.BooleanField(default=True)
+    expiry_date = models.DateField(null=True, blank=True)
     
 class ShippingAddress(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)

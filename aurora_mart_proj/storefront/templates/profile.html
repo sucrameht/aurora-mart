@@ -24,7 +24,10 @@
             <span class="logo-text">AuroraMart</span>
         </div>
         <div class="icons">
-            <a href="{% url 'view_cart' %}" class="icon icon-cart">🛒</a>
+            <a href="{% url 'view_cart' %}" class="icon icon-cart">
+                🛒
+                <span id="cart-count">{{ cart_item_count|default:0 }}</span>
+            </a>
             <form id="logout-form" method="post" action="{% url 'auroraadmin:logout' %}" style="display:inline">
                 {% csrf_token %}
                 <button type="submit" class="logout-button">Logout</button>
@@ -106,7 +109,7 @@
                                 </div>
                             </div>
                             <div class="order-right">
-                                <div class="order-total">${{ order.total|default:"0.00" }}</div>
+                                <div class="order-total">${{ order.total_spent|default:"0.00" }}</div>
                                 <div class="order-status">Completed</div>
                             </div>
                         </div>
