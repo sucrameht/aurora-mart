@@ -25,7 +25,10 @@
         </div>
         <div class="icons">
             <a href="{% url 'view_cart' %}" class="icon icon-cart">🛒</a>
-            <a href="{% url 'profile' %}" class="icon">👤</a>
+            <form id="logout-form" method="post" action="{% url 'auroraadmin:logout' %}" style="display:inline">
+                {% csrf_token %}
+                <button type="submit" class="logout-button">Logout</button>
+            </form>
         </div>
     </div>
 
@@ -102,9 +105,9 @@
                 <div class="orders-list">
                     {% if recent_orders %}
                         {% for order in recent_orders %}
-                        <div class="order-card">
+                        <div class="order-card" onclick="window.location.href='{% url 'customer_order_detail' order.pk %}'" style="cursor: pointer;">
                             <div class="order-left">
-                                <div class="order-id">Order #{{ order.id }}</div>
+                                <div class="order-id">Order #{{ forloop.revcounter }}</div>
                                 
                                 <div class="order-date">{{ order.transaction_datetime|date:"Y-m-d" }}</div>
                                 
@@ -113,7 +116,7 @@
                                 </div>
                             </div>
                             <div class="order-right">
-                                <div class="order-total">${{ order.total_spent|default:"0.00" }}</div>
+                                <div class="order-total">${{ order.total|default:"0.00" }}</div>
                                 <div class="order-status">Completed</div>
                             </div>
                         </div>
