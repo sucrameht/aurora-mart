@@ -9,6 +9,15 @@
     <link rel="stylesheet" href="{% static 'storefront/css/profile.css' %}">
 </head>
 <body>
+    {% if messages %}
+        <div class="message-container">
+            {% for message in messages %}
+                <div class="message {{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
     <div class="header">
         <div class="logo" onclick="window.location.href='{% url 'storefront_home' %}'">
             <img src="{% static 'storefront/images/AuroraMartLogo.png' %}" alt="AuroraMart Logo" class="logo-img">
@@ -70,7 +79,7 @@
                         <span class="wallet-label">Current Balance</span>
                         <span class="wallet-amount">${{ profile.wallet_balance|default:'0.00' }}</span>
                     </div>
-                    <a href="#" class="btn-top-up">+ Top Up Wallet</a>
+                    <a href="{% url 'wallet' %}" class="btn-top-up">+ Top Up Wallet</a>
                 </div>
 
                 <div class="paylater-card">
@@ -96,12 +105,16 @@
                         <div class="order-card">
                             <div class="order-left">
                                 <div class="order-id">Order #{{ order.id }}</div>
-                                <div class="order-date">{{ order.created_at|date:"Y-m-d" }}</div>
-                                <div class="order-items">{{ order.items_summary|default:"1 item" }}</div>
+                                
+                                <div class="order-date">{{ order.transaction_datetime|date:"Y-m-d" }}</div>
+                                
+                                <div class="order-items">
+                                    {{ order.num_of_products }} item{{ order.num_of_products|pluralize }}
+                                </div>
                             </div>
                             <div class="order-right">
-                                <div class="order-total">${{ order.total_price|default:"0.00" }}</div>
-                                <div class="order-status">{{ order.status }}</div>
+                                <div class="order-total">${{ order.total_spent|default:"0.00" }}</div>
+                                <div class="order-status">Completed</div>
                             </div>
                         </div>
                         {% endfor %}
