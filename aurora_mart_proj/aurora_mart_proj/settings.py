@@ -119,7 +119,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [ # for the static image to load
-    BASE_DIR / "static" / 'auroraadmin',
+    BASE_DIR / 'auroraadmin' / "static" ,
 ]
 
 # Default primary key field type

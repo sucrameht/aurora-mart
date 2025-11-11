@@ -13,6 +13,7 @@ class Product(models.Model):
     reorder_quantity = models.IntegerField()
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
     product_rating = models.FloatField()
+    num_sold = models.IntegerField(default=0)
 
     class Meta:
         ordering = ['product_category', 'product_name']

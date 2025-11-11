@@ -170,6 +170,56 @@ class AddProductView(View):
     
 @method_decorator(login_required(login_url='/login'), name='dispatch')
 @method_decorator(user_passes_test(is_staff, login_url='/login'), name='dispatch')
+class ProductActionsView(View):
+    template_name = 'auroraadmin/product_actions.html'
+
+    def get(self, request, sku_code, *args, **kwargs):
+        product = get_object_or_404(Product, sku_code=sku_code)
+        # Preserve filters for redirect
+        search_query = request.GET.get('q', '').strip()
+        category_filter = request.GET.get('category', '').strip()
+        context = {
+            'product': product,
+            'search_query': search_query,
+            'category_filter': category_filter,
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request, sku_code, *args, **kwargs):
+        product = get_object_or_404(Product, sku_code=sku_code)
+        action = request.POST.get('action')
+        search_query = request.POST.get('q', '').strip()
+        category_filter = request.POST.get('category', '').strip()
+        redirect_url = reverse('auroraadmin:product_actions',kwargs={'sku_code':sku_code})
+        params = []
+        if search_query:
+            params.append(f'q={search_query}')
+        if category_filter:
+            params.append(f'category={category_filter}')
+        if params:
+            redirect_url += '?' + '&'.join(params)
+
+        if action == "reorder":
+            try:
+                product.quantity_on_hand += product.reorder_quantity
+                product.save()
+                messages.success(request, f'Order Successful: Reordered {product.reorder_quantity} units of {product.product_name}.')
+            except Exception as e:
+                messages.error(request, f'Order Failed: {e}')
+        
+        elif action == "change_price":
+            new_price = request.POST.get('new_price')
+            try:
+                product.unit_price = float(new_price)
+                product.save()
+                messages.success(request, f'Price updated successfully for {product.product_name} to ${product.unit_price:.2f}.')
+            except (ValueError, TypeError):
+                messages.error(request, 'Invalid price value.')
+        
+        return redirect(redirect_url)
+
+@method_decorator(login_required(login_url='/login'), name='dispatch')
+@method_decorator(user_passes_test(is_staff, login_url='/login'), name='dispatch')
 class DeleteProductView(View):
     template_name = 'auroraadmin/product_confirm_del.html'
 
@@ -326,6 +376,9 @@ class VoucherManagementView(View):
                 user_profile = UserProfile.objects.get(user=user)
                 user_profile.vouchers.add(voucher)
                 count += 1
+            
+            voucher.issued_count += count
+            voucher.save()
 
             messages.success(request, f'Voucher assigned to {count} users successfully.')
         

@@ -53,5 +53,7 @@ class CustomerVoucherAssignForm(forms.Form):
         if vouchers:
             for voucher in vouchers:
                 self.user.userprofile.vouchers.add(voucher)
+                voucher.issued_count += 1
+                voucher.save()
             return len(vouchers)
         return 0

@@ -54,14 +54,14 @@
                 <th>Price</th>
                 <th>Stock</th>
                 <th>Status</th>
-                <th>Actions</th>
+                <th>Volume Sold</th>
             </tr>
         </thead>
         <tbody>
             {% for product in products %}
             <tr>
                 <td>{{ product.sku_code }}</td>
-                <td><a href="#" style="color:#00bfff; text-decoration:none;">{{ product.product_name }}</a></td>
+                <td><a href="{% url 'auroraadmin:product_actions' product.sku_code %}" style="color:#00bfff; text-decoration:none;">{{ product.product_name }}</a></td>
                 <td><span class="category-badge">{{ product.product_category }}</span></td>
                 <td>${{ product.unit_price|floatformat:2 }}</td>
                 <td>{{ product.quantity_on_hand }}</td>
@@ -76,30 +76,7 @@
                         </span>
                     {% endif %}
                 </td>
-                <td>
-                    <!--Reorder Button: visible only when low stock-->
-                    {% if product.quantity_on_hand <= 50 %}
-                        <form method="post" action="{% url 'auroraadmin:product' %}" style="display:inline">
-                            {% csrf_token %}
-                            <!--action and pk values tells the view which action to perform and which user to update respectively-->
-                            <input type="hidden" name="pk" value="{{ product.sku_code }}">
-                            <input type="hidden" name="action" value="reorder">
-                            <!--q/category - preserves the current search/filter state so after the {POST + redirect}, we can get back the same state -->
-                            <input type="hidden"name="q" value="{{ search_query | default:'' }}">
-                            <input type="hidden" name="category" value="{{ selected_category | default:'' }}">
-                            <button type="submit" class="action-button" style="background: orange; color: whitesmoke; border: 1px solid orange;">
-                                Reorder +{{ product.reorder_quantity }}
-                            </button>
-                        </form>
-                    {% endif %}
-
-                    <!-- Delete button -->
-                    <a href="{% url 'auroraadmin:product_delete' product.sku_code %}" 
-                        class="action-button" 
-                        style="margin-left:8px; background:#d9534f; color:#fff; border:1px solid #d9534f; text-decoration:none; padding:6px 8px; border-radius:6px;">
-                        Delete
-                    </a>
-                </td>
+                <td>{{ product.num_sold }}</td>
             </tr>
             {% empty %}
             <tr>

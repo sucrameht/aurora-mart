@@ -1,0 +1,43 @@
+{% extends 'auroraadmin/base.html' %}
+{% load static %}
+{% block title %}Actions for {{ product.product_name }}{% endblock %}
+{% block extra_css%}
+<link rel="stylesheet" href="{% static 'auroraadmin/css/product_actions.css' %}">
+{% endblock %}
+{% block main_content %}
+
+<div class="actions-container">
+    <div class="product-info">
+        <h2>Actions for {{ product.product_name }}</h2>
+        <p><strong>SKU:</strong> {{ product.sku_code }}</p>
+    </div>
+
+    <div class="actions-form">
+        {% if product.quantity_on_hand <= 50 %}
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="reorder">
+                <input type="hidden" name="q" value="{{ search_query }}">
+                <input type="hidden" name="category" value="{{ category_filter }}">
+                <button type="submit" class="reorder-btn">Reorder +{{ product.reorder_quantity }}</button>
+            </form>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="change_price">
+            <input type="hidden" name="q" value="{{ search_query }}">
+            <input type="hidden" name="category" value="{{ category_filter }}">
+            <input type="number" name="new_price" step="0.01" min="0" placeholder="New Price" required>
+            <button type="submit" class="change-btn">Change Price</button>
+        </form>
+
+        <a href="{% url 'auroraadmin:product_delete' product.sku_code %}" class="delete-btn">Delete Product</a>
+    </div>
+
+    <div class="back-link">
+        <a href="{% url 'auroraadmin:product' %}?q={{ search_query }}&category={{ category_filter }}">← Back to Products</a>
+    </div>
+</div>
+
+{% endblock %}

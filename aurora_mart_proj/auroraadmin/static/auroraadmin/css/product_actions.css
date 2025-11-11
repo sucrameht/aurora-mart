@@ -1,0 +1,67 @@
+.actions-container { 
+    max-width: 600px; 
+    margin: 20px auto; 
+    padding: 20px; 
+    background: #fff; 
+    border-radius: 8px; 
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+}
+
+.product-info { 
+    margin-bottom: 20px; 
+}
+.product-info h2 { 
+    margin-bottom: 10px; 
+}
+.product-info p { 
+    margin: 5px 0; 
+}
+
+.actions-form { 
+    margin-bottom: 15px; 
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+.actions-form form { 
+    display: flex; 
+    gap: 10px; 
+    align-items: center; 
+}
+.actions-form input[type="number"] { 
+    width: 100px; 
+    padding: 6px; 
+    border: 1px solid #ddd; 
+    border-radius: 4px; 
+}
+.actions-form button { 
+    padding: 8px 12px;
+    border: none; 
+    border-radius: 4px; 
+    cursor: pointer; 
+    font-size: 14px; 
+}
+
+.reorder-btn { 
+    background: orange; 
+    color: white; 
+}
+.change-btn { 
+    background: #28a745; 
+    color: white; 
+}
+.delete-btn { 
+    background: #d9534f; 
+    color: white; 
+    text-decoration: none; 
+    display: inline-block; 
+    padding: 8px 12px; 
+    align-self: flex-start;
+}
+.back-link { 
+    margin-top: 20px; 
+}
+.back-link a { 
+    color: #007bff; 
+    text-decoration: none; 
+}
