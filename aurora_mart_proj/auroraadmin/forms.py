@@ -1,11 +1,9 @@
 from django import forms
 from storefront.models import Product, Voucher
-
 class ProductCreateForm(forms.ModelForm):
     class Meta:
         model = Product
         fields = [
-            'sku_code',
             'product_name',
             'product_description',
             'product_category',

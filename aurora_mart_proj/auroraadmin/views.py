@@ -16,6 +16,136 @@ from decimal import Decimal
 from django.core.paginator import Paginator
 from authentication.models import UserProfile
 from django.contrib.auth.models import User
+import secrets, string
+
+SKU_MAPPINGS = {
+    'Automotive': {
+        'initial': 'A',
+        'subcats': {
+            'Car Care': 'CC',
+            'Tools & Equipment': 'T&',
+            'Exterior Accessories': 'EA',
+            'Interior Accessories': 'IA',
+            'Oils & Fluids': 'O&',
+        }
+    },
+    'Beauty & Personal Care': {
+        'initial': 'BP',
+        'subcats': {
+            'Fragrances': 'F',
+            'Hair Care': 'HC',
+            'Makeup': 'M',
+            'Grooming Tools': 'GT',
+            'Skincare': 'S',
+        }
+    },
+    'Books': {
+        'initial': 'B',
+        'subcats': {
+            'Children': 'C',
+            'Comics & Manga': 'C&',
+            'Fiction':"F",
+            'Non?Fiction': 'N',
+            'Textbooks': 'T',
+        }
+    },
+    'Electronics': {
+        'initial': 'E',
+        'subcats': {
+            'Cameras': 'C',
+            'Headphones': 'H',
+            'Laptops': 'L',
+            'Monitors': 'M',
+            'Printers': 'P',
+            'Smartphones': 'S',
+            'Smart Home': 'SH',
+            'Smartwatches': 'S',
+            'Tablets': 'T',
+        }
+    },
+    'Fashion - Men': {
+        'initial': 'F-', # Following your example
+        'subcats': {
+            'Accessories': 'A',
+            'Bottoms': 'B',
+            'Footwear': 'F',
+            'Outerwear': 'O',
+            'Tops': 'T',
+        }
+    },
+    'Fashion - Women': {
+        'initial': 'F-', # Following your example
+        'subcats': {
+            'Accessories': 'A',
+            'Bottoms': 'B',
+            'Dresses': 'D',
+            'Handbags': 'H',
+            'Footwear': 'F',
+            'Outerwear': 'O',
+            'Tops': 'T',
+        }
+    },
+    'Groceries & Gourmet': {
+        'initial': 'GG',
+        'subcats': {
+            'Beverages': 'B',
+            'Breakfast': 'BF',
+            'Health Foods': 'HF',
+            'Pantry Staples': 'PS',
+            'Snacks': 'S',
+        }
+    },
+    'Health': {
+        'initial': 'H',
+        'subcats': {
+            'Supplements': 'S',
+            'First Aid': 'FA',
+            'Medical Devices': 'MD',
+            'Personal Care':'PC'
+        }
+    },
+    'Home & Kitchen': {
+        'initial': 'HK',
+        'subcats': {
+            'Small Appliances': 'SA',
+            'Bedding': 'B',
+            'Cookware': 'C',
+            'Vacuum & Cleaning': 'C&',
+            'Home Decor': 'HD',
+            'Storage & Organization': 'S&',
+        }
+    },
+    'Pet Supplies': {
+        'initial': 'PS',
+        'subcats': {
+            'Accessories': 'A',
+            'Aquatic':'A',
+            'Cat': 'C',
+            'Dog': 'D',
+            'Small Pets': 'SP',
+        }
+    },
+    'Sports & Outdoors': {
+        'initial': 'SO',
+        'subcats': {
+            'Camping & Hiking': 'C&',
+            'Cycling': 'C',
+            'Fitness Equipment': 'FE',
+            'Team Sports': 'TS',
+            'Yoga & Wellness': 'Y&',
+        }
+    },
+    'Toys & Games': {
+        'initial': 'TG',
+        'subcats': {
+            'Action Figures': 'AF',
+            'Board Games': 'BG',
+            'Building Sets':'BS',
+            'Puzzles': 'P',
+            'STEM Toys': 'ST',
+        }
+    },
+}
 
 # helper function for decorator functions
 def is_staff(user):
@@ -29,6 +159,7 @@ def analytics_view(request):
 @method_decorator(user_passes_test(is_staff, login_url='/login'), name='dispatch')
 class ProductInventoryView(View):
     template_name = 'auroraadmin/product.html'
+   
     def get(self, request, *args, **kwargs):
         # query and filter set up
         productsSet = Product.objects.all().order_by('sku_code')
@@ -102,6 +233,18 @@ class ProductInventoryView(View):
 class AddProductView(View):
     template_name = 'auroraadmin/add_product.html'
 
+    def generate_unique_sku(category, subcategory):
+        if category not in SKU_MAPPINGS or subcategory not in SKU_MAPPINGS[category]['subcats']:
+            raise ValueError(f"Invalid category/subcategory: {category}/{subcategory}")
+        prefix = SKU_MAPPINGS[category]['initial'] + SKU_MAPPINGS[category]['subcats'][subcategory] + '-'
+        digits = string.digits
+        for _ in range(100):
+            random_part = ''.join(secrets.choice(digits) for _ in range(8))
+            sku = prefix + random_part
+            if not Product.objects.filter(sku_code=sku).exists():
+                return sku
+        raise ValueError("Could not generate a unique SKU")
+
     # build the dropdown list for form inputting
     def _build_category_mapper(self):
         catSubcatPairs = Product.objects.values('product_category', 'product_subcategory').distinct()
@@ -156,6 +299,16 @@ class AddProductView(View):
             product = form.save(commit=False)
             if hasattr(product, "product_rating"):
                 product.product_rating = 0.0
+            try:
+                product.sku_code = AddProductView.generate_unique_sku(product.product_category, product.product_subcategory)
+            except ValueError as e:
+                messages.error(request, f'Error generating SKU: {e}')
+                context = {
+                    'form': form,
+                    'categories': categories,
+                    'selected_category': selected_cat
+                }
+                return render(request, self.template_name, context)
             product.save()
             messages.success(request, 'Product added successfully.')
             return redirect(reverse('auroraadmin:product'))
