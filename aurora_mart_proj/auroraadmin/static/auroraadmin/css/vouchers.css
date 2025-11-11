@@ -1,0 +1,206 @@
+/* --- Styles for Voucher Page --- */
+.voucher-container {
+    padding: 20px;
+    background-color: #f0f8ff;
+}
+.voucher-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #ccc;
+}
+.voucher-title {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: #007ca5;
+}
+
+/* Form Container */
+.voucher-form-container {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    margin-bottom: 20px;
+}
+.form-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 15px;
+}
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px 20px;
+    align-items: flex-start; /* Align items to the top */
+}
+.form-group { margin-bottom: 5px; }
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group input[type="date"],
+.form-group select,
+.form-control, .form-select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box; 
+}
+.form-group .helptext {
+    font-size: 0.8rem;
+    color: #777;
+}
+.form-group-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-top: 25px; /* Align with other fields' labels */
+}
+
+/* Error styles */
+.form-group .errorlist {
+    list-style: none;
+    padding: 0;
+    margin: 5px 0 0;
+    color: #dc3545;
+    font-size: 0.9em;
+}
+
+/* List Container */
+.voucher-list-container {
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+.list-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #333;
+    padding: 15px 20px;
+    border-bottom: 1px solid #eee;
+}
+
+/* Table Styles */
+.inventory-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.inventory-table th,
+.inventory-table td {
+    padding: 12px 20px;
+    border-bottom: 1px solid #e0e0e0;
+    text-align: left;
+}
+.inventory-table th {
+    background-color: #f9f9f9;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #007ca5;
+    text-transform: uppercase;
+}
+.inventory-table tbody tr:last-child td {
+    border-bottom: none; /* No border on last row */
+}
+.inventory-table tbody tr:hover { 
+    background-color: #fdfdfd; 
+}
+
+.status-active { 
+    color: #28a745; 
+    font-weight: 600; 
+}
+.status-inactive { 
+    color: #dc3545; 
+    font-weight: 600; 
+}
+.discount-type { 
+    text-transform: capitalize; 
+}
+
+/* Buttons */
+.action-button {
+    padding: 6px 10px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 0.9em;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+}
+.btn-delete {
+    background-color: #dc3545;
+    color: white;
+}
+.btn-delete:hover {
+    background-color: #c82333;
+}
+
+.btn-activate {
+    background-color: #28a745;
+    color: white;
+}
+.btn-activate:hover {
+    background-color: #218838;
+}
+.btn-assign {
+    background-color: #007ca5;
+    color: white;
+    margin-right: 5px;
+}
+.btn-assign:hover {
+    background-color: #005f80;
+}
+.btn-submit {
+    padding: 10px 20px;
+    font-size: 1rem;
+    background-color: #007ca5;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    grid-column: -1; /* Place in last column */
+    align-self: end;
+}
+.btn-submit:hover { background-color: #005f80; }
+
+/* Pagination */
+.pagination-row {
+    padding: 15px 20px;
+    text-align: center;
+    font-size: 0.9rem;
+    border-top: 1px solid #eee;
+}
+.step-links a, .step-links .current_page, .step-links .disabled {
+    padding: 5px 10px;
+    margin: 0 2px;
+    border-radius: 4px;
+    text-decoration: none;
+}
+.step-links a {
+    background: #fff;
+    border: 1px solid #ddd;
+    color: #007ca5;
+}
+.step-links a:hover {
+    background: #f0f8ff;
+}
+.step-links .current_page {
+    background: #007ca5;
+    color: #fff;
+    border: 1px solid #007ca5;
+    font-weight: 600;
+}
+.step-links .disabled {
+    color: #aaa;
+    border: 1px solid #ddd;
+}
