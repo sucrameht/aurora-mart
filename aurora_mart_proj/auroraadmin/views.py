@@ -64,7 +64,7 @@ SKU_MAPPINGS = {
         }
     },
     'Fashion - Men': {
-        'initial': 'F-', # Following your example
+        'initial': 'F-',
         'subcats': {
             'Accessories': 'A',
             'Bottoms': 'B',
@@ -74,7 +74,7 @@ SKU_MAPPINGS = {
         }
     },
     'Fashion - Women': {
-        'initial': 'F-', # Following your example
+        'initial': 'F-',
         'subcats': {
             'Accessories': 'A',
             'Bottoms': 'B',
@@ -237,9 +237,9 @@ class AddProductView(View):
         if category not in SKU_MAPPINGS or subcategory not in SKU_MAPPINGS[category]['subcats']:
             raise ValueError(f"Invalid category/subcategory: {category}/{subcategory}")
         prefix = SKU_MAPPINGS[category]['initial'] + SKU_MAPPINGS[category]['subcats'][subcategory] + '-'
-        digits = string.digits
+        chars = string.ascii_uppercase +  string.digits
         for _ in range(100):
-            random_part = ''.join(secrets.choice(digits) for _ in range(8))
+            random_part = ''.join(secrets.choice(chars) for _ in range(8))
             sku = prefix + random_part
             if not Product.objects.filter(sku_code=sku).exists():
                 return sku
