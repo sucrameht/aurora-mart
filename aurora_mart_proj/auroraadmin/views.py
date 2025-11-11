@@ -25,8 +25,8 @@ def analytics_view(request):
     return render(request, 'auroraadmin/analytics.html')
 
 # dispatch is the method that redirects to the right functions after all the checks have been cleared
-@method_decorator(login_required(login_url='/authentication/login/'), name='dispatch')
-@method_decorator(user_passes_test(is_staff, login_url='/authentication/login/'), name='dispatch')
+@method_decorator(login_required(login_url='/login'), name='dispatch')
+@method_decorator(user_passes_test(is_staff, login_url='/login'), name='dispatch')
 class ProductInventoryView(View):
     template_name = 'auroraadmin/product.html'
     def get(self, request, *args, **kwargs):
@@ -97,8 +97,8 @@ class ProductInventoryView(View):
                 pass
             return redirect(redirect_url)
         
-@method_decorator(login_required(login_url='/authentication/login/'), name='dispatch')
-@method_decorator(user_passes_test(is_staff, login_url='/authentication/login/'), name='dispatch')
+@method_decorator(login_required(login_url='/login'), name='dispatch')
+@method_decorator(user_passes_test(is_staff, login_url='/login'), name='dispatch')
 class AddProductView(View):
     template_name = 'auroraadmin/add_product.html'
 
@@ -168,8 +168,8 @@ class AddProductView(View):
         # if there are errors
         return render(request, self.template_name, context)
     
-@method_decorator(login_required(login_url='/authentication/login/'), name='dispatch')
-@method_decorator(user_passes_test(is_staff, login_url='/authentication/login/'), name='dispatch')
+@method_decorator(login_required(login_url='/login'), name='dispatch')
+@method_decorator(user_passes_test(is_staff, login_url='/login'), name='dispatch')
 class DeleteProductView(View):
     template_name = 'auroraadmin/product_confirm_del.html'
 
@@ -191,7 +191,7 @@ class TransactionListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     template_name = 'auroraadmin/transactions_list.html'
     context_object_name = 'transactions'
 
-    login_url ='/authentication/login/'
+    login_url ='/login'
     paginate_by = 50
 
     def test_func(self):
@@ -256,7 +256,7 @@ class TransactionDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView)
     model = Transactions
     template_name = 'auroraadmin/transaction_detail.html'
     context_object_name = 'transaction'
-    login_url ='/authentication/login/'
+    login_url ='/login'
 
     def test_func(self):
         return self.request.user.is_staff
@@ -266,8 +266,8 @@ class TransactionDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView)
         context['page_title'] = f'Transaction {self.object.id}'
         return context
 
-@method_decorator(login_required(login_url='/authentication/login/'), name='dispatch')
-@method_decorator(user_passes_test(is_staff, login_url='/authentication/login/'), name='dispatch')
+@method_decorator(login_required(login_url='/login'), name='dispatch')
+@method_decorator(user_passes_test(is_staff, login_url='/login'), name='dispatch')
 class VoucherManagementView(View):
     template_name = 'auroraadmin/vouchers.html'
     paginate_by = 10
@@ -334,8 +334,8 @@ class VoucherManagementView(View):
         
         return redirect('auroraadmin:voucher_list')
 
-@method_decorator(login_required(login_url='/authentication/login/'), name='dispatch')
-@method_decorator(user_passes_test(is_staff, login_url='/authentication/login/'), name='dispatch')
+@method_decorator(login_required(login_url='/login'), name='dispatch')
+@method_decorator(user_passes_test(is_staff, login_url='/login'), name='dispatch')
 class CustomerListView(View):
     template_name = 'auroraadmin/customer.html'
     paginate_by = 40
@@ -397,8 +397,8 @@ class CustomerListView(View):
         }
         return render(request, self.template_name, context)
     
-@method_decorator(login_required(login_url='/authentication/login/'), name='dispatch')
-@method_decorator(user_passes_test(is_staff, login_url='/authentication/login/'), name='dispatch')
+@method_decorator(login_required(login_url='/login'), name='dispatch')
+@method_decorator(user_passes_test(is_staff, login_url='/login'), name='dispatch')
 class CustomerVoucherAssignView(View):
     template_name  = 'auroraadmin/customer_add_vouchers.html'
 

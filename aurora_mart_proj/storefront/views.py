@@ -603,7 +603,7 @@ class CustomerTransactionDetailView(LoginRequiredMixin, DetailView):
     model = Transactions
     template_name = 'transaction_detail.html'
     context_object_name = 'transaction'
-    login_url ='/authentication/login/'
+    login_url ='/login'
 
     def get_queryset(self):
         """Ensure user can only see their own transactions."""
