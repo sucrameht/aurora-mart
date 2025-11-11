@@ -187,7 +187,7 @@
         <!-- Search Bar over transaction table -->
         <form method="GET" action="{% url 'auroraadmin:transactions_list' %}" class="search-form">
             <input type="hidden" name="sort" value="{{ current_sort }}">
-            <input type="search" name="q" value="{{ search_query }}" placeholder="Search by Username or User ID" class="search-input">
+            <input type="search" name="q" value="{{ search_query }}" placeholder="Search by Username" class="search-input">
             <button type="submit" class="search-button">Search</button>
         </form>
     </div>
@@ -196,17 +196,6 @@
         <thead>
             <tr>
                 <th>Transaction ID</th>
-                
-                <!-- Create a sortable ID-->
-                 <th class="sortable">
-                    <a href="?sort={% if current_sort == 'user__id'%}-user__id{% else %}user__id{% endif %}&q={{ search_query }}"
-                        class="{% if 'user__id' in current_sort %}active-sort{% endif %}">
-                        User ID
-                        {% if 'user__id' in current_sort %} 
-                            <span class="sort-arrow">{% if current_sort == '-user__id' %}▼{% else %}▲{% endif %}</span>
-                        {% endif %}
-                    </a>
-                 </th>
 
                 <th>Username</th>
 
@@ -248,7 +237,6 @@
             {% for transaction in transactions %}
             <tr>
                 <td>{{ transaction.id }}</td>
-                <td>{{ transaction.user.id }}</td>
                 <td>{{ transaction.user.username }}</td>
                 <td>{{ transaction.transaction_datetime|date:"d M Y, P" }}</td>
                 <td class="text-center">{{ transaction.viewcal_num_of_products }}</td>

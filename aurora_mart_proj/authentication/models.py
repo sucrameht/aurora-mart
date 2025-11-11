@@ -16,3 +16,4 @@ class UserProfile(models.Model):
     is_initial_password = models.BooleanField(default=False) # for setting of initial password
     vouchers = models.ManyToManyField(Voucher, blank=True)
     wallet_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    phone_number = models.IntegerField(default=12345678)

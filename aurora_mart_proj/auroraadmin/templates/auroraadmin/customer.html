@@ -166,13 +166,6 @@
             <thead>
                 <tr>
                     <th class="sortable">
-                        <a href="?sort={% if current_sort == 'id' %}-id{% else %}id{% endif %}&q={{ search_query }}"
-                           class="{% if 'id' in current_sort %}active-sort{% endif %}">
-                            User ID
-                            <span class="sort-arrow">{% if current_sort == 'id' %}▲{% elif current_sort == '-id' %}▼{% endif %}</span>
-                        </a>
-                    </th>
-                    <th class="sortable">
                         <a href="?sort={% if current_sort == 'username' %}-username{% else %}username{% endif %}&q={{ search_query }}"
                            class="{% if 'username' in current_sort %}active-sort{% endif %}">
                             Username
@@ -214,7 +207,6 @@
             <tbody>
                 {% for customer in customers %}
                 <tr>
-                    <td>{{ customer.id }}</td>
                     <td>{{ customer.username }}</td>
                     <td>{{ customer.email }}</td>
                     <td>{{ customer.userprofile.preferred_category|default:"N/A" }}</td> <!-- NEW DATA CELL -->

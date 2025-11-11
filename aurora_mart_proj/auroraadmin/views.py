@@ -219,10 +219,7 @@ class TransactionListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         if user_id_filter:
             queryset = queryset.filter(user__id=int(user_id_filter))
         elif search_query:
-            search_filters = Q(user__username__icontains=search_query)
-            if search_query.isdigit():
-                # adds the user_id that matches to the search
-                search_filters |= Q(user_id=int(search_query))
+            search_filters = Q(user__username=search_query)
             queryset = queryset.filter(search_filters)
 
         # implementing the sorting logic

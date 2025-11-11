@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 # Create your models here.
 class Product(models.Model):
@@ -27,6 +28,25 @@ class Transactions(models.Model):
     shipping_city = models.CharField(max_length=100, blank=True)
     shipping_state = models.CharField(max_length=100, blank=True)
     shipping_postal_code = models.CharField(max_length=20, blank=True)
+    status = models.CharField(
+        max_length=50,
+        choices=[
+            ('Payment Made', 'Payment Made'),
+            ('Delivered to Warehouse', 'Delivered to Warehouse'),
+            ('Delivery Completed', 'Delivery Completed')
+        ],
+        default='Delivery Completed',
+    )
+    voucher_value = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    payment_method = models.CharField(
+        max_length=20,
+        choices=[
+            ('Wallet', 'Wallet'),
+            ('Card', 'Card')
+        ],
+        default='Card',
+    )
+    
 
     class Meta:
         # in order to sort by latest first
@@ -48,6 +68,8 @@ class OrderItem(models.Model):
     product = models.ForeignKey(Product, on_delete=models.RESTRICT)
     quantity_purchased = models.IntegerField()
     price_at_purchase = models.DecimalField(max_digits=10, decimal_places=2)
+    rating = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(5)])
+    text_review = models.CharField(max_length=256, blank=True)
 
     @property
     def subtotal_products_bought(self):
@@ -62,6 +84,9 @@ class Voucher(models.Model):
     discount_value = models.DecimalField(max_digits=10, decimal_places=2)
     is_active = models.BooleanField(default=True)
     expiry_date = models.DateField(null=True, blank=True)
+    issued_count = models.IntegerField(default=0)
+    used_count = models.IntegerField(default=0)
+    
 
     def __str__(self): # for the displaying of voucher code name in customer add voucher
         return self.code
