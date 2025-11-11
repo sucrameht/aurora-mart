@@ -208,7 +208,7 @@
                             <span class="sort-arrow">{% if current_sort == 'last_transaction_date' %}▲{% elif current_sort == '-last_transaction_date' %}▼{% endif %}</span>
                         </a>
                     </th>
-                    <th>Add Vouchers</th>
+                    <th>Add/View Vouchers</th>
                 </tr>
             </thead>
             <tbody>
@@ -229,7 +229,7 @@
                     <td>
                         <!-- This link will go to Phase 2. We'll build this next. -->
                         <a href="{% url 'auroraadmin:customer_add_vouchers' customer.id %}" class="action-button btn-assign">
-                            Add Vouchers
+                            Add/View
                         </a>
                     </td>
                 </tr>
