@@ -19,6 +19,15 @@ class Product(models.Model):
 class Transactions(models.Model):
     user = models.ForeignKey(User, on_delete=models.RESTRICT, related_name="transactions")
     transaction_datetime = models.DateTimeField()
+
+    shipping_first_name = models.CharField(max_length=100, blank=True)
+    shipping_last_name = models.CharField(max_length=100, blank=True)
+    shipping_phone = models.CharField(max_length=20, blank=True)
+    shipping_address = models.CharField(max_length=255, blank=True)
+    shipping_city = models.CharField(max_length=100, blank=True)
+    shipping_state = models.CharField(max_length=100, blank=True)
+    shipping_postal_code = models.CharField(max_length=20, blank=True)
+
     class Meta:
         # in order to sort by latest first
         ordering = ['-transaction_datetime']
@@ -38,11 +47,12 @@ class OrderItem(models.Model):
     transactions = models.ForeignKey(Transactions, on_delete=models.CASCADE, related_name="items")
     product = models.ForeignKey(Product, on_delete=models.RESTRICT)
     quantity_purchased = models.IntegerField()
+    price_at_purchase = models.DecimalField(max_digits=10, decimal_places=2)
 
     @property
     def subtotal_products_bought(self):
-        return self.quantity_purchased * self.product.unit_price
-
+        return self.quantity_purchased * self.price_at_purchase
+    
 class Voucher(models.Model):
     code = models.CharField(max_length=50, unique=True)
     discount_type = models.CharField(
@@ -55,3 +65,19 @@ class Voucher(models.Model):
 
     def __str__(self): # for the displaying of voucher code name in customer add voucher
         return self.code
+    
+class ShippingAddress(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    nickname = models.CharField(max_length=100)
+    
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100)
+    phone = models.CharField(max_length=20)
+    address = models.CharField(max_length=255)
+    city = models.CharField(max_length=100)
+    state = models.CharField(max_length=100)
+    postal_code = models.CharField(max_length=20)
+
+    class Meta:
+        # Prevent a user from having two addresses with the same nickname
+        unique_together = ('user', 'nickname')

@@ -1,0 +1,179 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout</title>
+    <link rel="stylesheet" href="{% static 'storefront/css/storefront.css' %}">
+    <link rel="stylesheet" href="{% static 'storefront/css/cart.css' %}">
+    <link rel="stylesheet" href="{% static 'storefront/css/checkout.css' %}">
+</head>
+<body>
+    {% if messages %}
+        <div class="message-container">
+            {% for message in messages %}
+                <div class="message {{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+    <div class="header">
+        <div class="logo" onclick="window.location.href='{% url 'storefront_home' %}'">
+            <img src="{% static 'storefront/images/AuroraMartLogo.png' %}" alt="AuroraMart Logo" class="logo-img">
+            <span class="logo-text">AuroraMart</span>
+        </div>
+    </div>
+
+    <div class="checkout-container">
+        <h1>Checkout</h1>
+
+        <form class="checkout-layout" method="POST" action="{% url 'checkout' %}">
+            {% csrf_token %}
+            
+            <div class="checkout-forms">
+                
+                <div class="form-card">
+                    <div class="form-group">
+                        <h2>Shipping Information</h2>
+                        <hr class="form-divider"> 
+                        <label for="address_selector">Saved Addresses</label>
+                        <div class="address-loader-input">
+                            <select id="address_selector" name="load_address_id">
+                                <option value="">-- Enter a new address --</option>
+                                {% for addr in saved_addresses %}
+                                <option value="{{ addr.id }}" 
+                                        {% if addr.id == selected_address.id %}selected{% endif %}>
+                                    {{ addr.nickname }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn-load-address" 
+                                    formaction="{% url 'checkout' %}" formmethod="GET" formnovalidate>Load</button>
+                        </div>
+                    </div>
+                    
+                    <a href="{% url 'add_shipping_address' %}?next=checkout" class="btn-add-address">
+                        + Add New Address
+                    </a>
+                    <br><br>
+                    
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label for="first_name">First Name</label>
+                            <input type="text" id="first_name" name="first_name" 
+                                value="{{ selected_address.first_name|default:user.first_name|default:'' }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="last_name">Last Name</label>
+                            <input type="text" id="last_name" name="last_name" 
+                                value="{{ selected_address.last_name|default:user.last_name|default:'' }}" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Phone</label>
+                        <input type="tel" id="phone" name="phone" 
+                            value="{{ selected_address.phone|default:'' }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="address">Address</label>
+                        <input type="text" id="address" name="address" 
+                            value="{{ selected_address.address|default:'' }}" required>
+                    </div>
+                    <div class="form-grid-3">
+                        <div class="form-group">
+                            <label for="city">City</label>
+                            <input type="text" id="city" name="city" 
+                                value="{{ selected_address.city|default:'' }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="state">State</label>
+                            <input type="text" id="state" name="state" 
+                                value="{{ selected_address.state|default:'' }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="postal_code">Postal Code</label>
+                            <input type="text" id="postal_code" name="postal_code" 
+                                value="{{ selected_address.postal_code|default:'' }}" required>
+                        </div>
+                    </div>
+                
+                </div>
+
+                <div class="form-card">
+                    <h2>Payment Method</h2>
+                    
+                    <div class="payment-option">
+                        <input type="radio" id="credit_card" name="payment_method" value="card" 
+                               {% if selected_payment_method == 'card' %}checked{% endif %}>
+                        <label for="credit_card">Credit / Debit Card</label>
+                    </div>
+                    
+                    <div class="payment-option">
+                        <input type="radio" id="wallet" name="payment_method" value="wallet"
+                               {% if selected_payment_method == 'wallet' %}checked{% endif %}>
+                        <label for="wallet">AuroraMart Wallet (Balance: ${{ profile.wallet_balance|default:'0.00' }})</label>
+                    </div>
+                        <button type="submit" class="btn-update-payment" formaction="{% url 'checkout' %}" formmethod="GET" formnovalidate>
+                        Update
+                    </button>
+
+                    
+                    {% if selected_payment_method == 'card' %}
+                    <div id="credit-card-form" class="payment-details">
+                        <hr class="form-divider">
+                        <div class="form-group">
+                            <label for="card_number">Card Number</label>
+                            <input type="text" id="card_number" name="card_number" placeholder="1234 5678 9012 3456">
+                        </div>
+                        <div class="form-grid-2">
+                            <div class="form-group">
+                                <label for="expiry_date">Expiry Date</label>
+                                <input type="text" id="expiry_date" name="expiry_date" placeholder="MM / YY">
+                            </div>
+                            <div class="form-group">
+                                <label for="cvv">CVV</label>
+                                <input type="text" id="cvv" name="cvv" placeholder="123">
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+            </div> 
+            <div class="order-summary-card">
+                <h2>Order Summary</h2>
+                <div class="summary-items">
+                    {% for item in cart_items %}
+                    <div class="summary-line">
+                        <span>{{ item.product.product_name }} x{{ item.quantity }}</span>
+                        <span>${{ item.total_price }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="summary-line">
+                    <span>Subtotal</span>
+                    <span>${{ subtotal }}</span>
+                </div>
+                
+                {% if discount > 0 %}
+                <div class="summary-line discount">
+                    <span>Discount</span>``
+                    <span>-${{ discount }}</span>
+                </div>
+                {% endif %}
+                
+                <div class="summary-line total">
+                    <span>Total</span>
+                    <span>${{ total }}</span>
+                </div>
+                
+                <button type="submit" class="complete-payment-btn">
+                    ✓ Complete Payment
+                </button>
+                <p class="secure-note">Your payment information is secure and encrypted.</p>
+            </div> </form> </div>
+</body>
+</html>

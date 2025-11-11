@@ -18,7 +18,7 @@
         </div>
     {% endif %}
     <div class="header">
-        <div class="logo" onclick="window.location.href='{% url 'storefront_home' %}?category=All'">
+        <div class="logo" onclick="window.location.href='{% url 'storefront_home' %}'">
             <img src="{% static 'storefront/images/AuroraMartLogo.png' %}" alt="AuroraMart Logo" class="logo-img">
             <span class="logo-text">AuroraMart</span>
         </div>
@@ -31,13 +31,13 @@
                 🛒
                 <span id="cart-count">{{ cart_item_count|default:0 }}</span>
             </a>
-            <a href="#" class="icon">👤</a>
+            <a href="{% url 'profile' %}" class="icon">👤</a>
         </div>
     </div>
 
     <div class="banner">
         <p>Personalized for you.</p>
-        <h2>Based on your interests, we recommend {{ active_category|default:'Electronics' }}</h2>
+        <h2>Based on your interests, we recommend {{ recommended_category|default:'Electronics' }}</h2>
     </div>
 
     <div class="nav-tabs">
@@ -47,7 +47,8 @@
         </a>
         {% for category in categories %}
         <a href="{% url 'storefront_home' %}?category={{ category|urlencode }}{% if query %}&query={{ query|urlencode }}{% endif %}{% if sort %}&sort={{ sort|urlencode }}{% endif %}" 
-           class="tab {% if category == active_category %}active{% endif %}">
+           class="tab {% if category == active_category %}active{% endif %}
+           {% if category == recommended_category %}recommended{% endif %}">
             {{ category }}
         </a>
         {% endfor %}

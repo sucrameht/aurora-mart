@@ -1,0 +1,125 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>My Profile - AuroraMart</title>
+    <link rel="stylesheet" href="{% static 'storefront/css/storefront.css' %}">
+    <link rel="stylesheet" href="{% static 'storefront/css/profile.css' %}">
+</head>
+<body>
+    {% if messages %}
+        <div class="message-container">
+            {% for message in messages %}
+                <div class="message {{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+    <div class="header">
+        <div class="logo" onclick="window.location.href='{% url 'storefront_home' %}'">
+            <img src="{% static 'storefront/images/AuroraMartLogo.png' %}" alt="AuroraMart Logo" class="logo-img">
+            <span class="logo-text">AuroraMart</span>
+        </div>
+        <div class="icons">
+            <a href="{% url 'view_cart' %}" class="icon icon-cart">
+                🛒
+                <span id="cart-count">{{ cart_item_count|default:0 }}</span>
+            </a>
+            <form id="logout-form" method="post" action="{% url 'auroraadmin:logout' %}" style="display:inline">
+                {% csrf_token %}
+                <button type="submit" class="logout-button">Logout</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="profile-container">
+        <h1 class="profile-title">My Profile</h1>
+        <div class="profile-grid">
+            <aside class="profile-sidebar">
+
+                <div class="account-card">
+                    <div class="card-header">
+                        <h2>Account Info</h2>
+                        <div class="card-header-icons">
+                            <a href="{% url 'edit_profile' %}" class="card-icon-link" title="Edit Profile">✎</a>
+                            <a href="{% url 'add_shipping_address' %}?next=profile" class="card-icon-link" title="Add New Address">📍</a>
+                        </div>
+                    </div>
+                    
+                    <div class="account-info">
+                        <div class="avatar">👤</div>
+                        <div class="info-text">
+                            <h3>{{ user.get_full_name|default:user.username }}</h3>
+                            <p class="muted">Member since {{ user.date_joined|date:"Y" }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-details">
+                        <p>📧 {{ user.email }}</p>
+                        {% if profile %}
+                            <p>📞 {{ profile.phone_number|default:"—" }}</p>
+                            <p>🏠 123 Orchard Road, Singapore 238858</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="account-stats">
+                        <div class="stat">
+                            <div class="stat-number">{{ total_orders }}</div>
+                            <div class="stat-label">Total Orders</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-number">{{ completed_orders }}</div>
+                            <div class="stat-label">Completed</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wallet-card">
+                    <div class="card-header">
+                        <h2>AuroraMart Wallet</h2>
+                    </div>
+                    <div class="wallet-balance">
+                        <span class="wallet-label">Current Balance</span>
+                        <span class="wallet-amount">${{ profile.wallet_balance|default:'0.00' }}</span>
+                    </div>
+                    <a href="{% url 'wallet' %}" class="btn-top-up">+ Top Up Wallet</a>
+                </div>
+            </aside>
+
+            <section class="orders-panel">
+                <div class="tabs">
+                    <button class="tab-button active">Active Orders</button>
+                    <button class="tab-button">Completed</button>
+                </div>
+
+                <div class="orders-list">
+                    {% if recent_orders %}
+                        {% for order in recent_orders %}
+                        <div class="order-card" onclick="window.location.href='{% url 'customer_order_detail' order.pk %}'" style="cursor: pointer;">
+                            <div class="order-left">
+                                <div class="order-id">Order #{{ forloop.revcounter }}</div>
+                                
+                                <div class="order-date">{{ order.transaction_datetime|date:"Y-m-d" }}</div>
+                                
+                                <div class="order-items">
+                                    {{ order.num_of_products }} item{{ order.num_of_products|pluralize }}
+                                </div>
+                            </div>
+                            <div class="order-right">
+                                <div class="order-total">${{ order.total_spent|default:"0.00" }}</div>
+                                <div class="order-status">Completed</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-order">No recent orders to show.</div>
+                    {% endif %}
+                </div>
+            </section>
+        </div>
+    </div>
+</body>
+</html>

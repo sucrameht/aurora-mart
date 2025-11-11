@@ -1,0 +1,78 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Details - AuroraMart</title>
+    <link rel="stylesheet" href="{% static 'storefront/css/storefront.css' %}">
+    <link rel="stylesheet" href="{% static 'storefront/css/transaction.css' %}">
+</head>
+<body>
+    <div class="header">
+        <div class="logo" onclick="window.location.href='{% url 'storefront_home' %}'">
+            <img src="{% static 'storefront/images/AuroraMartLogo.png' %}" alt="AuroraMart Logo" class="logo-img">
+            <span class="logo-text">AuroraMart</span>
+        </div>
+        <div class="icons">
+            <a href="{% url 'view_cart' %}" class="icon icon-cart">🛒</a>
+            <a href="{% url 'profile' %}" class="icon">👤</a>
+        </div>
+    </div>
+
+<div class="detail-container">
+    <div class="detail-card">
+        <div class="detail-header">
+            <h1 class="detail-title">Order Details</h1>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <span class="summary-label">Customer</span>
+                    <span class="summary-value username">{{ transaction.user.username }}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Date</span>
+                    <span class="summary-value">{{ transaction.transaction_datetime|date:"d M Y, P" }}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Total Items</span>
+                    <span class="summary-value">{{ transaction.num_of_products }}</span>
+                </div>
+            </div>
+        </div>
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th>Product SKU</th>
+                    <th>Product Name</th>
+                    <th class="text-center">Quantity</th>
+                    <th class="text-right">Unit Price</th>
+                    <th class="text-right">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in transaction.items.all %}
+                <tr>
+                    <td>{{ item.product.sku_code }}</td>
+                    <td class="product-name">{{ item.product.product_name }}</td>
+                    <td class="text-center">{{ item.quantity_purchased }}</td>
+                    <td class="text-right">S${{ item.price_at_purchase|floatformat:2 }}</td>
+                    <td class="text-right">S${{ item.subtotal_products_bought|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Footer with Grand Total -->
+        <div class="items-footer">
+            <span class="total-label">Grand Total:</span>
+            <span class="total-value">S${{ transaction.total|floatformat:2 }}</span>
+        </div>
+
+    </div>
+</div>
+
+    </div>
+</div>
+
+</body>
+</html>

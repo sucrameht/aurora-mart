@@ -15,3 +15,4 @@ class UserProfile(models.Model):
     preferred_category = models.CharField(max_length=200, blank=True, null=True)
     is_initial_password = models.BooleanField(default=False) # for setting of initial password
     vouchers = models.ManyToManyField(Voucher, blank=True)
+    wallet_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)

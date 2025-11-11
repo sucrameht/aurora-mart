@@ -1,15 +1,73 @@
+from urllib import request
 from django.shortcuts import render, redirect
 from django.db.models import Q
-from .models import Product, Voucher
+from .models import *
 import joblib
 import os
 from django.apps import apps
-from django.http import JsonResponse
 from decimal import Decimal
 from django.contrib import messages
-from django.views.generic import ListView, View
+from django.views.generic import ListView, View, DetailView
 from .forms import CartActionForm
 from datetime import date
+from django.contrib.auth.mixins import LoginRequiredMixin
+from authentication.models import UserProfile
+import joblib
+import pandas as pd
+from django.apps import apps
+from django.db import transaction
+from datetime import datetime
+from django.db.models import Sum, F, DecimalField
+
+APP_PATH = apps.get_app_config('storefront').path
+
+classifier_model_path = os.path.join(APP_PATH, 'mlmodels', 'b2c_customers_100.joblib')
+rules_model_path = os.path.join(APP_PATH, 'mlmodels', 'b2c_products_500_transactions_50k.joblib')
+
+try:
+    CLASSIFIER_MODEL = joblib.load(classifier_model_path)
+    ASSOCIATION_RULES_MODEL = joblib.load(rules_model_path)
+    print("ML Models loaded successfully from storefront/mlmodels.")
+except FileNotFoundError:
+    print(f"ERROR: Could not find ML models. Check 'mlmodels' folder in '{APP_PATH}'")
+    CLASSIFIER_MODEL = None
+    ASSOCIATION_RULES_MODEL = None
+
+
+def predict_preferred_category(model, customer_data):
+    # This is the list of all columns the model was trained on
+    columns = {
+        'age':'int64', 'household_size':'int64', 'has_children':'int64', 'monthly_income_sgd':'float64',
+        'gender_Female':'bool', 'gender_Male':'bool', 'employment_status_Full-time':'bool',
+        'employment_status_Part-time':'bool', 'employment_status_Retired':'bool',
+        'employment_status_Self-employed':'bool', 'employment_status_Student':'bool',
+        'occupation_Admin':'bool', 'occupation_Education':'bool', 'occupation_Sales':'bool',
+        'occupation_Service':'bool', 'occupation_Skilled Trades':'bool', 'occupation_Tech':'bool',
+        'education_Bachelor':'bool', 'education_Diploma':'bool', 'education_Doctorate':'bool',
+        'education_Master':'bool', 'education_Secondary':'bool'
+    }
+    
+    # Create an empty DataFrame with the correct columns and types
+    df = pd.DataFrame({col: pd.Series(dtype=dtype) for col, dtype in columns.items()})
+    
+    # Convert new customer data to a DataFrame and encode it
+    customer_df = pd.DataFrame([customer_data])
+    customer_encoded = pd.get_dummies(customer_df, columns=['gender', 'employment_status', 'occupation', 'education'])    
+
+    # Fill the empty DataFrame with the new customer's encoded data
+    for col in df.columns:
+        if col not in customer_encoded.columns:
+            # Use False for bool columns, 0 for numeric
+            if df[col].dtype == bool:
+                df[col] = False
+            else:
+                df[col] = 0
+        else:
+            df[col] = customer_encoded[col]
+    
+    # Make the prediction
+    prediction = model.predict(df)    
+    return prediction
 
 
 class StorefrontView(ListView):
@@ -17,10 +75,39 @@ class StorefrontView(ListView):
 
     def get(self, request, *args, **kwargs):
         query = request.GET.get('query', '')
-        active_category = request.GET.get('category')
+        user_clicked_category = request.GET.get('category')
+        # active_category = request.GET.get('category')
         sort = request.GET.get('sort', 'name-asc')
 
         queryset = Product.objects.all()
+
+        # Get the recommended category for the user
+        recommended_category = "All"
+        if CLASSIFIER_MODEL and request.user.is_authenticated:
+            try:
+                profile = UserProfile.objects.get(user=request.user)
+                customer_data = {
+                    'age': profile.age,
+                    'household_size': profile.household_size,
+                    'has_children': profile.has_children,
+                    'monthly_income_sgd': float(profile.monthly_income_sgd),
+                    'gender': profile.gender,
+                    'employment_status': profile.employment_status,
+                    'occupation': profile.occupation,
+                    'education': profile.education
+                }
+                print(f"Customer data for prediction: {customer_data}")
+                # Call the prediction function
+                prediction = predict_preferred_category(CLASSIFIER_MODEL, customer_data)
+                recommended_category = prediction[0]
+                print(f"Predicted preferred category: {recommended_category}")
+            except Exception as e:
+                print(f"Prediction failed: {e}")
+        
+        if user_clicked_category:
+            active_category = user_clicked_category
+        else:
+            active_category = recommended_category
 
         if active_category and active_category != 'All':
             queryset = queryset.filter(product_category=active_category)
@@ -52,6 +139,7 @@ class StorefrontView(ListView):
             'query': query,
             'cart_item_count': cart_item_count,
             'sort': sort,
+            'recommended_category': recommended_category,
         }
         return render(request, self.template_name, context)
 
@@ -188,3 +276,341 @@ class CartView(View):
         
         request.session['cart'] = cart
         return redirect('view_cart')
+
+
+class ProfileView(LoginRequiredMixin, View):
+    template_name = 'profile.html'
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        try:
+            profile = user.userprofile
+        except UserProfile.DoesNotExist:
+            profile = None
+
+        userTransactions = Transactions.objects.filter(user=user)
+        cart = request.session.get('cart', {})
+        cart_item_count = sum(cart.values())
+        
+        total_orders = userTransactions.count()
+        
+        completed_orders = userTransactions.count() 
+        recent_orders = userTransactions.order_by('-transaction_datetime')[:5] 
+
+        context = {
+            'profile': profile,
+            'user': user,
+            'total_orders': total_orders,
+            'completed_orders': completed_orders,
+            'recent_orders': recent_orders,
+            'cart_item_count': cart_item_count,
+        }
+        return render(request, self.template_name, context)
+
+class CheckoutView(LoginRequiredMixin, View):
+    template_name = 'checkout.html'
+
+    def get(self, request, *args, **kwargs):
+        cart = request.session.get('cart', {})
+        cart_items = []
+        subtotal = Decimal('0.00')
+        products_in_cart = Product.objects.filter(sku_code__in=cart.keys())
+
+        for product in products_in_cart:
+            sku = product.sku_code
+            quantity = cart.get(sku, 0)
+            total_item_price = product.unit_price * quantity
+            cart_items.append({
+                'product': product,
+                'quantity': quantity,
+                'total_price': total_item_price
+            })
+            subtotal += total_item_price
+        
+        # (This logic is from CartView's get_voucher method)
+        discount = Decimal('0.00')
+        voucher_code = request.session.get('applied_voucher')
+        if voucher_code:
+            try:
+                voucher = Voucher.objects.get(code=voucher_code, is_active=True)
+                if not voucher.expiry_date or voucher.expiry_date >= date.today():
+                    if voucher.discount_type == 'percent':
+                        discount = subtotal * (voucher.discount_value / Decimal('100'))
+                    else:
+                        discount = voucher.discount_value
+                    discount = min(discount, subtotal)
+                else:
+                    del request.session['applied_voucher']
+            except Voucher.DoesNotExist:
+                del request.session['applied_voucher']
+
+        total = subtotal - discount
+
+        try:
+            profile = UserProfile.objects.get(user=request.user)
+        except UserProfile.DoesNotExist:
+            profile = None
+
+        saved_addresses = ShippingAddress.objects.filter(user=request.user)
+
+        selected_address = None
+        load_address_id = request.GET.get('load_address_id')
+
+        if load_address_id:
+            try:
+                selected_address = ShippingAddress.objects.get(id=load_address_id, user=request.user)
+            except ShippingAddress.DoesNotExist:
+                pass
+        
+        selected_payment_method = request.GET.get('payment_method', 'card')
+
+        context = {
+            'cart_items': cart_items,
+            'subtotal': subtotal,
+            'discount': discount,
+            'total': total,
+            'profile': profile,
+            'user': request.user,
+            'saved_addresses': saved_addresses,
+            'selected_address': selected_address,
+            'selected_payment_method': selected_payment_method,
+        }
+        return render(request, self.template_name, context)
+
+    @transaction.atomic # all or nothing
+    def post(self, request, *args, **kwargs):
+        
+        cart = request.session.get('cart', {})
+        cart_items = []
+        subtotal = Decimal('0.00')
+        if not cart:
+            messages.error(request, "Your cart is empty.")
+            return redirect('view_cart')
+
+        products_in_cart = Product.objects.filter(sku_code__in=cart.keys())
+        for product in products_in_cart:
+            sku = product.sku_code
+            quantity = cart.get(sku, 0)
+            subtotal += product.unit_price * quantity
+            cart_items.append({'product': product, 'quantity': quantity})
+
+        discount = Decimal('0.00')
+        voucher_code = request.session.get('applied_voucher')
+        if voucher_code:
+            try:
+                voucher = Voucher.objects.get(code=voucher_code, is_active=True)
+                if not voucher.expiry_date or voucher.expiry_date >= date.today():
+                    if voucher.discount_type == 'percent':
+                        discount = subtotal * (voucher.discount_value / Decimal('100'))
+                    else:
+                        discount = voucher.discount_value
+                    discount = min(discount, subtotal)
+                else:
+                    del request.session['applied_voucher']
+            except Voucher.DoesNotExist:
+                del request.session['applied_voucher']
+        
+        total = subtotal - discount
+
+        payment_method = request.POST.get('payment_method')
+        shipping_first_name = request.POST.get('first_name')
+        shipping_last_name = request.POST.get('last_name')
+        shipping_phone = request.POST.get('phone')
+        shipping_address = request.POST.get('address')
+        shipping_city = request.POST.get('city')
+        shipping_state = request.POST.get('state')
+        shipping_postal_code = request.POST.get('postal_code')
+
+        if not all([payment_method, shipping_first_name, shipping_address, shipping_city, shipping_postal_code]):
+            messages.error(request, "Please fill out all required shipping and payment fields.")
+            return self.get(request)
+        
+        try:
+            profile = UserProfile.objects.get(user=request.user)
+            
+            if payment_method == 'wallet':
+                if profile.wallet_balance < total:
+                    messages.error(request, f"Insufficient wallet balance. You need ${total}, but only have ${profile.wallet_balance}.")
+                    return self.get(request)
+                profile.wallet_balance -= total
+                profile.save()
+            
+            elif payment_method == 'card':
+                print("Processing credit card (simulation)...")
+        
+        except UserProfile.DoesNotExist:
+            messages.error(request, "User profile not found.")
+            return self.get(request)
+        except Exception as e:
+            messages.error(request, f"An error occurred during payment: {e}")
+            return self.get(request)
+
+        new_transaction = Transactions.objects.create(
+            user=request.user,
+            transaction_datetime=datetime.now(),
+
+            # subtotal=subtotal,
+            # discount=discount,
+            # total=total,
+            # payment_method=payment_method,
+            shipping_first_name=shipping_first_name,
+            shipping_last_name=shipping_last_name,
+            shipping_phone=shipping_phone,
+            shipping_address=shipping_address,
+            shipping_city=shipping_city,
+            shipping_state=shipping_state,
+            shipping_postal_code=shipping_postal_code
+        )
+
+        items_to_create = []
+        for item in cart_items:
+            items_to_create.append(
+                OrderItem(
+                    transactions=new_transaction,
+                    product=item['product'],
+                    quantity_purchased=item['quantity'],
+                    price_at_purchase=item['product'].unit_price 
+                )
+            )
+        OrderItem.objects.bulk_create(items_to_create)
+
+        request.session['cart'] = {}
+        if 'applied_voucher' in request.session:
+            del request.session['applied_voucher']
+            
+        messages.success(request, f"Your order #{new_transaction.id} has been placed!")
+        return redirect('profile')
+    
+class AddShippingAddressView(LoginRequiredMixin, View):
+    template_name = 'add_shipping_address.html'
+    
+    def get(self, request, *args, **kwargs):
+        # Just show the blank form
+        return render(request, self.template_name)
+
+    def post(self, request, *args, **kwargs):
+        # 1. Get the form data
+        nickname = request.POST.get('nickname')
+        
+        # 2. Check for a nickname (it's required for this to work)
+        if not nickname:
+            messages.error(request, "You must provide a nickname (e.g., 'Home' or 'Work').")
+            return render(request, self.template_name)
+            
+        # 3. Create and save the new address object
+        try:
+            ShippingAddress.objects.create(
+                user=request.user,
+                nickname=nickname,
+                first_name=request.POST.get('first_name'),
+                last_name=request.POST.get('last_name'),
+                phone=request.POST.get('phone'),
+                address=request.POST.get('address'),
+                city=request.POST.get('city'),
+                state=request.POST.get('state'),
+                postal_code=request.POST.get('postal_code'),
+            )
+            messages.success(request, f"Address '{nickname}' saved!")
+        
+        except Exception as e:
+            # Handle error, e.g., if nickname is not unique for this user
+            messages.error(request, f"Could not save address: {e}")
+            return render(request, self.template_name)
+
+        # 4. Redirect back to the checkout page
+        #    We check the 'next' parameter to be safe.
+        next_url = request.GET.get('next')
+        if next_url == 'checkout':
+            return redirect('checkout')
+        
+        # Default fallback
+        return redirect('profile')
+
+class EditProfileView(LoginRequiredMixin, View):
+    template_name = 'edit_profile.html'
+
+    def get(self, request, *args, **kwargs):
+        try:
+            profile = UserProfile.objects.get(user=request.user)
+        except UserProfile.DoesNotExist:
+            messages.error(request, "User profile not found.")
+            return redirect('profile')
+        
+        context = {
+            'user': request.user,
+            'profile': profile
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        # We can safely assume the profile exists now because of the get method
+        profile = UserProfile.objects.get(user=request.user)
+        
+        # Get data from the POST form
+        first_name = request.POST.get('first_name')
+        last_name = request.POST.get('last_name')
+        email = request.POST.get('email')
+        
+        # Get profile-specific data (add any other fields you have)
+        phone_number = request.POST.get('phone_number') # Assumes 'phone_number' on UserProfile
+        
+        # Update the User model
+        user.first_name = first_name
+        user.last_name = last_name
+        user.email = email
+        user.save()
+        
+        # Update the UserProfile model
+        profile.phone_number = phone_number
+        # profile.age = request.POST.get('age') # Example
+        # profile.household_size = request.POST.get('household_size') # Example
+        profile.save()
+        
+        messages.success(request, "Your profile has been updated.")
+        return redirect('profile') # Redirect back to the profile page
+
+class WalletView(LoginRequiredMixin, View):
+    template_name = 'wallet.html'
+    
+    def get(self, request, *args, **kwargs):
+        # Get profile, or create it if it doesn't exist
+        profile, created = UserProfile.objects.get_or_create(user=request.user)
+        context = {
+            'profile': profile
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+        profile = UserProfile.objects.get(user=request.user)
+        try:
+            # Get the amount from the form
+            top_up_amount = Decimal(request.POST.get('top_up_amount'))
+            
+            if top_up_amount <= 0:
+                messages.error(request, "Top-up amount must be positive.")
+            else:
+                profile.wallet_balance += top_up_amount
+                profile.save()
+                messages.success(request, f"Successfully added ${top_up_amount} to your wallet.")
+        
+        except:
+            messages.error(request, "Invalid amount entered. Please enter a number.")
+            
+        return redirect('wallet') # Redirect back to the same page
+
+class CustomerTransactionDetailView(LoginRequiredMixin, DetailView):
+    model = Transactions
+    template_name = 'transaction_detail.html'
+    context_object_name = 'transaction'
+    login_url ='/authentication/login/'
+
+    def get_queryset(self):
+        """Ensure user can only see their own transactions."""
+        queryset = super().get_queryset()
+        return queryset.filter(user=self.request.user)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = f'Order Details'
+        return context

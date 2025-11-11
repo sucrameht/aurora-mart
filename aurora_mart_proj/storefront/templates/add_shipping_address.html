@@ -1,0 +1,79 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add New Address</title>
+    <link rel="stylesheet" href="{% static 'storefront/css/storefront.css' %}">
+    <link rel="stylesheet" href="{% static 'storefront/css/checkout.css' %}">
+</head>
+<body>
+
+    <div class="header">
+        </div>
+
+    <div class="checkout-container">
+        <form class="checkout-forms" method="POST" 
+              action="{% url 'add_shipping_address' %}?next={{ request.GET.next }}">
+            {% csrf_token %}
+            
+            <div class="form-card">
+                <h2>Add New Shipping Address</h2>
+                <p>Save an address for faster checkout next time.</p>
+                
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="message {{ message.tags }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+
+                <div class="form-group">
+                    <label for="nickname">Address Nickname</label>
+                    <input type="text" id="nickname" name="nickname" 
+                           placeholder="e.g., Home, Work Office" required>
+                </div>
+                <hr>
+                
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label for="first_name">First Name</label>
+                        <input type="text" id="first_name" name="first_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="last_name">Last Name</label>
+                        <input type="text" id="last_name" name="last_name" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="phone">Phone</label>
+                    <input type="tel" id="phone" name="phone" required>
+                </div>
+                <div class="form-group">
+                    <label for="address">Address</label>
+                    <input type="text" id="address" name="address" required>
+                </div>
+                <div class="form-grid-3">
+                    <div class="form-group">
+                        <label for="city">City</label>
+                        <input type="text" id="city" name="city" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="state">State</label>
+                        <input type="text" id="state" name="state" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="postal_code">Postal Code</label>
+                        <input type="text" id="postal_code" name="postal_code" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="complete-payment-btn">Save Address</button>
+                <br><br>
+                <a href="{% if request.GET.next == 'profile' %}{% url 'profile' %}{% else %}{% url 'checkout' %}{% endif %}" class="cancel-link">Cancel and go back</a>
+            </div>
+        </form>
+    </div>
+    
+</body>
+</html>
