@@ -388,47 +388,18 @@ class DeleteProductView(View):
         product_name = product.product_name
         product.delete()
         return redirect(reverse('auroraadmin:product'))
-    
-class TransactionListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
-    model = Transactions
+
+@method_decorator(login_required(login_url='/login'), name='dispatch')
+@method_decorator(user_passes_test(is_staff, login_url='/login'), name='dispatch')    
+class TransactionListView(View):
     template_name = 'auroraadmin/transactions_list.html'
-    context_object_name = 'transactions'
-
-    login_url ='/login'
-    paginate_by = 50
-
-    def test_func(self):
-        return self.request.user.is_staff
     
-    # optimisation (avoid slow load time by loading the dataset only once instead on multiple calls)
-    def get_queryset(self):
-        queryset = super().get_queryset()
+    def get(self, request, *args, **kwargs):
+        search_query = request.GET.get('q', '').strip()
+        sort_by = request.GET.get('sort', '-transaction_datetime')
+        user_id = request.GET.get('user_id', '').strip()
 
-        # join the user table
-        queryset = queryset.select_related('user')
-
-        # use the annotate func to calc the num of products and total spent in the view
-        queryset = queryset.annotate(
-            viewcal_num_of_products = Sum('items__quantity_purchased', default=0),
-            viewcal_total_spent = Sum(F('items__quantity_purchased') * F('items__product__unit_price'), default=Decimal(0.0), output_field=DecimalField())
-        )
-
-        # check for specific user id first
-        user_id_filter = self.request.GET.get('user_id')
-
-        # implementing the search logic
-        search_query = self.request.GET.get('q', '')
-
-        if user_id_filter:
-            queryset = queryset.filter(user__id=int(user_id_filter))
-        elif search_query:
-            search_filters = Q(user__username=search_query)
-            queryset = queryset.filter(search_filters)
-
-        # implementing the sorting logic
-        sort_by = self.request.GET.get('sort', '-transaction_datetime')
-
-        # defining the fields that are sortable
+        # Define valid sort fields (same as before)
         valid_sort_fields = [
             'user__id', '-user__id',
             'transaction_datetime', '-transaction_datetime',
@@ -436,21 +407,48 @@ class TransactionListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
             'viewcal_total_spent', '-viewcal_total_spent'
         ]
 
-        # apply valid sort_key if any, order by will clear default
-        if sort_by in valid_sort_fields:
+        if sort_by not in valid_sort_fields:
+            sort_by = '-transaction_datetime'
+
+        # Helper function to get filtered, sorted, and paginated queryset for a status
+        def get_paginated_transactions(status, page_param):
+            queryset = Transactions.objects.filter(status=status).select_related('user').annotate(
+                viewcal_num_of_products=Sum('items__quantity_purchased', default=0),
+                viewcal_total_spent=Sum(
+                    F('items__quantity_purchased') * F('items__product__unit_price'),
+                    default=Decimal(0.0),
+                    output_field=DecimalField()
+                )
+            )
+
+            if user_id:
+                queryset = queryset.filter(user__id=user_id)
+
+
+            if search_query:
+                queryset = queryset.filter(user__username=search_query)
+
             queryset = queryset.order_by(sort_by)
 
-        return queryset
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['page_title'] = 'Transactions'
+            paginator = Paginator(queryset, 30)
+            page_number = request.GET.get(page_param)
+            return paginator.get_page(page_number)
 
-        # pass search and sort state from the tmplate
-        context['search_query'] = self.request.GET.get('q', '')
-        context['current_sort'] = self.request.GET.get('sort', '-transaction_datetime')
-        
-        return context
+        # paginated data for each status
+        payment_page = get_paginated_transactions('Payment Made', 'payment_page')
+        delivered_page = get_paginated_transactions('Delivered to Warehouse', 'delivered_page')
+        completed_page = get_paginated_transactions('Delivery Completed', 'completed_page')
+
+        context = {
+            'page_title': 'Transactions',
+            'search_query': search_query,
+            'current_sort': sort_by,
+            'user_id': user_id,
+            'payment_page': payment_page,
+            'delivered_page': delivered_page,
+            'completed_page': completed_page,
+        }
+        return render(request, self.template_name, context)
     
 class TransactionDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
     model = Transactions

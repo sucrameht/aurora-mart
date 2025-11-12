@@ -10,7 +10,9 @@
 
 <div class="transactions-container">
     <div class="transactions-header">
-        <h2 class="transactions-title">Transactions List</h2>
+        <h2 class="transactions-title">
+            Transactions List
+        </h2>
         <!-- Search Bar over transaction table -->
         <form method="GET" action="{% url 'auroraadmin:transactions_list' %}" class="search-form">
             <input type="hidden" name="sort" value="{{ current_sort }}">
@@ -19,6 +21,8 @@
         </form>
     </div>
 
+    <!-- Payment Made Transactions Table -->
+    <h3>Payment Made Transactions</h3>
     <table class="transactions-table">
         <thead>
             <tr>
@@ -61,13 +65,13 @@
         </thead>
 
         <tbody>
-            {% for transaction in transactions %}
+            {% for completed_payment in payment_page %}
             <tr>
-                <td>{{ transaction.id }}</td>
-                <td>{{ transaction.user.username }}</td>
-                <td>{{ transaction.transaction_datetime|date:"d M Y, P" }}</td>
-                <td class="text-center">{{ transaction.viewcal_num_of_products }}</td>
-                <td class="text-right">${{ transaction.viewcal_total_spent|floatformat:2 }}</td>
+                <td>{{ completed_payment.id }}</td>
+                <td>{{ completed_payment.user.username }}</td>
+                <td>{{ completed_payment.transaction_datetime|date:"d M Y, P" }}</td>
+                <td class="text-center">{{ completed_payment.viewcal_num_of_products }}</td>
+                <td class="text-right">${{ completed_payment.viewcal_total_spent|floatformat:2 }}</td>
                 <td>
                     <a href="{% url 'auroraadmin:transaction_detail' transaction.pk %}" class="details-link">
                         View Details
@@ -76,7 +80,7 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="7" class="text-center">No transactions found.</td>
+                <td colspan="7" class="text-center">No Payments found that just completed payment.</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -84,21 +88,199 @@
 
     <div class="pagination-row">
         <span class="step-links">
-            {% if page_obj.has_previous %}
-                <a href="?page=1&sort={{ current_sort }}&q={{ search_query }}">&laquo; First</a>
-                <a href="?page={{ page_obj.previous_page_number }}&sort={{ current_sort }}&q={{ search_query }}">&lsaquo; Prev</a>
+            {% if payment_page.has_previous %}
+                <a href="?page=1&sort={{ current_sort }}&q={{ search_query }}&payment_page=1">&laquo; First</a>
+                <a href="?page={{ payment_page.previous_page_number }}&sort={{ current_sort }}&q={{ search_query }}&payment_page={{ payment_page.previous_page_number }}">&lsaquo; Prev</a>
             {% else %}
                 <span class="disabled">First</span>
                 <span class="disabled">Prev</span>
             {% endif %}
 
             <span class="current_page">
-                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                Page {{ payment_page.number }} of {{ payment_page.paginator.num_pages }}
             </span>
 
-            {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}&sort={{ current_sort }}&q={{ search_query }}"> Next &rsaquo;</a>
-                <a href="?page={{ page_obj.paginator.num_pages }}&sort={{ current_sort }}&q={{ search_query }}">Last &raquo;</a>
+            {% if payment_page.has_next %}
+                <a href="?page={{ payment_page.next_page_number }}&sort={{ current_sort }}&q={{ search_query }}&payment_page={{ payment_page.next_page_number }}"> Next &rsaquo;</a>
+                <a href="?page={{ payment_page.paginator.num_pages }}&sort={{ current_sort }}&q={{ search_query }}&payment_page={{ payment_page.paginator.num_pages }}">Last &raquo;</a>
+            {% else %}
+                <span class="disabled">Next</span>
+                <span class="disabled">Last</span>
+            {% endif %}
+        </span>
+    </div>
+
+    <!-- Delivery to Warehouse Made Transactions Table -->
+    <h3>Delivered to Warehouse Transactions</h3>
+    <table class="transactions-table">
+        <thead>
+            <tr>
+                <th>Transaction ID</th>
+
+                <th>Username</th>
+
+                <th class="sortable">
+                    <a href="?sort={% if current_sort == 'transaction_datetime' %}-transaction_datetime{% else %}transaction_datetime{% endif %}&q={{ search_query }}"
+                        class="{% if 'transaction_datetime' in current_sort %}active-sort{% endif %}">
+                        Transaction Time
+                        {% if 'transaction_datetime' in current_sort %}
+                        <span class="sort-arrow">{% if current_sort == '-transaction_datetime' %}▼{% else %}▲{% endif %}</span>
+                        {% endif %}
+                    </a>
+                </th>
+
+                <th class="sortable">
+                    <a href="?sort={% if current_sort == 'viewcal_num_of_products' %}-viewcal_num_of_products{% else %}viewcal_num_of_products{% endif %}&q={{ search_query }}"
+                        class="{% if 'viewcal_num_of_products' in current_sort %}active-sort{% endif %}">
+                        Number of products
+                        {% if 'viewcal_num_of_products' in current_sort %}
+                        <span class="sort-arrow">{% if current_sort == '-viewcal_num_of_products' %}▼{% else %}▲{% endif %}</span>
+                        {% endif %}
+                    </a>
+                </th>
+
+                <th class="sortable">
+                    <a href="?sort={% if current_sort == 'viewcal_total_spent' %}-viewcal_total_spent{% else %}viewcal_total_spent{% endif %}&q={{ search_query }}"
+                        class="{% if 'viewcal_total_spent' in current_sort %}active-sort{% endif %}">
+                        Total Spent
+                        {% if 'viewcal_total_spent' in current_sort %}
+                        <span class="sort-arrow">{% if current_sort == '-viewcal_total_spent' %}▼{% else %}▲{% endif %}</span>
+                        {% endif %}
+                    </a>
+                </th>
+                                                
+                <th>View</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for delivered_payment in delivered_page %}
+            <tr>
+                <td>{{ delivered_payment.id }}</td>
+                <td>{{ delivered_payment.user.username }}</td>
+                <td>{{ delivered_payment.transaction_datetime|date:"d M Y, P" }}</td>
+                <td class="text-center">{{ delivered_payment.viewcal_num_of_products }}</td>
+                <td class="text-right">${{ delivered_payment.viewcal_total_spent|floatformat:2 }}</td>
+                <td>
+                    <a href="{% url 'auroraadmin:transaction_detail' transaction.pk %}" class="details-link">
+                        View Details
+                    </a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="text-center">No Payments that are just sent to the warehouse are found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="pagination-row">
+        <span class="step-links">
+            {% if delivered_page.has_previous %}
+                <a href="?page=1&sort={{ current_sort }}&q={{ search_query }}&delivered_page=1">&laquo; First</a>
+                <a href="?page={{ delivered_page.previous_page_number }}&sort={{ current_sort }}&q={{ search_query }}&delivered_page={{ delivered_page.previous_page_number }}">&lsaquo; Prev</a>
+            {% else %}
+                <span class="disabled">First</span>
+                <span class="disabled">Prev</span>
+            {% endif %}
+
+            <span class="current_page">
+                Page {{ delivered_page.number }} of {{ delivered_page.paginator.num_pages }}
+            </span>
+
+            {% if delivered_page.has_next %}
+                <a href="?page={{ delivered_page.next_page_number }}&sort={{ current_sort }}&q={{ search_query }}&delivered_page={{ delivered_page.next_page_number }}"> Next &rsaquo;</a>
+                <a href="?page={{ delivered_page.paginator.num_pages }}&sort={{ current_sort }}&q={{ search_query }}&delivered_page={{ delivered_page.paginator.num_pages }}">Last &raquo;</a>
+            {% else %}
+                <span class="disabled">Next</span>
+                <span class="disabled">Last</span>
+            {% endif %}
+        </span>
+    </div>
+
+    <!-- Completed Transactions Table -->
+    <h3>Completed Transactions</h3>
+    <table class="transactions-table">
+        <thead>
+            <tr>
+                <th>Transaction ID</th>
+
+                <th>Username</th>
+
+                <th class="sortable">
+                    <a href="?sort={% if current_sort == 'transaction_datetime' %}-transaction_datetime{% else %}transaction_datetime{% endif %}&q={{ search_query }}"
+                        class="{% if 'transaction_datetime' in current_sort %}active-sort{% endif %}">
+                        Transaction Time
+                        {% if 'transaction_datetime' in current_sort %}
+                        <span class="sort-arrow">{% if current_sort == '-transaction_datetime' %}▼{% else %}▲{% endif %}</span>
+                        {% endif %}
+                    </a>
+                </th>
+
+                <th class="sortable">
+                    <a href="?sort={% if current_sort == 'viewcal_num_of_products' %}-viewcal_num_of_products{% else %}viewcal_num_of_products{% endif %}&q={{ search_query }}"
+                        class="{% if 'viewcal_num_of_products' in current_sort %}active-sort{% endif %}">
+                        Number of products
+                        {% if 'viewcal_num_of_products' in current_sort %}
+                        <span class="sort-arrow">{% if current_sort == '-viewcal_num_of_products' %}▼{% else %}▲{% endif %}</span>
+                        {% endif %}
+                    </a>
+                </th>
+
+                <th class="sortable">
+                    <a href="?sort={% if current_sort == 'viewcal_total_spent' %}-viewcal_total_spent{% else %}viewcal_total_spent{% endif %}&q={{ search_query }}"
+                        class="{% if 'viewcal_total_spent' in current_sort %}active-sort{% endif %}">
+                        Total Spent
+                        {% if 'viewcal_total_spent' in current_sort %}
+                        <span class="sort-arrow">{% if current_sort == '-viewcal_total_spent' %}▼{% else %}▲{% endif %}</span>
+                        {% endif %}
+                    </a>
+                </th>
+                                                
+                <th>View</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for completed_delivery in completed_page %}
+            <tr>
+                <td>{{ completed_delivery.id }}</td>
+                <td>{{ completed_delivery.user.username }}</td>
+                <td>{{ completed_delivery.transaction_datetime|date:"d M Y, P" }}</td>
+                <td class="text-center">{{ completed_delivery.viewcal_num_of_products }}</td>
+                <td class="text-right">${{ completed_delivery.viewcal_total_spent|floatformat:2 }}</td>
+                <td>
+                    <a href="{% url 'auroraadmin:transaction_detail' completed_delivery.pk %}" class="details-link">
+                        View Details
+                    </a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="text-center">No Completed Payments.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="pagination-row">
+        <span class="step-links">
+            {% if completed_page.has_previous %}
+                <a href="?page=1&sort={{ current_sort }}&q={{ search_query }}&delivered_page=1">&laquo; First</a>
+                <a href="?page={{ completed_page.previous_page_number }}&sort={{ current_sort }}&q={{ search_query }}&completed_page={{ completed_page.previous_page_number }}">&lsaquo; Prev</a>
+            {% else %}
+                <span class="disabled">First</span>
+                <span class="disabled">Prev</span>
+            {% endif %}
+
+            <span class="current_page">
+                Page {{ completed_page.number }} of {{ completed_page.paginator.num_pages }}
+            </span>
+
+            {% if completed_page.has_next %}
+                <a href="?page={{ completed_page.next_page_number }}&sort={{ current_sort }}&q={{ search_query }}&completed_page={{ completed_page.next_page_number }}"> Next &rsaquo;</a>
+                <a href="?page={{ completed_page.paginator.num_pages }}&sort={{ current_sort }}&q={{ search_query }}&completed_page={{ completed_page.paginator.num_pages }}">Last &raquo;</a>
             {% else %}
                 <span class="disabled">Next</span>
                 <span class="disabled">Last</span>
