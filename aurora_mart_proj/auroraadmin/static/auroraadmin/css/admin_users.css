@@ -1,0 +1,97 @@
+/* --- Styles for Admin Users Page --- */
+/* Inspired by vouchers.css, applied to admin_users.html classes */
+
+/* Main container: 
+  Styled like the white "cards" from vouchers.html (.voucher-form-container)
+*/
+.container {
+    padding: 20px;
+    background-color: #f0f8ff; /* White card background */
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    margin-bottom: 20px;
+}
+
+.container h2 {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: #007ca5;
+    margin-top: 0; /* Remove default margin */
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #ccc;
+}
+
+.container h3 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 15px;
+    margin-top: 30px;
+}
+.container h3:first-of-type {
+    margin-top: 0;
+}
+
+.container form p {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 15px;
+}
+.container form label {
+    margin-bottom: 5px;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+.container form input[type="text"],
+.container form input[type="email"],
+.container form input[type="password"] {
+    width: 100%;
+    max-width: 400px;
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 0; 
+}
+.table th,
+.table td {
+    padding: 12px 20px; 
+    text-align: center;
+    border-bottom: 1px solid #e0e0e0;
+    vertical-align: middle;
+}
+.table th {
+    background-color: #f9f9f9; 
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #007ca5;
+    text-transform: uppercase;
+}
+.table tbody {
+    background-color: #fdfdfd; 
+}
+
+.btn {
+    padding: 8px 14px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 0.9em;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    color: white;
+}
+.btn-danger:hover {
+    background-color: #c82333;
+}

@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from storefront.models import Product, Voucher
 from django.db.models import Q
 from django.views import View
-from .forms import ProductCreateForm, VoucherForm, CustomerVoucherAssignForm
+from .forms import ProductCreateForm, VoucherForm, CustomerVoucherAssignForm, SuperUserCreationForm
 from django.urls import reverse
 from django.contrib import messages
 from django import forms
@@ -17,6 +17,7 @@ from django.core.paginator import Paginator
 from authentication.models import UserProfile
 from django.contrib.auth.models import User
 import secrets, string
+from django.http import HttpResponseForbidden
 
 SKU_MAPPINGS = {
     'Automotive': {
@@ -635,3 +636,49 @@ class CustomerVoucherAssignView(View):
             'current_vouchers': current_vouchers,
         }
         return render(request, self.template_name, context)
+
+@method_decorator(login_required(login_url='/login'), name='dispatch')
+@method_decorator(user_passes_test(lambda u: u.is_superuser, login_url='/login'), name='dispatch')
+class AdminUserView(View):
+    template_name = 'auroraadmin/admin_users.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.username != 'admin':
+            return HttpResponseForbidden("Only the main admin user can access this page!")
+        return super().dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        admins = User.objects.filter(is_superuser=True).exclude(id=request.user.id)
+        print("Admins in list:", list(admins.values_list('username', flat=True)))
+        form = SuperUserCreationForm()
+        context = {
+            'form': form,
+            'admins': admins,
+        }
+        return render(request, self.template_name, context)
+    
+    def post(self, request, *args, **kwargs):
+        if 'add' in request.POST:
+            form = SuperUserCreationForm(request.POST)
+            
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'New admin user created successfully.')
+                return redirect('auroraadmin:admin_users')
+            
+            else:
+                admins = User.objects.filter(is_superuser=True).exclude(username='admin')
+                context = {
+                    'form': form,
+                    'admins': admins,
+                }
+            return render(request, self.template_name, context)
+        
+        elif 'delete' in request.POST: # since the main user will not be in the list
+            admin_id = request.POST.get('pk')
+            admin_user = get_object_or_404(User, id=admin_id, is_superuser=True)
+            admin_user.delete()
+            messages.success(request, 'Admin user deleted successfully.')
+            return redirect('auroraadmin:admin_users')
+        
+        return self.get(request)

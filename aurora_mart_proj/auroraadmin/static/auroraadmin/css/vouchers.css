@@ -63,7 +63,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    padding-top: 25px; /* Align with other fields' labels */
+    padding-top: 25px;
 }
 
 /* Error styles */
