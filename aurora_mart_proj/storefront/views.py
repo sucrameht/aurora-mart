@@ -331,9 +331,15 @@ class CartView(View):
                 request.session['cart_item_count'] = sum(cart.values())
 
             if action == 'apply_voucher':
+                if not request.user.is_authenticated:
+                    return redirect('login')
                 if voucher_code:
                     try:
+                        profile = UserProfile.objects.get(user=request.user)
                         voucher = Voucher.objects.get(code=voucher_code)
+                        if not profile.vouchers.filter(code=voucher_code).exists():
+                            messages.error(request, "This voucher is not valid for your account.")
+                            return redirect('view_cart')
                         if voucher.is_active and (not voucher.expiry_date or voucher.expiry_date >= date.today()):
                             request.session['applied_voucher'] = voucher.code
                             messages.success(request, f"Voucher '{voucher.code}' applied.")
@@ -519,7 +525,6 @@ class CheckoutView(LoginRequiredMixin, View):
             messages.error(request, "Please fill out all required shipping and payment fields.")
             return self.get(request)
         
-        # --- Payment processing (your code is fine) ---
         try:
             profile = UserProfile.objects.get(user=request.user)
             if payment_method == 'wallet':
@@ -553,10 +558,8 @@ class CheckoutView(LoginRequiredMixin, View):
             payment_method=payment_method,
         )
 
-        # --- FIX 3: Update products and create OrderItems ---
         items_to_create = []
         for item in cart_items_db:
-            # Prepare OrderItem for bulk creation
             items_to_create.append(
                 OrderItem(
                     transactions=new_transaction,
@@ -575,6 +578,7 @@ class CheckoutView(LoginRequiredMixin, View):
         if voucher_obj:
             voucher_obj.used_count = F('used_count') + 1
             voucher_obj.save()
+            del request.session['applied_voucher']
 
         cart_items_db.delete()
         messages.success(request, f"Your order #{new_transaction.id} has been placed!")
