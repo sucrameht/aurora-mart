@@ -1,4 +1,3 @@
-from urllib import request
 from django.shortcuts import render, redirect
 from django.db.models import Q
 from .models import *
@@ -12,12 +11,10 @@ from .forms import CartActionForm
 from datetime import date
 from django.contrib.auth.mixins import LoginRequiredMixin
 from authentication.models import UserProfile
-import joblib
 import pandas as pd
 from django.apps import apps
 from django.db import transaction
 from datetime import datetime
-from django.db.models import Sum, F, DecimalField
 
 APP_PATH = apps.get_app_config('storefront').path
 
@@ -64,8 +61,7 @@ def predict_preferred_category(model, customer_data):
                 df[col] = 0
         else:
             df[col] = customer_encoded[col]
-    
-    # Make the prediction
+
     prediction = model.predict(df)    
     return prediction
 
