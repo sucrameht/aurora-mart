@@ -17,6 +17,9 @@
         </div>
         <div class="icons">
             <a href="{% url 'profile' %}" class="icon">👤</a>
+            {% if user.is_superuser %}
+            <a href="{% url 'auroraadmin:admin_dashboard' %}" class="admin-button">Admin</a>
+            {% endif %}
         </div>
     </div>
 
@@ -74,7 +77,31 @@
                         </form>
                     </div>
                     {% endfor %}
+
+                    {% if recommended_products %}
+                        <div class="recommendations-panel">
+                            <h2>Frequently Bought Together</h2>
+                            <div class="recommendations-list">
+                                {% for product in recommended_products %}
+                                <div class="recommendation-card">
+                                    <img src="https://nus.edu.sg/images/default-source/identity-images/NUS_logo_full-horizontal.jpg" alt="{{ product.product_name }}" class="recommendation-img">
+                                    <div class="recommendation-details">
+                                        <span class="recommendation-name">{{ product.product_name }}</span>
+                                        <span class="recommendation-price">${{ product.unit_price }}</span>
+                                    </div>
+                                    <form action="{% url 'storefront_home' %}" method="POST" class="recommendation-add-form">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="add">
+                                        <input type="hidden" name="sku_code" value="{{ product.sku_code }}">
+                                        <button type="submit" class="btn-add-recommendation">+</button>
+                                    </form>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
                 </div>
+
 
                 <div class="order-summary">
                     <h2>Order Summary</h2>

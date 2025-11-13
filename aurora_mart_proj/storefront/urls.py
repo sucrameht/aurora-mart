@@ -10,4 +10,6 @@ urlpatterns = [
     path('profile/edit-profile/', EditProfileView.as_view(), name='edit_profile'),
     path('wallet/', WalletView.as_view(), name='wallet'),
     path('orders/<int:pk>/', CustomerTransactionDetailView.as_view(), name='customer_order_detail'),
+    path('orders/<int:pk>/review/', RateOrderView.as_view(), name='rate_order'),
+    path('buy-now/<str:sku_code>/', BuyNowView.as_view(), name='buy_now'),
 ]

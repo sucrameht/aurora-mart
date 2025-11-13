@@ -64,8 +64,16 @@
 
         <!-- Footer with Grand Total -->
         <div class="items-footer">
+            <span class="total-label">Total:</span>
+            <span class="total-value">S${{ total|floatformat:2 }}</span>
+            <br/>
+            <br/>
+            <span class="total-label">Voucher Value:</span>
+            <span class="total-value">S${{ voucher_value|floatformat:2 }}</span>
+            <br/>
+            <br/>
             <span class="total-label">Grand Total:</span>
-            <span class="total-value">S${{ transaction.total|floatformat:2 }}</span>
+            <span class="total-value">S${{ grand_total|floatformat:2 }}</span>
         </div>
 
     </div>

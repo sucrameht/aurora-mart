@@ -1,6 +1,5 @@
-from urllib import request
-from django.shortcuts import render, redirect
-from django.db.models import Q
+from django.shortcuts import render, redirect, get_object_or_404
+from django.db.models import Q, Sum, F
 from .models import *
 import joblib
 import os
@@ -9,15 +8,12 @@ from decimal import Decimal
 from django.contrib import messages
 from django.views.generic import ListView, View, DetailView
 from .forms import CartActionForm
-from datetime import date
+from datetime import date, datetime
 from django.contrib.auth.mixins import LoginRequiredMixin
 from authentication.models import UserProfile
-import joblib
 import pandas as pd
 from django.apps import apps
 from django.db import transaction
-from datetime import datetime
-from django.db.models import Sum, F, DecimalField
 
 APP_PATH = apps.get_app_config('storefront').path
 
@@ -64,11 +60,26 @@ def predict_preferred_category(model, customer_data):
                 df[col] = 0
         else:
             df[col] = customer_encoded[col]
-    
-    # Make the prediction
+
     prediction = model.predict(df)    
     return prediction
 
+def get_recommendations(loaded_rules, items, metric='confidence', top_n=6):
+    recommendations = set()
+
+    for item in items:
+        # Find rules where the item is in the antecedents
+        matched_rules = loaded_rules[loaded_rules['antecedents'].apply(lambda x: item in x)]
+        # Sort by the specified metric and get the top N
+        top_rules = matched_rules.sort_values(by=metric, ascending=False).head(top_n)
+
+        for _, row in top_rules.iterrows():
+            recommendations.update(row['consequents'])
+
+    # Remove items that are already in the input list
+    recommendations.difference_update(items)
+    print(f"Recommendations after filtering out items already in cart: {recommendations}")
+    return list(recommendations)[:top_n]
 
 class StorefrontView(ListView):
     template_name = 'storefront.html'
@@ -132,8 +143,12 @@ class StorefrontView(ListView):
             queryset = queryset.order_by('-product_rating')
 
         categories = Product.objects.values_list('product_category', flat=True).distinct().order_by('product_category')
-        cart = request.session.get('cart', {})
-        cart_item_count = sum(cart.values())
+        if request.user.is_authenticated:
+            cart_item_count = CartItem.objects.filter(user=request.user).aggregate(
+                total_quantity=Sum('quantity')
+            )['total_quantity'] or 0
+        else:
+            cart_item_count = request.session.get('cart_item_count', 0)
 
         context = {
             'products': queryset,
@@ -153,13 +168,33 @@ class StorefrontView(ListView):
             sku = form.cleaned_data['sku_code']
             cart = request.session.get('cart', {})
 
-            if action == 'add':
+            if not request.user.is_authenticated:
                 cart[sku] = cart.get(sku, 0) + 1
                 request.session['cart'] = cart
-                messages.success(request, "Item added to cart!")
+                request.session['cart_item_count'] = sum(cart.values())
+                messages.success(request, "Item added to cart! Please log in to save your cart.")
+                return redirect('storefront_home')
+
+            if action == 'add':
+                try:
+                    product = Product.objects.get(sku_code=sku)
+                    # Get or create a cart item
+                    cart_item, created = CartItem.objects.get_or_create(
+                        user=request.user, 
+                        product=product,
+                        quantity=1
+                    )
+                    if not created:
+                        # If it already exists, just increment the quantity
+                        cart_item.quantity += 1
+                    
+                    cart_item.save()
+                    messages.success(request, "Item added to cart!")
+                
+                except Product.DoesNotExist:
+                    messages.error(request, "Product not found.")
         else:
             return self.get(request, form=form)  # Re-render with errors; adjust if needed
-
         return redirect(request.META.get('HTTP_REFERER', 'storefront_home'))
 
 
@@ -168,22 +203,43 @@ class CartView(View):
 
     def get(self, request, *args, **kwargs):
         # Handle displaying the cart (your existing get_context_data logic)
-        cart = request.session.get('cart', {})
-        cart_items = []
-        subtotal = Decimal('0.00')
+        if not request.user.is_authenticated:
+            cart = request.session.get('cart', {})
+            cart_items = []
+            subtotal = Decimal('0.00')
+            cart_skus = list(cart.keys())
 
-        products_in_cart = Product.objects.filter(sku_code__in=cart.keys())
+            products_in_cart = Product.objects.filter(sku_code__in=cart.keys())
 
-        for product in products_in_cart:
-            sku = product.sku_code
-            quantity = cart.get(sku, 0)
-            total_item_price = product.unit_price * quantity
-            cart_items.append({
-                'product': product,
-                'quantity': quantity,
-                'total_price': total_item_price
-            })
-            subtotal += total_item_price
+            for product in products_in_cart:
+                sku = product.sku_code
+                quantity = cart.get(sku, 0)
+                total_item_price = product.unit_price * quantity
+                cart_items.append({
+                    'product': product,
+                    'quantity': quantity,
+                    'total_price': total_item_price
+                })
+                subtotal += total_item_price
+        else:
+            cart_items = CartItem.objects.filter(user=request.user).select_related('product')
+            subtotal = sum(item.total_price for item in cart_items)
+            cart_skus = [item.product.sku_code for item in cart_items]
+    
+        recommended_products = []
+
+        if cart_skus and ASSOCIATION_RULES_MODEL is not None:
+            # Call your new function
+            recommended_skus = get_recommendations(
+                ASSOCIATION_RULES_MODEL, 
+                cart_skus, 
+                metric='lift',  # 'lift' is often good for recommendations
+                top_n=6
+            )
+            # Get the full Product objects for the recommended SKUs
+            recommended_products = Product.objects.filter(sku_code__in=recommended_skus)
+        print(f"Recommended products based on cart: {[p.sku_code for p in recommended_products]}")
+
         
         applied_voucher, discount = self.get_voucher(request, subtotal)
 
@@ -201,6 +257,7 @@ class CartView(View):
             'applied_voucher': applied_voucher,
             'discount': discount,
             'current_voucher_code': current_voucher_code,
+            'recommended_products': recommended_products,
         }
         return render(request, self.template_name, context)
     
@@ -217,10 +274,8 @@ class CartView(View):
                         discount = subtotal * (voucher.discount_value / Decimal('100'))
                     else:  # 'amount'
                         discount = voucher.discount_value
-                    # Cap discount at subtotal to avoid negative totals
                     discount = min(discount, subtotal)
                 else:
-                    # Invalid/expired: remove from session
                     del request.session['applied_voucher']
                     messages.error(request, "Applied voucher is no longer valid.")
             except Voucher.DoesNotExist:
@@ -235,38 +290,68 @@ class CartView(View):
             action = form.cleaned_data['action']
             sku = form.cleaned_data['sku_code']
             quantity = form.cleaned_data['quantity']
-            cart = request.session.get('cart', {})
             voucher_code = form.cleaned_data['voucher_code']
 
-            if action == 'update':
-                sku = request.POST.get('sku_code')
-                quantity = int(request.POST.get('quantity', 1))
-                if sku in cart:
-                    if quantity > 0:
-                        cart[sku] = quantity
-                    else:
+            if request.user.is_authenticated:
+                if action == 'update':
+                    sku = request.POST.get('sku_code')
+                    quantity = int(request.POST.get('quantity', 1))
+                    try:
+                        cart_item = CartItem.objects.get(user=request.user, product__sku_code=sku)
+                        if quantity > 0:
+                            cart_item.quantity = quantity
+                            cart_item.save()
+                        else:
+                            cart_item.delete() # Remove if quantity is 0
+                    except CartItem.DoesNotExist:
+                        messages.error(request, "Item not in cart.")
+                
+                elif action == 'remove':
+                    sku = request.POST.get('sku_code')
+                    CartItem.objects.filter(user=request.user, product__sku_code=sku).delete()
+            
+            else:
+                cart = request.session.get('cart', {})
+                
+                if action == 'update':
+                    sku = request.POST.get('sku_code')
+                    quantity = int(request.POST.get('quantity', 1))
+                    if sku in cart:
+                        if quantity > 0:
+                            cart[sku] = quantity
+                        else:
+                            del cart[sku]
+                
+                elif action == 'remove':
+                    sku = request.POST.get('sku_code')
+                    if sku in cart:
                         del cart[sku]
+                
+                request.session['cart'] = cart
+                request.session['cart_item_count'] = sum(cart.values())
 
-            elif action == 'remove':
-                sku = request.POST.get('sku_code')
-                if sku in cart:
-                    del cart[sku]
-            elif action == 'apply_voucher':
+            if action == 'apply_voucher':
+                if not request.user.is_authenticated:
+                    return redirect('login')
                 if voucher_code:
                     try:
-                        # Check voucher validity
+                        profile = UserProfile.objects.get(user=request.user)
                         voucher = Voucher.objects.get(code=voucher_code)
+                        if not profile.vouchers.filter(code=voucher_code).exists():
+                            messages.error(request, "This voucher is not valid for your account.")
+                            return redirect('view_cart')
                         if voucher.is_active and (not voucher.expiry_date or voucher.expiry_date >= date.today()):
                             request.session['applied_voucher'] = voucher.code
                             messages.success(request, f"Voucher '{voucher.code}' applied.")
                         elif not voucher.is_active:
                             messages.error(request, "Voucher is not active.")
-                        else: # Expired
+                        else:
                             messages.error(request, "Voucher is expired.")
                     except Voucher.DoesNotExist:
                         messages.error(request, "Invalid voucher code.")
                 else:
                     messages.error(request, "Please enter a voucher code.")
+            
             elif action == 'remove_voucher':
                 if 'applied_voucher' in request.session:
                     del request.session['applied_voucher']
@@ -276,8 +361,7 @@ class CartView(View):
             for field, errors in form.errors.items():
                 for error in errors:
                     messages.error(request, f"{field}: {error}")
-        
-        request.session['cart'] = cart
+
         return redirect('view_cart')
 
 
@@ -286,27 +370,39 @@ class ProfileView(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         user = request.user
+        active_tab = request.GET.get('tab', 'active')
+        
         try:
             profile = user.userprofile
         except UserProfile.DoesNotExist:
             profile = None
 
-        userTransactions = Transactions.objects.filter(user=user)
-        cart = request.session.get('cart', {})
-        cart_item_count = sum(cart.values())
+        user_transactions = Transactions.objects.filter(user=user)
         
-        total_orders = userTransactions.count()
+        completed_orders_list = user_transactions.filter(
+            status='Delivery Completed'
+        ).order_by('-transaction_datetime')
+
+        active_orders_list = user_transactions.exclude(
+            status='Delivery Completed'
+        ).order_by('-transaction_datetime')
         
-        completed_orders = userTransactions.count() 
-        recent_orders = userTransactions.order_by('-transaction_datetime')[:5] 
+        total_orders = user_transactions.count()
+        completed_orders_count = completed_orders_list.count() 
+        
+        if request.user.is_authenticated:
+            cart_items_db = CartItem.objects.filter(user=request.user).select_related('product')
+            cart_item_count = sum(item.quantity for item in cart_items_db)
 
         context = {
             'profile': profile,
             'user': user,
             'total_orders': total_orders,
-            'completed_orders': completed_orders,
-            'recent_orders': recent_orders,
+            'completed_orders': completed_orders_count,
+            'active_orders_list': active_orders_list,
+            'completed_orders_list': completed_orders_list,
             'cart_item_count': cart_item_count,
+            'active_tab': active_tab,  # --- ADD THIS ---
         }
         return render(request, self.template_name, context)
 
@@ -314,40 +410,62 @@ class CheckoutView(LoginRequiredMixin, View):
     template_name = 'checkout.html'
 
     def get(self, request, *args, **kwargs):
-        cart = request.session.get('cart', {})
-        cart_items = []
-        subtotal = Decimal('0.00')
-        products_in_cart = Product.objects.filter(sku_code__in=cart.keys())
+        buy_now_item_session = request.session.get('buy_now_item')
 
-        for product in products_in_cart:
-            sku = product.sku_code
-            quantity = cart.get(sku, 0)
-            total_item_price = product.unit_price * quantity
-            cart_items.append({
+        if buy_now_item_session:
+            # --- BUY NOW LOGIC ---
+            product = get_object_or_404(Product, sku_code=buy_now_item_session['sku_code'])
+            cart_items = [{
                 'product': product,
-                'quantity': quantity,
-                'total_price': total_item_price
-            })
-            subtotal += total_item_price
-        
-        # (This logic is from CartView's get_voucher method)
-        discount = Decimal('0.00')
-        voucher_code = request.session.get('applied_voucher')
-        if voucher_code:
-            try:
-                voucher = Voucher.objects.get(code=voucher_code, is_active=True)
-                if not voucher.expiry_date or voucher.expiry_date >= date.today():
-                    if voucher.discount_type == 'percent':
-                        discount = subtotal * (voucher.discount_value / Decimal('100'))
-                    else:
-                        discount = voucher.discount_value
-                    discount = min(discount, subtotal)
-                else:
-                    del request.session['applied_voucher']
-            except Voucher.DoesNotExist:
-                del request.session['applied_voucher']
+                'quantity': 1,
+                'total_price': product.unit_price
+            }]
+            subtotal = product.unit_price
+            discount = Decimal('0.00') # No vouchers for buy now
+            total = subtotal
+            
+            # Clear the session item after use
+            # del request.session['buy_now_item']
 
-        total = subtotal - discount
+        else:
+            # --- REGULAR CART CHECKOUT LOGIC ---
+            cart_items_db = CartItem.objects.filter(user=request.user).select_related('product')
+            
+            if not cart_items_db.exists():
+                messages.warning(request, "Your cart is empty. Add some products before checking out.")
+                return redirect('storefront_home')
+
+            cart_items = []
+            subtotal = Decimal('0.00')
+
+            for item in cart_items_db:
+                item_total = item.quantity * item.product.unit_price
+                cart_items.append({
+                    'product': item.product,
+                    'quantity': item.quantity,
+                    'total_price': item_total
+                })
+                subtotal += item_total
+
+            # (This logic is from CartView's get_voucher method)
+            discount = Decimal('0.00')
+            voucher_code = request.session.get('applied_voucher')
+            if voucher_code:
+                try:
+                    voucher = Voucher.objects.get(code=voucher_code, is_active=True)
+                    if voucher.discount_type == 'percent':
+                        discount = (subtotal * (voucher.discount_value / 100)).quantize(Decimal('0.01'))
+                    else: # amount
+                        discount = voucher.discount_value
+                    
+                    if discount > subtotal:
+                        discount = subtotal
+
+                except Voucher.DoesNotExist:
+                    messages.error(request, "The applied voucher is no longer valid.")
+                    del request.session['applied_voucher']
+
+            total = subtotal - discount
 
         try:
             profile = UserProfile.objects.get(user=request.user)
@@ -382,40 +500,10 @@ class CheckoutView(LoginRequiredMixin, View):
 
     @transaction.atomic # all or nothing
     def post(self, request, *args, **kwargs):
-        
-        cart = request.session.get('cart', {})
-        cart_items = []
-        subtotal = Decimal('0.00')
-        if not cart:
-            messages.error(request, "Your cart is empty.")
-            return redirect('view_cart')
+        buy_now_item_session = request.session.get('buy_now_item')
+        user = request.user
 
-        products_in_cart = Product.objects.filter(sku_code__in=cart.keys())
-        for product in products_in_cart:
-            sku = product.sku_code
-            quantity = cart.get(sku, 0)
-            subtotal += product.unit_price * quantity
-            cart_items.append({'product': product, 'quantity': quantity})
-
-        discount = Decimal('0.00')
-        voucher_code = request.session.get('applied_voucher')
-        if voucher_code:
-            try:
-                voucher = Voucher.objects.get(code=voucher_code, is_active=True)
-                if not voucher.expiry_date or voucher.expiry_date >= date.today():
-                    if voucher.discount_type == 'percent':
-                        discount = subtotal * (voucher.discount_value / Decimal('100'))
-                    else:
-                        discount = voucher.discount_value
-                    discount = min(discount, subtotal)
-                else:
-                    del request.session['applied_voucher']
-            except Voucher.DoesNotExist:
-                del request.session['applied_voucher']
-        
-        total = subtotal - discount
-
-        payment_method = request.POST.get('payment_method')
+        # --- Common data from form ---
         shipping_first_name = request.POST.get('first_name')
         shipping_last_name = request.POST.get('last_name')
         shipping_phone = request.POST.get('phone')
@@ -423,66 +511,128 @@ class CheckoutView(LoginRequiredMixin, View):
         shipping_city = request.POST.get('city')
         shipping_state = request.POST.get('state')
         shipping_postal_code = request.POST.get('postal_code')
+        payment_method = request.POST.get('payment_method')
 
-        if not all([payment_method, shipping_first_name, shipping_address, shipping_city, shipping_postal_code]):
-            messages.error(request, "Please fill out all required shipping and payment fields.")
-            return self.get(request)
-        
-        try:
-            profile = UserProfile.objects.get(user=request.user)
-            
+        if not all([shipping_first_name, shipping_address, shipping_city, shipping_postal_code]):
+            messages.error(request, "Please fill in all required shipping details.")
+            return redirect(request.META.get('HTTP_REFERER', 'checkout'))
+
+        if buy_now_item_session:
+            # --- 1. HANDLE BUY NOW ORDER ---
+            product = get_object_or_404(Product, sku_code=buy_now_item_session['sku_code'])
+            total_cost = product.unit_price
+
+            # Check stock
+            if product.quantity_on_hand < 1:
+                messages.error(request, f"Sorry, {product.product_name} is out of stock.")
+                del request.session['buy_now_item']
+                return redirect('storefront_home')
+
+            # Handle payment
             if payment_method == 'wallet':
-                if profile.wallet_balance < total:
-                    messages.error(request, f"Insufficient wallet balance. You need ${total}, but only have ${profile.wallet_balance}.")
-                    return self.get(request)
-                profile.wallet_balance -= total
+                profile = UserProfile.objects.get(user=user)
+                if profile.wallet_balance < total_cost:
+                    messages.error(request, "Insufficient wallet balance.")
+                    return redirect('checkout')
+                profile.wallet_balance -= total_cost
                 profile.save()
-            
-            elif payment_method == 'card':
-                print("Processing credit card (simulation)...")
-        
-        except UserProfile.DoesNotExist:
-            messages.error(request, "User profile not found.")
-            return self.get(request)
-        except Exception as e:
-            messages.error(request, f"An error occurred during payment: {e}")
-            return self.get(request)
 
-        new_transaction = Transactions.objects.create(
-            user=request.user,
-            transaction_datetime=datetime.now(),
-
-            # subtotal=subtotal,
-            # discount=discount,
-            # total=total,
-            # payment_method=payment_method,
-            shipping_first_name=shipping_first_name,
-            shipping_last_name=shipping_last_name,
-            shipping_phone=shipping_phone,
-            shipping_address=shipping_address,
-            shipping_city=shipping_city,
-            shipping_state=shipping_state,
-            shipping_postal_code=shipping_postal_code
-        )
-
-        items_to_create = []
-        for item in cart_items:
-            items_to_create.append(
-                OrderItem(
-                    transactions=new_transaction,
-                    product=item['product'],
-                    quantity_purchased=item['quantity'],
-                    price_at_purchase=item['product'].unit_price 
-                )
+            # Create transaction
+            new_transaction = Transactions.objects.create(
+                user=user,
+                transaction_datetime=datetime.now(),
+                shipping_first_name=shipping_first_name,
+                shipping_last_name=shipping_last_name,
+                shipping_phone=shipping_phone,
+                shipping_address=shipping_address,
+                shipping_city=shipping_city,
+                shipping_state=shipping_state,
+                shipping_postal_code=shipping_postal_code,
+                status='Payment Made',
+                payment_method=payment_method,
+                voucher_value=0 # No vouchers for buy now
             )
-        OrderItem.objects.bulk_create(items_to_create)
 
-        request.session['cart'] = {}
-        if 'applied_voucher' in request.session:
-            del request.session['applied_voucher']
+            # Create order item
+            OrderItem.objects.create(
+                transactions=new_transaction,
+                product=product,
+                quantity_purchased=1,
+                price_at_purchase=product.unit_price
+            )
+
+            # Update product stock
+            product.quantity_on_hand -= 1
+            product.num_sold += 1
+            product.save()
+
+            # Clean up session
+            del request.session['buy_now_item']
+
+        else:
+            # --- 2. HANDLE REGULAR CART ORDER ---
+            cart_items = CartItem.objects.filter(user=user)
+            if not cart_items.exists():
+                messages.error(request, "Your cart is empty.")
+                return redirect('storefront_home')
+
+            subtotal = sum(item.total_price for item in cart_items)
             
-        messages.success(request, f"Your order #{new_transaction.id} has been placed!")
+            # Apply voucher discount
+            _, discount = self.get_voucher(request, subtotal)
+            total_cost = subtotal - discount
+
+            # Check stock for all items
+            for item in cart_items:
+                if item.product.quantity_on_hand < item.quantity:
+                    messages.error(request, f"Sorry, not enough stock for {item.product.product_name}.")
+                    return redirect('view_cart')
+
+            # Handle payment
+            if payment_method == 'wallet':
+                profile = UserProfile.objects.get(user=user)
+                if profile.wallet_balance < total_cost:
+                    messages.error(request, "Insufficient wallet balance.")
+                    return redirect('checkout')
+                profile.wallet_balance -= total_cost
+                profile.save()
+
+            # Create transaction
+            new_transaction = Transactions.objects.create(
+                user=user,
+                transaction_datetime=datetime.now(),
+                shipping_first_name=shipping_first_name,
+                shipping_last_name=shipping_last_name,
+                shipping_phone=shipping_phone,
+                shipping_address=shipping_address,
+                shipping_city=shipping_city,
+                shipping_state=shipping_state,
+                shipping_postal_code=shipping_postal_code,
+                status='Payment Made',
+                payment_method=payment_method,
+                voucher_value=discount
+            )
+
+            # Create order items and update stock
+            for item in cart_items:
+                OrderItem.objects.create(
+                    transactions=new_transaction,
+                    product=item.product,
+                    quantity_purchased=item.quantity,
+                    price_at_purchase=item.product.unit_price
+                )
+                item.product.quantity_on_hand -= item.quantity
+                item.product.num_sold += item.quantity
+                item.product.save()
+
+            # Clean up cart and session
+            cart_items.delete()
+            if 'applied_voucher' in request.session:
+                del request.session['applied_voucher']
+
+        messages.success(request, "Your order has been placed successfully!")
         return redirect('profile')
+
     
 class AddShippingAddressView(LoginRequiredMixin, View):
     template_name = 'add_shipping_address.html'
@@ -606,7 +756,6 @@ class CustomerTransactionDetailView(LoginRequiredMixin, DetailView):
     model = Transactions
     template_name = 'transaction_detail.html'
     context_object_name = 'transaction'
-    login_url ='/login'
 
     def get_queryset(self):
         """Ensure user can only see their own transactions."""
@@ -615,5 +764,73 @@ class CustomerTransactionDetailView(LoginRequiredMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        transaction = context.get('transaction')
+
+        total = transaction.total_spent
+        voucher_value = transaction.voucher_value
+        grand_total = total - voucher_value
+
         context['page_title'] = f'Order Details'
+        context['total'] = total
+        context['grand_total'] = grand_total
+        context['voucher_value'] = voucher_value
         return context
+
+class RateOrderView(LoginRequiredMixin, View):
+    template_name = 'reviews.html'
+
+    def get(self, request, *args, **kwargs):
+        order_pk = self.kwargs.get('pk')
+        order = get_object_or_404(Transactions, pk=order_pk, user=request.user)
+
+        if order.status != 'Delivery Completed':
+            messages.error(request, "You can only review completed orders.")
+            return redirect('profile')
+
+        order_items = OrderItem.objects.filter(transactions=order).select_related('product')
+        context = {
+            'order': order,
+            'order_items': order_items
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+        order_pk = self.kwargs.get('pk')
+        order = get_object_or_404(Transactions, pk=order_pk, user=request.user)
+
+        if order.status != 'Delivery Completed':
+            messages.error(request, "You can only review completed orders.")
+            return redirect('profile')
+
+        for item in order.items.all():
+            rating_key = f'rating_{item.pk}'
+            review_key = f'review_{item.pk}'
+
+            if rating_key in request.POST and request.POST[rating_key]:
+                item.rating = request.POST[rating_key]
+            
+            if review_key in request.POST:
+                item.text_review = request.POST[review_key]
+            
+            item.save()
+
+        messages.success(request, "Your review has been submitted successfully!")
+        return redirect('profile')
+
+class BuyNowView(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        sku_code = self.kwargs.get('sku_code')
+        product = get_object_or_404(Product, sku_code=sku_code)
+        
+        # Store the single item in the session for checkout
+        request.session['buy_now_item'] = {
+            'sku_code': product.sku_code,
+            'quantity': 1,
+            'price': str(product.unit_price) 
+        }
+        
+        # Clear any previous cart-based checkout session data
+        if 'applied_voucher' in request.session:
+            del request.session['applied_voucher']
+
+        return redirect('checkout')
