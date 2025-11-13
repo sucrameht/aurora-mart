@@ -25,6 +25,8 @@
         <form action="" method="GET" class="search-form">
             <input type="search" name="query" class="search-bar" placeholder="Search products..." value="{{ request.GET.query }}">
             {% if sort %}<input type="hidden" name="sort" value="{{ sort }}">{% endif %} 
+
+            <input type="hidden" name="category" value="{{ active_category|default:'All' }}">
         </form>
         <div class="icons">
             <a href="{% url 'view_cart' %}" class="icon icon-cart">
@@ -36,7 +38,7 @@
     </div>
 
     <div class="banner">
-        <p>Personalized for you.</p>
+        <p>Personalised for you.</p>
         <h2>Based on your interests, we recommend {{ recommended_category|default:'Electronics' }}</h2>
     </div>
 
