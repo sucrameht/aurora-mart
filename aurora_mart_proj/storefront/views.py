@@ -554,7 +554,7 @@ class CheckoutView(LoginRequiredMixin, View):
             shipping_state=shipping_state,
             shipping_postal_code=shipping_postal_code,
             status='Payment Made',
-            voucher_value=discount,
+            voucher_value=-discount,
             payment_method=payment_method,
         )
 
