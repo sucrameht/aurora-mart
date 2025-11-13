@@ -17,6 +17,9 @@
         </div>
         <div class="icons">
             <a href="{% url 'profile' %}" class="icon">👤</a>
+            {% if user.is_superuser %}
+            <a href="{% url 'auroraadmin:admin_dashboard' %}" class="admin-button">Admin</a>
+            {% endif %}
         </div>
     </div>
 

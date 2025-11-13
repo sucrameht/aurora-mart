@@ -33,6 +33,9 @@
                 {% csrf_token %}
                 <button type="submit" class="logout-button">Logout</button>
             </form>
+            {% if user.is_superuser %}
+            <a href="{% url 'auroraadmin:admin_dashboard' %}" class="admin-button">Admin</a>
+            {% endif %}
         </div>
     </div>
 
