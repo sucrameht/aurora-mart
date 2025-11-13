@@ -100,6 +100,9 @@ class StorefrontView(ListView):
                 # Call the prediction function
                 prediction = predict_preferred_category(CLASSIFIER_MODEL, customer_data)
                 recommended_category = prediction[0]
+                if profile.preferred_category != recommended_category:
+                    profile.preferred_category = recommended_category
+                    profile.save()
                 print(f"Predicted preferred category: {recommended_category}")
             except Exception as e:
                 print(f"Prediction failed: {e}")

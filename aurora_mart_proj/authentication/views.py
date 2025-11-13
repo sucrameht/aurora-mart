@@ -75,31 +75,8 @@ class OnboardingView(LoginRequiredMixin, FormView):
     def form_valid(self, form):
         form.save(commit=True, user=self.request.user)
         profile = UserProfile.objects.get(user=self.request.user)
-
-        try:
-            model_path = os.path.join(settings.BASE_DIR, 'models', 'b2c_customers_100.joblib')
-            model = load(model_path)
-            gender_code = 0 if profile.gender == 'Male' else 1 if profile.gender == 'Female' else 2
-            employment_status_code = {
-                'Full-time': 1,
-                'Part-time': 1,
-                'Self-employed': 1,
-                'Unemployed': 0,
-                'Student': 1,
-                'Retired': 0,
-                'Others': 0
-            }.get(profile.employment_status, 0)
-            input_df = pd.DataFrame([
-                [profile.age, gender_code, employment_status_code, profile.monthly_income_sgd]
-            ])
-            predicted_category = model.predict(input_df)[0]
-            profile.preferred_category = predicted_category
-            profile.save()
-        except Exception as e:
-            logger.error(f"ML prediction failed for user {profile.user.username}: {str(e)}")
-            # create a fall back for the category
-            profile.preferred_category = "General"
-            profile.save()
+        profile.preferred_category = "General"
+        profile.save()
         return super().form_valid(form)
     
 class ChangePasswordView(LoginRequiredMixin, FormView):
