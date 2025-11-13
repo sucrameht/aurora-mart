@@ -67,7 +67,7 @@ Transaction {{ transaction.id }}
         <!-- Footer with Grand Total -->
         <div class="items-footer">
             <div class="total-row">
-                <span class="total-label">Grand Total:</span>
+                <span class="total-label">Total:</span>
                 <span class="total-value">S${{ grand_total|floatformat:2 }}</span>
             </div>
             <div class="total-row">
@@ -75,7 +75,7 @@ Transaction {{ transaction.id }}
                 <span class="total-value">S${{ voucher_value|floatformat:2 }}</span>
             </div>
             <div class="total-row">
-                <span class="total-label">Final Total:</span>
+                <span class="total-label">Grand Total:</span>
                 <span class="total-value">S${{ final_total|floatformat:2 }}</span>
             </div>
         </div>   
