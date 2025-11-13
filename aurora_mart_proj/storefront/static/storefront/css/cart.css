@@ -332,3 +332,85 @@ body {
     background-color: #ff4d4d;
     color: white;
 }
+
+/* --- New wrapper for left column --- */
+.cart-main-column {
+    display: flex;
+    flex-direction: column;
+    gap: 24px; /* Adds space between the cart list and the recommendations */
+}
+
+/* --- Recommendations Panel --- */
+.recommendations-panel {
+    background: #f9f9f9;
+    border-radius: 8px;
+    padding: 20px 24px;
+    border: 1px solid #eee;
+}
+
+.recommendations-panel h2 {
+    font-size: 18px;
+    color: #333;
+    margin-top: 0;
+    margin-bottom: 16px;
+}
+
+.recommendations-list {
+    display: grid;
+    /* Show 2 or 3 items per row, or just let them wrap */
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.recommendation-card {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 12px;
+    gap: 12px;
+}
+
+.recommendation-img {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.recommendation-details {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.recommendation-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #444;
+}
+
+.recommendation-price {
+    font-size: 13px;
+    color: #007ca5;
+}
+
+.btn-add-recommendation {
+    background-color: #007ca5;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    flex-shrink: 0;
+    line-height: 30px; /* Aligns the '+' sign */
+}
+
+.btn-add-recommendation:hover {
+    background-color: #005f7f;
+}

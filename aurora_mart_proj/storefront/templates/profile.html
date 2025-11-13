@@ -7,6 +7,7 @@
     <title>My Profile - AuroraMart</title>
     <link rel="stylesheet" href="{% static 'storefront/css/storefront.css' %}">
     <link rel="stylesheet" href="{% static 'storefront/css/profile.css' %}">
+    <link rel="stylesheet" href="{% static 'auroraadmin/css/transaction_detail.css' %}">
 </head>
 <body>
     {% if messages %}
@@ -61,7 +62,6 @@
                         <p>📧 {{ user.email }}</p>
                         {% if profile %}
                             <p>📞 {{ profile.phone_number|default:"—" }}</p>
-                            <p>🏠 123 Orchard Road, Singapore 238858</p>
                         {% endif %}
                     </div>
                     
@@ -90,35 +90,65 @@
             </aside>
 
             <section class="orders-panel">
-                <div class="tabs">
-                    <button class="tab-button active">Active Orders</button>
-                    <button class="tab-button">Completed</button>
-                </div>
+    <div class="tabs">
+        <a class="tab-button {% if active_tab == 'active' %}active{% endif %}"
+           href="{% url 'profile' %}?tab=active">
+           Active Orders ({{ active_orders_list.count }})
+        </a>
+        
+        <a class="tab-button {% if active_tab == 'completed' %}active{% endif %}"
+           href="{% url 'profile' %}?tab=completed">
+           Completed ({{ completed_orders_list.count }})
+        </a>
+    </div>
 
-                <div class="orders-list">
-                    {% if recent_orders %}
-                        {% for order in recent_orders %}
-                        <div class="order-card" onclick="window.location.href='{% url 'customer_order_detail' order.pk %}'" style="cursor: pointer;">
-                            <div class="order-left">
-                                <div class="order-id">Order #{{ forloop.revcounter }}</div>
-                                
-                                <div class="order-date">{{ order.transaction_datetime|date:"Y-m-d" }}</div>
-                                
-                                <div class="order-items">
-                                    {{ order.num_of_products }} item{{ order.num_of_products|pluralize }}
-                                </div>
-                            </div>
-                            <div class="order-right">
-                                <div class="order-total">${{ order.total_spent|default:"0.00" }}</div>
-                                <div class="order-status">Completed</div>
-                            </div>
+    <div class="orders-list">
+        
+        {% if active_tab == 'active' %}
+            
+            {% if active_orders_list %}
+                {% for order in active_orders_list %}
+                <div class="order-card" onclick="window.location.href='{% url 'customer_order_detail' order.pk %}'" style="cursor: pointer;">
+                    <div class="order-left">
+                        <div class="order-id">Order #{{ order.id }}</div>
+                        <div class="order-date">{{ order.transaction_datetime|date:"Y-m-d" }}</div>
+                        <div class="order-items">
+                            {{ order.num_of_products }} item{{ order.num_of_products|pluralize }}
                         </div>
-                        {% endfor %}
-                    {% else %}
-                        <div class="empty-order">No recent orders to show.</div>
-                    {% endif %}
+                    </div>
+                    <div class="order-right">
+                        <div class="order-total">${{ order.total_spent|default:"0.00" }}</div>
+                        <div class="order-status">{{ order.status }}</div> 
+                    </div>
                 </div>
-            </section>
+                {% endfor %}
+            {% else %}
+                <div class="empty-order">You have no active orders.</div>
+            {% endif %}
+
+        {% else %}  {% if completed_orders_list %}
+                {% for order in completed_orders_list %}
+                <div class="order-card" onclick="window.location.href='{% url 'customer_order_detail' order.pk %}'" style="cursor: pointer;">
+                    <div class="order-left">
+                        <div class="order-id">Order #{{ order.id }}</div>
+                        <div class="order-date">{{ order.transaction_datetime|date:"Y-m-d" }}</div>
+                        <div class="order-items">
+                            {{ order.num_of_products }} item{{ order.num_of_products|pluralize }}
+                        </div>
+                    </div>
+                    <div class="order-right">
+                        <div class="order-total">${{ order.total_spent|default:"0.00" }}</div>
+                        <div class="order-status">{{ order.status }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-order">No completed orders to show.</div>
+            {% endif %}
+
+        {% endif %}
+    </div>
+</section>
         </div>
     </div>
 </body>

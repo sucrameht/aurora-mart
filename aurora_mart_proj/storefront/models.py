@@ -47,7 +47,6 @@ class Transactions(models.Model):
         ],
         default='Card',
     )
-    
 
     class Meta:
         # in order to sort by latest first
@@ -69,13 +68,25 @@ class OrderItem(models.Model):
     product = models.ForeignKey(Product, on_delete=models.RESTRICT)
     quantity_purchased = models.IntegerField()
     price_at_purchase = models.DecimalField(max_digits=10, decimal_places=2)
-    rating = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(5)])
-    text_review = models.CharField(max_length=256, blank=True)
+    rating = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(5)], blank=True, null=True)
+    text_review = models.CharField(max_length=256, blank=True, null=True)
 
     @property
     def subtotal_products_bought(self):
         return self.quantity_purchased * self.price_at_purchase
+
+class CartItem(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="cart_items")
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.IntegerField()
+
+    class Meta:
+        unique_together = ('user', 'product')
     
+    @property
+    def total_price(self):
+        return self.quantity * self.product.unit_price
+
 class Voucher(models.Model):
     code = models.CharField(max_length=50, unique=True)
     discount_type = models.CharField(
