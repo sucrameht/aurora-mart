@@ -111,6 +111,7 @@
                 <div class="order-card" onclick="window.location.href='{% url 'customer_order_detail' order.pk %}'" style="cursor: pointer;">
                     <div class="order-left">
                         <div class="order-id">Order #{{ forloop.revcounter }}</div>
+                        <br/>
                         <div class="order-date">{{ order.transaction_datetime|date:"Y-m-d" }}</div>
                         <div class="order-items">
                             {{ order.num_of_products }} item{{ order.num_of_products|pluralize }}
@@ -118,6 +119,7 @@
                     </div>
                     <div class="order-right">
                         <div class="order-total">${{ order.total_spent|default:"0.00" }}</div>
+                        <br/>
                         <div class="order-status">{{ order.status }}</div> 
                     </div>
                 </div>
@@ -131,6 +133,7 @@
                 <div class="order-card" onclick="window.location.href='{% url 'customer_order_detail' order.pk %}'" style="cursor: pointer;">
                     <div class="order-left">
                         <div class="order-id">Order #{{ forloop.revcounter }}</div>
+                        <br/>
                         <div class="order-date">{{ order.transaction_datetime|date:"Y-m-d" }}</div>
                         <div class="order-items">
                             {{ order.num_of_products }} item{{ order.num_of_products|pluralize }}
@@ -138,6 +141,7 @@
                     </div>
                     <div class="order-right">
                         <div class="order-total">${{ order.total_spent|default:"0.00" }}</div>
+                        <br/>
                         <div class="order-status">{{ order.status }}</div>
                     </div>
                 </div>
