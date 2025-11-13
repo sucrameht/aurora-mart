@@ -133,8 +133,8 @@
 
         {% else %}  {% if completed_orders_list %}
                 {% for order in completed_orders_list %}
-                <div class="order-card" onclick="window.location.href='{% url 'customer_order_detail' order.pk %}'" style="cursor: pointer;">
-                    <div class="order-left">
+                <div class="order-card">
+                    <div class="order-left" onclick="window.location.href='{% url 'customer_order_detail' order.pk %}'" style="cursor: pointer; flex-grow: 1;">
                         <div class="order-id">Order #{{ forloop.revcounter }}</div>
                         <br/>
                         <div class="order-date">{{ order.transaction_datetime|date:"Y-m-d" }}</div>
@@ -146,6 +146,7 @@
                         <div class="order-total">${{ order.total_spent|default:"0.00" }}</div>
                         <br/>
                         <div class="order-status">{{ order.status }}</div>
+                        <a href="{% url 'rate_order' order.pk %}" class="review-button">Review</a>
                     </div>
                 </div>
                 {% endfor %}

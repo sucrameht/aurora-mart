@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q, Sum, F
 from .models import *
 import joblib
@@ -728,4 +728,44 @@ class CustomerTransactionDetailView(LoginRequiredMixin, DetailView):
         context['grand_total'] = grand_total
         context['voucher_value'] = voucher_value
         return context
-    
+
+class RateOrderView(LoginRequiredMixin, View):
+    template_name = 'reviews.html'
+
+    def get(self, request, *args, **kwargs):
+        order_pk = self.kwargs.get('pk')
+        order = get_object_or_404(Transactions, pk=order_pk, user=request.user)
+
+        if order.status != 'Delivery Completed':
+            messages.error(request, "You can only review completed orders.")
+            return redirect('profile')
+
+        order_items = OrderItem.objects.filter(transactions=order).select_related('product')
+        context = {
+            'order': order,
+            'order_items': order_items
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+        order_pk = self.kwargs.get('pk')
+        order = get_object_or_404(Transactions, pk=order_pk, user=request.user)
+
+        if order.status != 'Delivery Completed':
+            messages.error(request, "You can only review completed orders.")
+            return redirect('profile')
+
+        for item in order.items.all():
+            rating_key = f'rating_{item.pk}'
+            review_key = f'review_{item.pk}'
+
+            if rating_key in request.POST and request.POST[rating_key]:
+                item.rating = request.POST[rating_key]
+            
+            if review_key in request.POST:
+                item.text_review = request.POST[review_key]
+            
+            item.save()
+
+        messages.success(request, "Your review has been submitted successfully!")
+        return redirect('profile')
