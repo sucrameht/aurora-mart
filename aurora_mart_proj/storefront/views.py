@@ -410,41 +410,62 @@ class CheckoutView(LoginRequiredMixin, View):
     template_name = 'checkout.html'
 
     def get(self, request, *args, **kwargs):
-        cart_items_db = CartItem.objects.filter(user=request.user).select_related('product')
-        
-        if not cart_items_db.exists():
-            messages.error(request, "Your cart is empty.")
-            return redirect('view_cart')
+        buy_now_item_session = request.session.get('buy_now_item')
 
-        cart_items = []
-        subtotal = Decimal('0.00')
+        if buy_now_item_session:
+            # --- BUY NOW LOGIC ---
+            product = get_object_or_404(Product, sku_code=buy_now_item_session['sku_code'])
+            cart_items = [{
+                'product': product,
+                'quantity': 1,
+                'total_price': product.unit_price
+            }]
+            subtotal = product.unit_price
+            discount = Decimal('0.00') # No vouchers for buy now
+            total = subtotal
+            
+            # Clear the session item after use
+            # del request.session['buy_now_item']
 
-        for item in cart_items_db:
-            cart_items.append({
-                'product': item.product,
-                'quantity': item.quantity,
-                'total_price': item.total_price  # Use the model property
-            })
-            subtotal += item.total_price # Use the model property
+        else:
+            # --- REGULAR CART CHECKOUT LOGIC ---
+            cart_items_db = CartItem.objects.filter(user=request.user).select_related('product')
+            
+            if not cart_items_db.exists():
+                messages.warning(request, "Your cart is empty. Add some products before checking out.")
+                return redirect('storefront_home')
 
-        # (This logic is from CartView's get_voucher method)
-        discount = Decimal('0.00')
-        voucher_code = request.session.get('applied_voucher')
-        if voucher_code:
-            try:
-                voucher = Voucher.objects.get(code=voucher_code, is_active=True)
-                if not voucher.expiry_date or voucher.expiry_date >= date.today():
+            cart_items = []
+            subtotal = Decimal('0.00')
+
+            for item in cart_items_db:
+                item_total = item.quantity * item.product.unit_price
+                cart_items.append({
+                    'product': item.product,
+                    'quantity': item.quantity,
+                    'total_price': item_total
+                })
+                subtotal += item_total
+
+            # (This logic is from CartView's get_voucher method)
+            discount = Decimal('0.00')
+            voucher_code = request.session.get('applied_voucher')
+            if voucher_code:
+                try:
+                    voucher = Voucher.objects.get(code=voucher_code, is_active=True)
                     if voucher.discount_type == 'percent':
-                        discount = subtotal * (voucher.discount_value / Decimal('100'))
-                    else:
+                        discount = (subtotal * (voucher.discount_value / 100)).quantize(Decimal('0.01'))
+                    else: # amount
                         discount = voucher.discount_value
-                    discount = min(discount, subtotal)
-                else:
-                    del request.session['applied_voucher']
-            except Voucher.DoesNotExist:
-                del request.session['applied_voucher']
+                    
+                    if discount > subtotal:
+                        discount = subtotal
 
-        total = subtotal - discount
+                except Voucher.DoesNotExist:
+                    messages.error(request, "The applied voucher is no longer valid.")
+                    del request.session['applied_voucher']
+
+            total = subtotal - discount
 
         try:
             profile = UserProfile.objects.get(user=request.user)
@@ -479,40 +500,10 @@ class CheckoutView(LoginRequiredMixin, View):
 
     @transaction.atomic # all or nothing
     def post(self, request, *args, **kwargs):
-        
-        cart_items_db = CartItem.objects.filter(user=request.user).select_related('product')
-        subtotal = Decimal('0.00')
+        buy_now_item_session = request.session.get('buy_now_item')
+        user = request.user
 
-        if not cart_items_db.exists():
-            messages.error(request, "Your cart is empty.")
-            return redirect('view_cart')
-
-        for item in cart_items_db:
-            subtotal += item.total_price
-        
-        discount = Decimal('0.00')
-        voucher_code = request.session.get('applied_voucher')
-        voucher_obj = None # Will store the voucher object if found
-        
-        if voucher_code:
-            try:
-                voucher_obj = Voucher.objects.get(code=voucher_code, is_active=True)
-                if not voucher_obj.expiry_date or voucher_obj.expiry_date >= date.today():
-                    if voucher_obj.discount_type == 'percent':
-                        discount = subtotal * (voucher_obj.discount_value / Decimal('100'))
-                    else:
-                        discount = voucher_obj.discount_value
-                    discount = min(discount, subtotal)
-                else:
-                    del request.session['applied_voucher']
-                    voucher_obj = None # Voucher expired
-            except Voucher.DoesNotExist:
-                del request.session['applied_voucher']
-                voucher_obj = None # Voucher not found
-        
-        total = subtotal - discount
-
-        payment_method = request.POST.get('payment_method')
+        # --- Common data from form ---
         shipping_first_name = request.POST.get('first_name')
         shipping_last_name = request.POST.get('last_name')
         shipping_phone = request.POST.get('phone')
@@ -520,70 +511,126 @@ class CheckoutView(LoginRequiredMixin, View):
         shipping_city = request.POST.get('city')
         shipping_state = request.POST.get('state')
         shipping_postal_code = request.POST.get('postal_code')
+        payment_method = request.POST.get('payment_method')
 
-        if not all([payment_method, shipping_first_name, shipping_address, shipping_city, shipping_postal_code]):
-            messages.error(request, "Please fill out all required shipping and payment fields.")
-            return self.get(request)
-        
-        try:
-            profile = UserProfile.objects.get(user=request.user)
+        if not all([shipping_first_name, shipping_address, shipping_city, shipping_postal_code]):
+            messages.error(request, "Please fill in all required shipping details.")
+            return redirect(request.META.get('HTTP_REFERER', 'checkout'))
+
+        if buy_now_item_session:
+            # --- 1. HANDLE BUY NOW ORDER ---
+            product = get_object_or_404(Product, sku_code=buy_now_item_session['sku_code'])
+            total_cost = product.unit_price
+
+            # Check stock
+            if product.quantity_on_hand < 1:
+                messages.error(request, f"Sorry, {product.product_name} is out of stock.")
+                del request.session['buy_now_item']
+                return redirect('storefront_home')
+
+            # Handle payment
             if payment_method == 'wallet':
-                if profile.wallet_balance < total:
-                    messages.error(request, f"Insufficient wallet balance. You need ${total}, but only have ${profile.wallet_balance}.")
-                    return self.get(request)
-                profile.wallet_balance -= total
+                profile = UserProfile.objects.get(user=user)
+                if profile.wallet_balance < total_cost:
+                    messages.error(request, "Insufficient wallet balance.")
+                    return redirect('checkout')
+                profile.wallet_balance -= total_cost
                 profile.save()
-            elif payment_method == 'card':
-                print("Processing credit card (simulation)...")
-        except UserProfile.DoesNotExist:
-            messages.error(request, "User profile not found.")
-            return self.get(request)
-        except Exception as e:
-            messages.error(request, f"An error occurred during payment: {e}")
-            return self.get(request)
 
-        # --- Create the Transaction ---
-        new_transaction = Transactions.objects.create(
-            user=request.user,
-            transaction_datetime=datetime.now(),
-            shipping_first_name=shipping_first_name,
-            shipping_last_name=shipping_last_name,
-            shipping_phone=shipping_phone,
-            shipping_address=shipping_address,
-            shipping_city=shipping_city,
-            shipping_state=shipping_state,
-            shipping_postal_code=shipping_postal_code,
-            status='Payment Made',
-            voucher_value=-discount,
-            payment_method=payment_method,
-        )
+            # Create transaction
+            new_transaction = Transactions.objects.create(
+                user=user,
+                transaction_datetime=datetime.now(),
+                shipping_first_name=shipping_first_name,
+                shipping_last_name=shipping_last_name,
+                shipping_phone=shipping_phone,
+                shipping_address=shipping_address,
+                shipping_city=shipping_city,
+                shipping_state=shipping_state,
+                shipping_postal_code=shipping_postal_code,
+                status='Payment Made',
+                payment_method=payment_method,
+                voucher_value=0 # No vouchers for buy now
+            )
 
-        items_to_create = []
-        for item in cart_items_db:
-            items_to_create.append(
-                OrderItem(
+            # Create order item
+            OrderItem.objects.create(
+                transactions=new_transaction,
+                product=product,
+                quantity_purchased=1,
+                price_at_purchase=product.unit_price
+            )
+
+            # Update product stock
+            product.quantity_on_hand -= 1
+            product.num_sold += 1
+            product.save()
+
+            # Clean up session
+            del request.session['buy_now_item']
+
+        else:
+            # --- 2. HANDLE REGULAR CART ORDER ---
+            cart_items = CartItem.objects.filter(user=user)
+            if not cart_items.exists():
+                messages.error(request, "Your cart is empty.")
+                return redirect('storefront_home')
+
+            subtotal = sum(item.total_price for item in cart_items)
+            
+            # Apply voucher discount
+            _, discount = self.get_voucher(request, subtotal)
+            total_cost = subtotal - discount
+
+            # Check stock for all items
+            for item in cart_items:
+                if item.product.quantity_on_hand < item.quantity:
+                    messages.error(request, f"Sorry, not enough stock for {item.product.product_name}.")
+                    return redirect('view_cart')
+
+            # Handle payment
+            if payment_method == 'wallet':
+                profile = UserProfile.objects.get(user=user)
+                if profile.wallet_balance < total_cost:
+                    messages.error(request, "Insufficient wallet balance.")
+                    return redirect('checkout')
+                profile.wallet_balance -= total_cost
+                profile.save()
+
+            # Create transaction
+            new_transaction = Transactions.objects.create(
+                user=user,
+                transaction_datetime=datetime.now(),
+                shipping_first_name=shipping_first_name,
+                shipping_last_name=shipping_last_name,
+                shipping_phone=shipping_phone,
+                shipping_address=shipping_address,
+                shipping_city=shipping_city,
+                shipping_state=shipping_state,
+                shipping_postal_code=shipping_postal_code,
+                status='Payment Made',
+                payment_method=payment_method,
+                voucher_value=discount
+            )
+
+            # Create order items and update stock
+            for item in cart_items:
+                OrderItem.objects.create(
                     transactions=new_transaction,
                     product=item.product,
                     quantity_purchased=item.quantity,
-                    price_at_purchase=item.product.unit_price, 
+                    price_at_purchase=item.product.unit_price
                 )
-            )
-            product = item.product
-            product.num_sold = F('num_sold') + item.quantity
-            product.quantity_on_hand = F('quantity_on_hand') - item.quantity
-            product.save()
+                item.product.quantity_on_hand -= item.quantity
+                item.product.num_sold += item.quantity
+                item.product.save()
 
-        OrderItem.objects.bulk_create(items_to_create)
+            # Clean up cart and session
+            cart_items.delete()
+            if 'applied_voucher' in request.session:
+                del request.session['applied_voucher']
 
-        if voucher_obj:
-            voucher_obj.used_count = F('used_count') + 1
-            voucher_obj.save()
-            del request.session['applied_voucher']
-            profile.vouchers.remove(voucher_obj)
-
-        cart_items_db.delete()
-
-        messages.success(request, f"Your order has been placed!")
+        messages.success(request, "Your order has been placed successfully!")
         return redirect('profile')
 
     
@@ -769,3 +816,21 @@ class RateOrderView(LoginRequiredMixin, View):
 
         messages.success(request, "Your review has been submitted successfully!")
         return redirect('profile')
+
+class BuyNowView(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        sku_code = self.kwargs.get('sku_code')
+        product = get_object_or_404(Product, sku_code=sku_code)
+        
+        # Store the single item in the session for checkout
+        request.session['buy_now_item'] = {
+            'sku_code': product.sku_code,
+            'quantity': 1,
+            'price': str(product.unit_price) 
+        }
+        
+        # Clear any previous cart-based checkout session data
+        if 'applied_voucher' in request.session:
+            del request.session['applied_voucher']
+
+        return redirect('checkout')
