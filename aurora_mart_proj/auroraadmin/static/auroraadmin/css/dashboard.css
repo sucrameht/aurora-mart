@@ -103,10 +103,10 @@
 }
 
 /* Different background colors for each card */
-.kpi-card:nth-child(1) { background-color: #f0f8ff; }
-.kpi-card:nth-child(2) { background-color: #e6f7ff; }
-.kpi-card:nth-child(3) { background-color: #d4edff; }
-.kpi-card:nth-child(4) { background-color: #c2e3ff; }
+.kpi-card:nth-child(1) { background-color: #e6f7ff; }
+.kpi-card:nth-child(2) { background-color: #f0fff0; }
+.kpi-card:nth-child(3) { background-color: #fff8dc; }
+.kpi-card:nth-child(4) { background-color: #f5f0ff; }
 
 .kpi-card:hover {
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
@@ -136,9 +136,16 @@
     font-weight: bold;
 }
 
-.products-table tr:hover {
-    background-color: #f1f1f1;
+.products-table tr:nth-child(even) {
+    background-color: #f9f9f9; 
 }
+.products-table tr:nth-child(odd) {
+    background-color: #ffffff;
+}
+.products-table tr:hover {
+    background-color: #e6f7ff;
+}
+
 .charts { 
     margin-top: 20px; 
 }
