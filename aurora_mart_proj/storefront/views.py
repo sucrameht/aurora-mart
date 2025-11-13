@@ -579,6 +579,7 @@ class CheckoutView(LoginRequiredMixin, View):
             voucher_obj.used_count = F('used_count') + 1
             voucher_obj.save()
             del request.session['applied_voucher']
+            profile.vouchers.remove(voucher_obj)
 
         cart_items_db.delete()
 
