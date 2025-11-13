@@ -581,7 +581,8 @@ class CheckoutView(LoginRequiredMixin, View):
             del request.session['applied_voucher']
 
         cart_items_db.delete()
-        messages.success(request, f"Your order #{new_transaction.id} has been placed!")
+
+        messages.success(request, f"Your order has been placed!")
         return redirect('profile')
 
     
@@ -707,7 +708,6 @@ class CustomerTransactionDetailView(LoginRequiredMixin, DetailView):
     model = Transactions
     template_name = 'transaction_detail.html'
     context_object_name = 'transaction'
-    login_url ='/login'
 
     def get_queryset(self):
         """Ensure user can only see their own transactions."""
@@ -716,5 +716,15 @@ class CustomerTransactionDetailView(LoginRequiredMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        transaction = context.get('transaction')
+
+        total = transaction.total_spent
+        voucher_value = transaction.voucher_value
+        grand_total = total - voucher_value
+
         context['page_title'] = f'Order Details'
+        context['total'] = total
+        context['grand_total'] = grand_total
+        context['voucher_value'] = voucher_value
         return context
+    
