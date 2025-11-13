@@ -1,17 +1,17 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from storefront.models import Product, Voucher
+from storefront.models import Product, Voucher, Transactions, OrderItem
 from django.db.models import Q
 from django.views import View
 from .forms import ProductCreateForm, VoucherForm, CustomerVoucherAssignForm, SuperUserCreationForm
 from django.urls import reverse
 from django.contrib import messages
 from django import forms
-from storefront.models import Transactions
 from django.views.generic import ListView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.utils.decorators import method_decorator
-from django.db.models import Sum, F, DecimalField, Max, Count
+from django.db.models import Sum, F, DecimalField, Max, Count, Avg
+from django.db.models.functions import TruncDay, TruncWeek, TruncMonth
 from decimal import Decimal
 from django.core.paginator import Paginator
 from authentication.models import UserProfile
@@ -20,6 +20,13 @@ import secrets, string
 from django.http import HttpResponseForbidden
 
 from storefront.models import ChatThread, ChatMessage
+from django.http import HttpResponseForbidden, HttpResponse
+from django.utils import timezone
+from datetime import timedelta
+import matplotlib
+matplotlib.use('Agg')  # Setting non-GUI backend before importing pyplot
+import matplotlib.pyplot as plt
+from io import BytesIO
 
 SKU_MAPPINGS = {
     'Automotive': {
@@ -734,3 +741,100 @@ class AdminChatThreadView(LoginRequiredMixin, UserPassesTestMixin, View):
             )
         
         return redirect('auroraadmin:admin_chat_thread', thread_id=thread.pk)
+
+@method_decorator(login_required(login_url='/login'), name='dispatch')
+@method_decorator(user_passes_test(is_staff, login_url='/login'), name='dispatch')
+class DashboardView(View):
+    template_name = 'auroraadmin/dashboard.html'
+    def get(self, request):
+        time_frame = request.GET.get('time_frame', '1m') # default 1 month
+        now = timezone.now()
+
+        # determine start-current frame
+        if time_frame == '1w':
+            start_date = now - timedelta(weeks=1)
+            period_label = 'Last 1 Week'
+        elif time_frame == '1m':
+            start_date = now - timedelta(days=30)
+            period_label = 'Last 1 Month'
+        elif time_frame == '3m':
+            start_date = now - timedelta(days=90)
+            period_label = 'Last 3 Months'
+        elif time_frame == '6m':
+            start_date = now - timedelta(days=180)
+            period_label = 'Last 6 Months'
+        elif time_frame == '1y':
+            start_date = now - timedelta(days=365)
+            period_label = 'Last 1 Year'
+        elif time_frame == 'all':
+            start_date = None
+            period_label = 'All Time'
+        else: # stick to the default
+            start_date = now - timedelta(days=30)
+            period_label = 'Last 1 Month'
+
+        # filtering the transactions and adding total spent for each transaction
+        filtered_transactions = Transactions.objects.all()
+        if start_date: # gte (>= start date)
+            filtered_transactions = filtered_transactions.filter(transaction_datetime__gte=start_date)
+        
+        filtered_transactions = filtered_transactions.annotate(
+            total_spent=Sum(
+                F('items__quantity_purchased') * F('items__price_at_purchase'),
+                default=Decimal('0.0'),
+                output_field=DecimalField()
+            ) + F('voucher_value')
+        )
+
+        product_quantity_by_period = OrderItem.objects.filter(transactions__in=filtered_transactions).values(
+            'product__product_name', 'product__sku_code', 'product__product_category'
+        ).annotate(
+            total_sold=Sum('quantity_purchased')
+        )
+
+        total_revenue = filtered_transactions.aggregate(total=Sum('total_spent'))['total'] or 0
+        total_transactions = filtered_transactions.count()
+        avg_order_value = total_revenue / total_transactions if total_transactions > 0 else 0
+        voucher_savings = filtered_transactions.aggregate(savings=Sum('voucher_value'))['savings'] or 0
+
+        top_products = product_quantity_by_period.order_by('-total_sold')[:5]
+        bottom_products = product_quantity_by_period.order_by('total_sold')[:5]
+        
+        context = {
+            'total_revenue': total_revenue,
+            'total_transactions': total_transactions,
+            'avg_order_value': avg_order_value,
+            'voucher_savings': -voucher_savings,
+            'top_products': top_products,
+            'bottom_products': bottom_products,
+            'time_frame': time_frame,
+            'period_label': period_label,
+        }
+
+        return render(request, self.template_name, context)
+
+class GenderChartView(View):
+    def get(self, request, time_frame):
+        gender_counts = list(UserProfile.objects.values('gender').annotate(count=Count('gender')))
+
+        if not gender_counts:
+            return HttpResponse("No data", status=404)
+        
+        labels = [item['gender'] for item in gender_counts]
+        sizes = [item['count'] for item in gender_counts]
+
+        plt.figure(figsize=(6,6))
+        plt.pie(
+            sizes, 
+            labels=labels, 
+            autopct=lambda pct: f"{pct:.1f}%\n({int(pct/100.*sum(sizes))})", 
+            startangle=140
+        )
+        plt.axis('equal') # pie chart fills space plus circular
+
+        buffer = BytesIO()
+        plt.savefig(buffer, format='png', bbox_inches='tight')
+        plt.close()
+        buffer.seek(0)
+
+        return HttpResponse(buffer.getvalue(), content_type='image/png')

@@ -1,0 +1,99 @@
+{% extends 'auroraadmin/base.html' %}
+{% load static %}
+{% block title %} KPI Dashboard {% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'auroraadmin/css/dashboard.css' %}">
+{% endblock %}
+{% block main_content %}
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1 class="dashboard-title">KPI Dashboard - {{ period_label }}</h1>
+    </div>
+    <!-- Time Frame Selector -->
+    <div class="time-frame-selector">
+        <h3>Select Time Frame:</h3>
+        <div class="time-frame-links">
+            <a href="?time_frame=1w" class="{% if time_frame == '1w' %}active{% endif %}">1 Week</a>
+            <a href="?time_frame=1m" class="{% if time_frame == '1m' %}active{% endif %}">1 Month</a>
+            <a href="?time_frame=6m" class="{% if time_frame == '6m' %}active{% endif %}">6 Months</a>
+            <a href="?time_frame=1y" class="{% if time_frame == '1y' %}active{% endif %}">1 Year</a>
+            <a href="?time_frame=all" class="{% if time_frame == 'all' %}active{% endif %}">All Time</a>
+        </div>
+    </div>
+    
+    <!-- KPI Cards -->
+    <div class="kpi-cards">
+        <div class="kpi-card">
+            <p>S${{ total_revenue|floatformat:2 }}</p>
+            <h4>Total Revenue</h4>
+        </div>
+        <div class="kpi-card">
+            <p>{{ total_transactions }}</p>
+            <h4>Total Orders</h4>
+        </div>
+        <div class="kpi-card">
+            <p>S${{ avg_order_value|floatformat:2 }}</p>
+            <h4>Average Order Value</h4>
+        </div>
+        <div class="kpi-card">
+            <p>S${{ voucher_savings|floatformat:2 }}</p>
+            <h4>Total Voucher Amount</h4>
+        </div>
+    </div>
+    
+    <!-- Top Products -->
+    <div class="top-products">
+        <h3>Top 5 Selling Products ({{ period_label }})</h3>
+        <table class="products-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Num Sold</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in top_products %}
+                <tr>
+                    <td>{{ product.product__product_name }}</td>
+                    <td>{{ product.product__product_category }}</td> 
+                    <td>{{ product.total_sold }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+<!-- Bottom Products -->
+<div class="bottom-products">
+    <h3>Bottom 5 Selling Products ({{ period_label }})</h3>
+    <table class="products-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Num Sold</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in bottom_products %}
+            <tr>
+                <td>{{ product.product__product_name }}</td>
+                <td>{{ product.product__product_category }}</td>
+                <td>{{ product.total_sold }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+    
+    <!-- Charts -->
+    <div class="charts">
+        <h3>Customer Gender Distribution</h3>
+        <div class="chart">
+            <img src="{% url 'auroraadmin:gender_chart' time_frame %}" alt="Gender Distribution Chart">
+        </div>
+    </div>
+</div>
+{% endblock %}
