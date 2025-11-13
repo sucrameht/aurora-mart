@@ -73,7 +73,7 @@
                 <td class="text-center">{{ completed_payment.viewcal_num_of_products }}</td>
                 <td class="text-right">${{ completed_payment.viewcal_total_spent|floatformat:2 }}</td>
                 <td>
-                    <a href="{% url 'auroraadmin:transaction_detail' transaction.pk %}" class="details-link">
+                    <a href="{% url 'auroraadmin:transaction_detail' completed_payment.id %}" class="details-link">
                         View Details
                     </a>
                 </td>
