@@ -416,10 +416,10 @@ class TransactionListView(View):
             queryset = Transactions.objects.filter(status=status).select_related('user').annotate(
                 viewcal_num_of_products=Sum('items__quantity_purchased', default=0),
                 viewcal_total_spent=Sum(
-                    F('items__quantity_purchased') * F('items__product__unit_price'),
+                    F('items__quantity_purchased') * F('items__price_at_purchase'),
                     default=Decimal(0.0),
                     output_field=DecimalField()
-                )
+                ) + F('voucher_value')
             )
 
             if user_id:
@@ -463,6 +463,13 @@ class TransactionDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView)
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['page_title'] = f'Transaction {self.object.id}'
+
+        grand_total = sum(item.quantity_purchased * item.price_at_purchase for item in self.object.items.all())
+        voucher_value = self.object.voucher_value
+        final_total = grand_total + voucher_value
+        context['grand_total'] = grand_total        
+        context['voucher_value'] = voucher_value
+        context['final_total'] = final_total
         return context
 
 @method_decorator(login_required(login_url='/login'), name='dispatch')
@@ -565,10 +572,10 @@ class CustomerListView(View):
         customer_list = customer_list.annotate(
             total_transactions=Count('transactions', distinct=True),
             total_spent=Sum(
-                F('transactions__items__quantity_purchased') * F('transactions__items__product__unit_price'),
+                F('transactions__items__quantity_purchased') * F('transactions__items__price_at_purchase'),
                 default=Decimal('0.0'),
                 output_field=DecimalField()
-            ),
+            ) + Sum('transactions__voucher_value', default=Decimal('0.0'), output_field=DecimalField()),
             last_transaction_date=Max('transactions__transaction_datetime')
         )
 
