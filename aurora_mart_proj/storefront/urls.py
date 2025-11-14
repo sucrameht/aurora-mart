@@ -22,4 +22,5 @@ urlpatterns = [
     path('profile/addresses/edit/<int:pk>/', EditShippingAddressView.as_view(), name='edit_shipping_address'),
     path('profile/addresses/delete/<int:pk>/', DeleteShippingAddressView.as_view(), name='delete_shipping_address'),
     path('profile/change-password/', ChangePasswordView.as_view(), name='change_password'),
+    path('profile/my-vouchers/', MyVouchersView.as_view(), name='my_vouchers'),
 ]
