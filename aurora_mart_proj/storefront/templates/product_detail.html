@@ -1,0 +1,107 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ product.product_name }} - AuroraMart</title>
+    <link rel="stylesheet" href="{% static 'storefront/css/storefront.css' %}">
+    <link rel="stylesheet" href="{% static 'storefront/css/product_detail.css' %}">
+</head>
+<body>
+    <div class="header">
+        <div class="logo" onclick="window.location.href='{% url 'storefront_home' %}'">
+            <img src="{% static 'storefront/images/AuroraMartLogo.png' %}" alt="AuroraMart Logo" class="logo-img">
+            <span class="logo-text">AuroraMart</span>
+        </div>
+        <div class="icons">
+            <a href="{% url 'view_cart' %}" class="icon icon-cart">
+                🛒
+                <span id="cart-count">{{ cart_item_count|default:0 }}</span>
+            </a>
+            <a href="{% url 'chat_list' %}" class="icon">💬</a>
+            <a href="{% url 'profile' %}" class="icon">👤</a>
+            {% if user.is_superuser %}
+            <a href="{% url 'auroraadmin:admin_dashboard' %}" class="admin-button">Admin</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="detail-container">
+        <div class="product-main-section">
+            <div class="product-image-gallery">
+                <img src="https://nus.edu.sg/images/default-source/identity-images/NUS_logo_full-horizontal.jpg" alt="{{ product.product_name }}" class="main-product-image">
+            </div>
+            <div class="product-info">
+                <h1 class="product-title-main">{{ product.product_name }}</h1>
+                <p class="product-category">{{ product.product_category }}</p>
+                
+                <div class="product-stats">
+                    <div class="rating-summary">★ {{ product.product_rating|floatformat:1 }}</div>
+                    <div class="sold-count">{{ product.num_sold }} sold</div>
+                </div>
+
+                <p class="product-description">{{ product.product_description }}</p>
+                
+                <div class="price-main">${{ product.unit_price }}</div>
+                
+                <div class="product-actions">
+                    <form action="{% url 'storefront_home' %}" method="POST" style="display:contents;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="add">
+                        <input type="hidden" name="sku_code" value="{{ product.sku_code }}">
+                        <button type="submit" class="add-cart-main">🛒 Add to Cart</button>
+                    </form>
+                    <a href="{% url 'buy_now' product.sku_code %}" class="buy-now-main">⚡️ Buy Now</a>
+                </div>
+                 <a href="{% url 'start_chat' product.sku_code %}" class="chat-link">💬 Chat with Seller about this product</a>
+            </div>
+        </div>
+
+        {% if recommended_products %}
+        <div class="recommendations-section">
+            <h2>You Might Also Like</h2>
+            <div class="product-grid-small">
+                {% for rec_product in recommended_products %}
+                    <div class="product-card-small">
+                        <a href="{% url 'product_detail' rec_product.sku_code %}">
+                            <div class="product-image-small">
+                                <img src="https://nus.edu.sg/images/default-source/identity-images/NUS_logo_full-horizontal.jpg" alt="{{ rec_product.product_name }}">
+                            </div>
+                            <div class="product-title-small">{{ rec_product.product_name }}</div>
+                            <div class="price-small">${{ rec_product.unit_price }}</div>
+                        </a>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="reviews-section">
+            <h2>Customer Reviews ({{ reviews.count }})</h2>
+            {% if reviews %}
+                <div class="reviews-list">
+                    {% for review in reviews %}
+                        <div class="review-card">
+                            <div class="review-header">
+                                <span class="review-author">{{ review.transactions.user.get_full_name|default:review.transactions.user.username }}</span>
+                                <span class="review-rating">
+                                    {% for i in "12345" %}
+                                        {% if i|add:0 <= review.rating %}★{% else %}☆{% endif %}
+                                    {% endfor %}
+                                </span>
+                            </div>
+                            {% if review.text_review %}
+                                <p class="review-text">"{{ review.text_review }}"</p>
+                            {% endif %}
+                            <p class="review-date">{{ review.transactions.transaction_datetime|date:"F d, Y" }}</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p>No reviews for this product yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

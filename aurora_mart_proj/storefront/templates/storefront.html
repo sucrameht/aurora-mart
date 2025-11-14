@@ -108,7 +108,7 @@
 
             <div id="modal-{{ product.sku_code }}" class="css-modal">
                 <div class="css-modal-content">
-                    <a href="#" class="css-close">&times;</a>
+                    <a href="" class="css-close">&times;</a>
     
                     <img src="https://nus.edu.sg/images/default-source/identity-images/NUS_logo_full-horizontal.jpg" 
                          alt="{{ product.product_name }}" class="modal-img">
@@ -123,9 +123,10 @@
                         <input type="hidden" name="sku_code" value="{{ product.sku_code }}">
                         <button type="submit" class="add-cart">🛒 Add to Cart</button>
                     </form>
+                    <br/>
                     <a href="{% url 'start_chat' product.sku_code %}" class="buy-now">💬 Chat with Seller</a>
     
-                    {% comment %} <a href="{% url 'product_detail' product.sku_code %}" class="buy-now">🔎 View Full Details</a> {% endcomment %}
+                    <a href="{% url 'product_detail' product.sku_code %}" class="buy-now">🔎 View Full Details</a>
                 </div>
             </div>
         {% empty %}

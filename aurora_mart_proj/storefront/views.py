@@ -903,3 +903,46 @@ class ChatThreadView(LoginRequiredMixin, View):
             )
         
         return redirect('chat_thread', thread_id=thread.pk)
+
+class ProductDetailView(DetailView):
+    model = Product
+    template_name = 'product_detail.html'
+    context_object_name = 'product'
+    pk_url_kwarg = 'sku_code'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        product = self.get_object()
+
+        # Get reviews for this product
+        # We filter OrderItems that have a rating or a text review
+        context['reviews'] = OrderItem.objects.filter(
+            product=product
+        ).filter(
+            # Find items where EITHER the rating is > 0
+            Q(rating__gt=0) | 
+            # OR the text_review is not null AND not an empty string
+            (Q(text_review__isnull=False) & ~Q(text_review=''))
+        ).select_related('transactions__user').order_by('-transactions__transaction_datetime')
+
+        # Get product recommendations
+        recommended_products = []
+        if ASSOCIATION_RULES_MODEL is not None:
+            recommended_skus = get_recommendations(
+                ASSOCIATION_RULES_MODEL, 
+                [product.sku_code], 
+                metric='lift',
+                top_n=5
+            )
+            recommended_products = Product.objects.filter(sku_code__in=recommended_skus)
+        
+        context['recommended_products'] = recommended_products
+        
+        # Get cart count for the header
+        if self.request.user.is_authenticated:
+            context['cart_item_count'] = CartItem.objects.filter(user=self.request.user).aggregate(
+                total_quantity=Sum('quantity')
+            )['total_quantity'] or 0
+        else:
+            context['cart_item_count'] = self.request.session.get('cart_item_count', 0)     
+        return context
