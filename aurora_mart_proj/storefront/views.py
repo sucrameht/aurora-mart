@@ -722,31 +722,28 @@ class EditProfileView(LoginRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
         user = request.user
-        # We can safely assume the profile exists now because of the get method
         profile = UserProfile.objects.get(user=request.user)
         
-        # Get data from the POST form
-        first_name = request.POST.get('first_name')
-        last_name = request.POST.get('last_name')
-        email = request.POST.get('email')
-        
-        # Get profile-specific data (add any other fields you have)
-        phone_number = request.POST.get('phone_number') # Assumes 'phone_number' on UserProfile
-        
-        # Update the User model
-        user.first_name = first_name
-        user.last_name = last_name
-        user.email = email
+        # Update User model
+        user.first_name = request.POST.get('first_name')
+        user.last_name = request.POST.get('last_name')
+        user.email = request.POST.get('email')
         user.save()
         
-        # Update the UserProfile model
-        profile.phone_number = phone_number
-        # profile.age = request.POST.get('age') # Example
-        # profile.household_size = request.POST.get('household_size') # Example
+        # Update UserProfile model
+        profile.phone_number = request.POST.get('phone_number')
+        profile.age = request.POST.get('age')
+        profile.household_size = request.POST.get('household_size')
+        profile.gender = request.POST.get('gender')
+        profile.has_children = request.POST.get('has_children') == 'true'
+        profile.employment_status = request.POST.get('employment_status')
+        profile.occupation = request.POST.get('occupation')
+        profile.education = request.POST.get('education')
+        profile.monthly_income_sgd = request.POST.get('monthly_income_sgd')
         profile.save()
         
-        messages.success(request, "Your profile has been updated.")
-        return redirect('profile') # Redirect back to the profile page
+        messages.success(request, "Your profile has been updated successfully.")
+        return redirect('profile')
 
 class WalletView(LoginRequiredMixin, View):
     template_name = 'wallet.html'
