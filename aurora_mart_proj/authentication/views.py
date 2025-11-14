@@ -7,6 +7,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.conf import settings
 from .models import UserProfile
 from .forms import RegistrationForm, onboardingForm, ChangePasswordForm
+from storefront.models import Product, CartItem
 from django.urls import reverse_lazy
 import os
 from joblib import load
@@ -27,6 +28,27 @@ class customLoginView(LoginView):
 
     def get_success_url(self):
         user = self.request.user
+        session_cart = self.request.session.get('cart', {})
+        if session_cart:
+            for sku_code, quantity in session_cart.items():
+                try:
+                    product = Product.objects.get(sku_code=sku_code)
+                    cart_item, created = CartItem.objects.get_or_create(
+                        user=user,
+                        product=product,
+                        defaults={'quantity': quantity}
+                    )
+                    if not created:
+                        # If item already exists, add quantities
+                        cart_item.quantity += quantity
+                        cart_item.save()
+                except Product.DoesNotExist:
+                    continue
+            # Clear the session cart after merging
+            del self.request.session['cart']
+            if 'cart_item_count' in self.request.session:
+                del self.request.session['cart_item_count']
+
         try:
             user_profile =  UserProfile.objects.get(user=user)
             if user_profile.is_initial_password:
