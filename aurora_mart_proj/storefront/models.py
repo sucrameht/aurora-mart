@@ -118,3 +118,23 @@ class ShippingAddress(models.Model):
     class Meta:
         # Prevent a user from having two addresses with the same nickname
         unique_together = ('user', 'nickname')
+
+class ChatThread(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='chat_threads')
+    customer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chat_threads')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('product', 'customer')
+        ordering = ['-updated_at']
+
+class ChatMessage(models.Model):
+    thread = models.ForeignKey(ChatThread, on_delete=models.CASCADE, related_name='messages')
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
+    message = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['timestamp']

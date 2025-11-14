@@ -12,4 +12,7 @@ urlpatterns = [
     path('orders/<int:pk>/', CustomerTransactionDetailView.as_view(), name='customer_order_detail'),
     path('orders/<int:pk>/review/', RateOrderView.as_view(), name='rate_order'),
     path('buy-now/<str:sku_code>/', BuyNowView.as_view(), name='buy_now'),
+    path('chat/', ChatListView.as_view(), name='chat_list'),
+    path('chat/start/<str:sku_code>/', StartChatView.as_view(), name='start_chat'),
+    path('chat/thread/<int:thread_id>/', ChatThreadView.as_view(), name='chat_thread'),
 ]

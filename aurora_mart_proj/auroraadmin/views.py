@@ -25,6 +25,8 @@ matplotlib.use('Agg')  # Setting non-GUI backend before importing pyplot
 import matplotlib.pyplot as plt
 from io import BytesIO
 
+from storefront.models import ChatThread, ChatMessage
+
 SKU_MAPPINGS = {
     'Automotive': {
         'initial': 'A',
@@ -792,3 +794,45 @@ class GenderChartView(View):
         buffer.seek(0)
 
         return HttpResponse(buffer.getvalue(), content_type='image/png')
+class AdminChatListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    model = ChatThread
+    template_name = 'auroraadmin/chat_list.html'
+    context_object_name = 'threads'
+    login_url = '/login'
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+    def get_queryset(self):
+        return ChatThread.objects.all().order_by('-updated_at')
+
+class AdminChatThreadView(LoginRequiredMixin, UserPassesTestMixin, View):
+    template_name = 'auroraadmin/chat_thread.html'
+    login_url = '/login'
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+    def get(self, request, *args, **kwargs):
+        thread_id = self.kwargs.get('thread_id')
+        thread = get_object_or_404(ChatThread, pk=thread_id)
+        messages = thread.messages.all()
+        context = {
+            'thread': thread,
+            'messages': messages
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+        thread_id = self.kwargs.get('thread_id')
+        thread = get_object_or_404(ChatThread, pk=thread_id)
+        
+        message = request.POST.get('message')
+        if message:
+            ChatMessage.objects.create(
+                thread=thread,
+                sender=request.user,
+                message=message
+            )
+        
+        return redirect('auroraadmin:admin_chat_thread', thread_id=thread.pk)

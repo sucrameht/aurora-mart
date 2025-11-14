@@ -1,0 +1,51 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Chats - AuroraMart</title>
+    <link rel="stylesheet" href="{% static 'storefront/css/storefront.css' %}">
+    <link rel="stylesheet" href="{% static 'storefront/css/chat.css' %}">
+</head>
+<body>
+    <div class="header">
+        <div class="logo" onclick="window.location.href='{% url 'storefront_home' %}'">
+            <img src="{% static 'storefront/images/AuroraMartLogo.png' %}" alt="AuroraMart Logo" class="logo-img">
+            <span class="logo-text">AuroraMart</span>
+        </div>
+        <div class="icons">
+            <a href="{% url 'view_cart' %}" class="icon icon-cart">
+                🛒
+                <span id="cart-count">{{ cart_item_count|default:0 }}</span>
+            </a>
+            <a href="{% url 'profile' %}" class="icon">👤</a>
+            {% if user.is_superuser %}
+            <a href="{% url 'auroraadmin:admin_dashboard' %}" class="admin-button">Admin</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="chat-container">
+        <h1 class="chat-main-title">My Inquiries</h1>
+        <div class="chat-list">
+            {% for thread in threads %}
+                <a href="{% url 'chat_thread' thread.id %}" class="chat-list-item">
+                    <div class="chat-item-info">
+                        <p class="chat-item-product">Product: <strong>{{ thread.product.product_name }}</strong></p>
+                        <p class="chat-item-user">Conversation with Seller</p>
+                    </div>
+                    <div class="chat-item-meta">
+                        <span class="chat-item-timestamp">{{ thread.updated_at|timesince }} ago</span>
+                        {% if thread.messages.last and not thread.messages.last.is_read and thread.messages.last.sender != request.user %}
+                            <span class="unread-indicator">New Reply</span>
+                        {% endif %}
+                    </div>
+                </a>
+            {% empty %}
+                <p>You have not started any chats. You can start a chat from any product page.</p>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>
