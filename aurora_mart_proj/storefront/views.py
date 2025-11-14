@@ -178,17 +178,16 @@ class StorefrontView(ListView):
             if action == 'add':
                 try:
                     product = Product.objects.get(sku_code=sku)
-                    # Get or create a cart item
                     cart_item, created = CartItem.objects.get_or_create(
                         user=request.user, 
                         product=product,
-                        quantity=1
+                        defaults={'quantity': 1}  # Use 'defaults'
                     )
-                    if not created:
-                        # If it already exists, just increment the quantity
-                        cart_item.quantity += 1
                     
-                    cart_item.save()
+                    if not created:
+                        cart_item.quantity += 1
+                        cart_item.save() #
+                    
                     messages.success(request, "Item added to cart!")
                 
                 except Product.DoesNotExist:
