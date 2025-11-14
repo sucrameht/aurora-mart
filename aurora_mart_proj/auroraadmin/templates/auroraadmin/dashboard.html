@@ -65,34 +65,47 @@
         </table>
     </div>
 
-<!-- Bottom Products -->
-<div class="bottom-products">
-    <h3>Bottom 5 Selling Products ({{ period_label }})</h3>
-    <table class="products-table">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Category</th>
-                <th>Num Sold</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for product in bottom_products %}
-            <tr>
-                <td>{{ product.product__product_name }}</td>
-                <td>{{ product.product__product_category }}</td>
-                <td>{{ product.total_sold }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
+    <!-- Bottom Products -->
+    <div class="bottom-products">
+        <h3>Bottom 5 Selling Products ({{ period_label }})</h3>
+        <table class="products-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Num Sold</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in bottom_products %}
+                <tr>
+                    <td>{{ product.product__product_name }}</td>
+                    <td>{{ product.product__product_category }}</td>
+                    <td>{{ product.total_sold }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
     
-    <!-- Charts -->
     <div class="charts">
-        <h3>Customer Gender Distribution</h3>
-        <div class="chart">
-            <img src="{% url 'auroraadmin:gender_chart' time_frame %}" alt="Gender Distribution Chart">
+        <div class="chart-container">
+            <h3>Customer Gender Distribution</h3>
+            <div class="chart">
+                <img src="{% url 'auroraadmin:gender_chart' time_frame %}?v={% now "U" %}" alt="Gender Distribution Chart">
+            </div>
+        </div>
+        <div class="chart-container">
+            <h3>Sales Trend</h3>
+            <div class="chart">
+                <img src="{% url 'auroraadmin:sales_trend_chart' time_frame %}?v={% now "U" %}" alt="Sales Trend Chart">
+            </div>
+        </div>
+        <div class="chart-container">
+            <h3>Revenue by Category</h3>
+            <div class="chart">
+                <img src="{% url 'auroraadmin:revenue_category_chart' time_frame %}?v={% now "U" %}" alt="Revenue by Category Bar Chart">
+            </div>
         </div>
     </div>
 </div>

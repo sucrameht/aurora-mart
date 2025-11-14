@@ -11,7 +11,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.utils.decorators import method_decorator
 from django.db.models import Sum, F, DecimalField, Max, Count, Avg
-from django.db.models.functions import TruncDay, TruncWeek, TruncMonth
+from django.db.models.functions import TruncDay, TruncWeek, TruncMonth, TruncQuarter
 from decimal import Decimal
 from django.core.paginator import Paginator
 from authentication.models import UserProfile
@@ -163,6 +163,22 @@ def is_staff(user):
 
 def analytics_view(request):
     return render(request, 'auroraadmin/analytics.html')
+
+def _create_empty_chart(title):
+    """
+    Creates a placeholder chart image with a "No Data" message.
+    """
+    plt.figure(figsize=(8, 4))
+    plt.text(0.5, 0.5, "No data available for " + title, 
+             ha='center', va='center', fontsize=12, color='gray')
+    plt.gca().axis('off')
+    plt.tight_layout()
+    
+    buffer = BytesIO()
+    plt.savefig(buffer, format='png', bbox_inches='tight')
+    plt.close()
+    buffer.seek(0)
+    return HttpResponse(buffer.getvalue(), content_type='image/png')
 
 # dispatch is the method that redirects to the right functions after all the checks have been cleared
 @method_decorator(login_required(login_url='/login'), name='dispatch')
@@ -813,24 +829,218 @@ class DashboardView(View):
 
         return render(request, self.template_name, context)
 
+@method_decorator(login_required(login_url='/login'), name='dispatch')
+@method_decorator(user_passes_test(is_staff, login_url='/login'), name='dispatch')
 class GenderChartView(View):
     def get(self, request, time_frame):
-        gender_counts = list(UserProfile.objects.values('gender').annotate(count=Count('gender')))
+        now = timezone.now()
+        start_date = None
 
-        if not gender_counts:
-            return HttpResponse("No data", status=404)
+        # Determine start date (same logic as DashboardView)
+        if time_frame == '1w':
+            start_date = now - timedelta(weeks=1)
+        elif time_frame == '1m':
+            start_date = now - timedelta(days=30)
+        elif time_frame == '3m':
+            start_date = now - timedelta(days=90)
+        elif time_frame == '6m':
+            start_date = now - timedelta(days=180)
+        elif time_frame == '1y':
+            start_date = now - timedelta(days=365)
+
+        transactions = Transactions.objects.all()
+        if start_date:
+            transactions = transactions.filter(transaction_datetime__gte=start_date)
+
+        gender_data = UserProfile.objects.filter(
+            user__transactions__in=transactions
+        ).values('gender').annotate(count=Count('gender')).order_by('gender')
+
+        if not gender_data.exists():
+            return _create_empty_chart(f"Customer Gender Distribution ({time_frame})")
+
+        labels = [item['gender'] for item in gender_data]
+        sizes = [item['count'] for item in gender_data]
         
-        labels = [item['gender'] for item in gender_counts]
-        sizes = [item['count'] for item in gender_counts]
+        plt.figure(figsize=(5, 5))
+        plt.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90, colors=['#007ca5', '#28a745', '#ffc107'])
+        plt.title(f'Customer Gender Distribution ({time_frame})')
+        
+        buffer = BytesIO()
+        plt.savefig(buffer, format='png', bbox_inches='tight')
+        plt.close()
+        buffer.seek(0)
+        return HttpResponse(buffer.getvalue(), content_type='image/png')
+    
+class AdminChatListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    model = ChatThread
+    template_name = 'auroraadmin/chat_list.html'
+    context_object_name = 'threads'
+    login_url = '/login'
 
-        plt.figure(figsize=(6,6))
-        plt.pie(
-            sizes, 
-            labels=labels, 
-            autopct=lambda pct: f"{pct:.1f}%\n({int(pct/100.*sum(sizes))})", 
-            startangle=140
+    def test_func(self):
+        return self.request.user.is_staff
+
+    def get_queryset(self):
+        return ChatThread.objects.all().order_by('-updated_at')
+
+class AdminChatThreadView(LoginRequiredMixin, UserPassesTestMixin, View):
+    template_name = 'auroraadmin/chat_thread.html'
+    login_url = '/login'
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+    def get(self, request, *args, **kwargs):
+        thread_id = self.kwargs.get('thread_id')
+        thread = get_object_or_404(ChatThread, pk=thread_id)
+        messages = thread.messages.all()
+        context = {
+            'thread': thread,
+            'messages': messages
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+        thread_id = self.kwargs.get('thread_id')
+        thread = get_object_or_404(ChatThread, pk=thread_id)
+        
+        message = request.POST.get('message')
+        if message:
+            ChatMessage.objects.create(
+                thread=thread,
+                sender=request.user,
+                message=message
+            )
+        
+        return redirect('auroraadmin:admin_chat_thread', thread_id=thread.pk)
+
+@method_decorator(login_required(login_url='/login/'), name='dispatch')
+@method_decorator(user_passes_test(is_staff, login_url='/login/'), name='dispatch')
+class SalesTrendChartView(View):
+    def get(self, request, time_frame):
+        now = timezone.now()
+        start_date = None
+
+        if time_frame == '1w':
+            start_date = now - timedelta(weeks=1)
+            trunc_func = TruncDay
+            date_format = '%Y-%m-%d'
+        elif time_frame == '1m':
+            start_date = now - timedelta(days=30)
+            trunc_func = TruncWeek
+            date_format = '%Y-%U'
+        elif time_frame == '3m':
+            start_date = now - timedelta(days=90)
+            trunc_func = TruncWeek
+            date_format = '%Y-%U'
+        elif time_frame == '6m':
+            start_date = now - timedelta(days=180)
+            trunc_func = TruncMonth
+            date_format = '%Y-%m'
+        elif time_frame == '1y':
+            start_date = now - timedelta(days=365)
+            trunc_func = TruncMonth
+            date_format = '%Y-%m'
+        elif time_frame == 'all':
+            trunc_func = TruncQuarter
+            date_format = None  # Custom formatting below
+
+        filtered_transactions = Transactions.objects.all()
+        if start_date:
+            filtered_transactions = filtered_transactions.filter(transaction_datetime__gte=start_date)
+
+        filtered_transactions = filtered_transactions.annotate(
+            final_total=Sum(F('items__quantity_purchased') * F('items__price_at_purchase')) - F('voucher_value')
         )
-        plt.axis('equal') # pie chart fills space plus circular
+
+        sales_trend = filtered_transactions.annotate(
+            date=trunc_func('transaction_datetime')
+        ).values('date').annotate(
+            revenue=Sum(
+                F('items__quantity_purchased') * F('items__price_at_purchase') - F('voucher_value'),
+                default=Decimal('0.0'),
+                output_field=DecimalField()
+            )
+        ).order_by('date')
+        
+        if not sales_trend:
+            return _create_empty_chart("Sales Trend Chart")
+
+        dates = []
+        for item in sales_trend:
+            if date_format:
+                dates.append(item['date'].strftime(date_format))
+            else:
+                # For 'all', format as Year-Quarter
+                year = item['date'].year
+                month = item['date'].month
+                quarter = (month - 1) // 3 + 1
+                dates.append(f"{year}-Q{quarter}")
+        revenues = [item['revenue'] for item in sales_trend]
+
+        plt.figure(figsize=(7, 4))
+        plt.plot(dates, revenues, marker='o')
+        plt.title(f'Sales Trend ({time_frame})')
+        plt.xlabel('Period')
+        plt.ylabel('Revenue (S$)')
+        plt.xticks(rotation=45)
+
+        buffer = BytesIO()
+        plt.savefig(buffer, format='png', bbox_inches='tight')
+        plt.close()
+        buffer.seek(0)
+
+        return HttpResponse(buffer.getvalue(), content_type='image/png')
+
+class RevenueByCategoryChartView(View):
+    def get(self, request, time_frame):
+        now = timezone.now()
+        start_date = None
+
+        # Determine start date (same logic as DashboardView)
+        if time_frame == '1w':
+            start_date = now - timedelta(weeks=1)
+        elif time_frame == '1m':
+            start_date = now - timedelta(days=30)
+        elif time_frame == '3m':
+            start_date = now - timedelta(days=90)
+        elif time_frame == '6m':
+            start_date = now - timedelta(days=180)
+        elif time_frame == '1y':
+            start_date = now - timedelta(days=365)
+
+        # Filter transactions
+        filtered_transactions = Transactions.objects.all()
+        if start_date:
+            filtered_transactions = filtered_transactions.filter(transaction_datetime__gte=start_date)
+
+        # Get revenue by category
+        revenue_by_category = OrderItem.objects.filter(transactions__in=filtered_transactions).values(
+            'product__product_category'
+        ).annotate(
+            total_revenue=Sum(
+                F('quantity_purchased') * F('price_at_purchase') - F('transactions__voucher_value'),
+                default=Decimal('0.0'),
+                output_field=DecimalField()
+            )
+        ).order_by('-total_revenue')[:10]  # Top 10 categories
+
+        if not revenue_by_category:
+            return _create_empty_chart(f"Revenue by Category ({time_frame})")
+
+        # Prepare data for bar chart
+        categories = [item['product__product_category'] or 'Uncategorized' for item in revenue_by_category]
+        revenues = [float(item['total_revenue']) for item in revenue_by_category]
+
+        # Create vertical bar chart
+        plt.figure(figsize=(8, 5))
+        plt.bar(categories, revenues, color='#28a745')  # Vertical bars
+        plt.title(f'Revenue by Product Category ({time_frame})')
+        plt.xlabel('Category')
+        plt.ylabel('Revenue (S$)')
+        plt.xticks(rotation=45)
+        plt.tight_layout()
 
         buffer = BytesIO()
         plt.savefig(buffer, format='png', bbox_inches='tight')
