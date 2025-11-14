@@ -42,6 +42,28 @@
         </div>
     </div>
     
+    <!-- Charts -->
+    <div class="charts">
+        <div class="chart-container">
+            <h3>Customer Gender Distribution</h3>
+            <div class="chart">
+                <img src="{% url 'auroraadmin:gender_chart' time_frame %}?chart=gender&v={% now "U" %}" alt="Gender Distribution Chart" onerror="console.error('Failed to load gender chart');">
+            </div>
+        </div>
+        <div class="chart-container">
+            <h3>Sales Trend</h3>
+            <div class="chart">
+                <img src="{% url 'auroraadmin:sales_trend_chart' time_frame %}?chart=sales&v={% now "U" %}" alt="Sales Trend Chart" onerror="console.error('Failed to load sales chart');">
+            </div>
+        </div>
+        <div class="chart-container">
+            <h3>Revenue by Category</h3>
+            <div class="chart">
+                <img src="{% url 'auroraadmin:revenue_category_chart' time_frame %}?chart=revenue&v={% now "U" %}" alt="Revenue by Category Bar Chart" onerror="console.error('Failed to load revenue chart');">
+            </div>
+        </div>
+    </div>
+    
     <!-- Top Products -->
     <div class="top-products">
         <h3>Top 5 Selling Products ({{ period_label }})</h3>
@@ -86,27 +108,6 @@
                 {% endfor %}
             </tbody>
         </table>
-    </div>
-    
-    <div class="charts">
-        <div class="chart-container">
-            <h3>Customer Gender Distribution</h3>
-            <div class="chart">
-                <img src="{% url 'auroraadmin:gender_chart' time_frame %}?v={% now "U" %}" alt="Gender Distribution Chart">
-            </div>
-        </div>
-        <div class="chart-container">
-            <h3>Sales Trend</h3>
-            <div class="chart">
-                <img src="{% url 'auroraadmin:sales_trend_chart' time_frame %}?v={% now "U" %}" alt="Sales Trend Chart">
-            </div>
-        </div>
-        <div class="chart-container">
-            <h3>Revenue by Category</h3>
-            <div class="chart">
-                <img src="{% url 'auroraadmin:revenue_category_chart' time_frame %}?v={% now "U" %}" alt="Revenue by Category Bar Chart">
-            </div>
-        </div>
     </div>
 </div>
 {% endblock %}

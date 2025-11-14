@@ -825,15 +825,23 @@ class GenderChartView(View):
         labels = [item['gender'] for item in gender_data]
         sizes = [item['count'] for item in gender_data]
         
-        plt.figure(figsize=(5, 5))
+        # Clear any existing matplotlib state
+        plt.close('all')
+        
+        fig = plt.figure(num=1, figsize=(6, 5), dpi=100, clear=True)
         plt.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90, colors=['#007ca5', '#28a745', '#ffc107'])
-        plt.title(f'Customer Gender Distribution ({time_frame})')
+        plt.title(f'Customer Gender Distribution ({time_frame})', pad=20)
+        plt.tight_layout(pad=2.0)
         
         buffer = BytesIO()
-        plt.savefig(buffer, format='png', bbox_inches='tight')
-        plt.close()
+        fig.savefig(buffer, format='png', bbox_inches='tight', dpi=100, pad_inches=0.2)
+        plt.close(fig)
         buffer.seek(0)
-        return HttpResponse(buffer.getvalue(), content_type='image/png')
+        response = HttpResponse(buffer.getvalue(), content_type='image/png')
+        response['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
+        response['Pragma'] = 'no-cache'
+        response['Expires'] = '0'
+        return response
     
 class AdminChatListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     model = ChatThread
@@ -914,14 +922,14 @@ class SalesTrendChartView(View):
             filtered_transactions = filtered_transactions.filter(transaction_datetime__gte=start_date)
 
         filtered_transactions = filtered_transactions.annotate(
-            final_total=Sum(F('items__quantity_purchased') * F('items__price_at_purchase')) - F('voucher_value')
+            final_total=Sum(F('items__quantity_purchased') * F('items__price_at_purchase')) + F('voucher_value')
         )
 
         sales_trend = filtered_transactions.annotate(
             date=trunc_func('transaction_datetime')
         ).values('date').annotate(
             revenue=Sum(
-                F('items__quantity_purchased') * F('items__price_at_purchase') - F('voucher_value'),
+                F('items__quantity_purchased') * F('items__price_at_purchase') + F('voucher_value'),
                 default=Decimal('0.0'),
                 output_field=DecimalField()
             )
@@ -942,19 +950,27 @@ class SalesTrendChartView(View):
                 dates.append(f"{year}-Q{quarter}")
         revenues = [item['revenue'] for item in sales_trend]
 
-        plt.figure(figsize=(7, 4))
-        plt.plot(dates, revenues, marker='o')
-        plt.title(f'Sales Trend ({time_frame})')
-        plt.xlabel('Period')
-        plt.ylabel('Revenue (S$)')
-        plt.xticks(rotation=45)
+        # Clear any existing matplotlib state
+        plt.close('all')
+        
+        fig = plt.figure(num=2, figsize=(8, 5), dpi=100, clear=True)
+        plt.plot(dates, revenues, marker='o', linewidth=2, markersize=6)
+        plt.title(f'Sales Trend ({time_frame})', pad=20)
+        plt.xlabel('Period', labelpad=10)
+        plt.ylabel('Revenue (S$)', labelpad=10)
+        plt.xticks(rotation=45, ha='right')
+        plt.tight_layout(pad=2.0)
 
         buffer = BytesIO()
-        plt.savefig(buffer, format='png', bbox_inches='tight')
-        plt.close()
+        fig.savefig(buffer, format='png', bbox_inches='tight', dpi=100, pad_inches=0.2)
+        plt.close(fig)
         buffer.seek(0)
 
-        return HttpResponse(buffer.getvalue(), content_type='image/png')
+        response = HttpResponse(buffer.getvalue(), content_type='image/png')
+        response['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
+        response['Pragma'] = 'no-cache'
+        response['Expires'] = '0'
+        return response
 
 class RevenueByCategoryChartView(View):
     def get(self, request, time_frame):
@@ -983,7 +999,7 @@ class RevenueByCategoryChartView(View):
             'product__product_category'
         ).annotate(
             total_revenue=Sum(
-                F('quantity_purchased') * F('price_at_purchase') - F('transactions__voucher_value'),
+                F('quantity_purchased') * F('price_at_purchase') + F('transactions__voucher_value'),
                 default=Decimal('0.0'),
                 output_field=DecimalField()
             )
@@ -996,18 +1012,25 @@ class RevenueByCategoryChartView(View):
         categories = [item['product__product_category'] or 'Uncategorized' for item in revenue_by_category]
         revenues = [float(item['total_revenue']) for item in revenue_by_category]
 
+        # Clear any existing matplotlib state
+        plt.close('all')
+        
         # Create vertical bar chart
-        plt.figure(figsize=(8, 5))
+        fig = plt.figure(num=3, figsize=(8, 5), dpi=100, clear=True)
         plt.bar(categories, revenues, color='#28a745')  # Vertical bars
-        plt.title(f'Revenue by Product Category ({time_frame})')
-        plt.xlabel('Category')
-        plt.ylabel('Revenue (S$)')
-        plt.xticks(rotation=45)
-        plt.tight_layout()
+        plt.title(f'Revenue by Product Category ({time_frame})', pad=20)
+        plt.xlabel('Category', labelpad=10)
+        plt.ylabel('Revenue (S$)', labelpad=10)
+        plt.xticks(rotation=45, ha='right')
+        plt.tight_layout(pad=2.0)
 
         buffer = BytesIO()
-        plt.savefig(buffer, format='png', bbox_inches='tight')
-        plt.close()
+        fig.savefig(buffer, format='png', bbox_inches='tight', dpi=100, pad_inches=0.2)
+        plt.close(fig)
         buffer.seek(0)
 
-        return HttpResponse(buffer.getvalue(), content_type='image/png')
+        response = HttpResponse(buffer.getvalue(), content_type='image/png')
+        response['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
+        response['Pragma'] = 'no-cache'
+        response['Expires'] = '0'
+        return response
