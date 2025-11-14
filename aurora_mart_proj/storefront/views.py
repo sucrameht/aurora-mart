@@ -14,6 +14,8 @@ from authentication.models import UserProfile
 import pandas as pd
 from django.apps import apps
 from django.db import transaction
+from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.forms import PasswordChangeForm
 
 APP_PATH = apps.get_app_config('storefront').path
 
@@ -999,3 +1001,28 @@ class DeleteShippingAddressView(LoginRequiredMixin, View):
         except Exception as e:
             messages.error(request, f"Error deleting address: {e}")
         return redirect('manage_addresses')
+
+
+class ChangePasswordView(LoginRequiredMixin, View):
+    template_name = 'change_password.html'
+    form_class = PasswordChangeForm
+
+    def get(self, request, *args, **kwargs):
+        form = self.form_class(user=request.user)
+        context = {'form': form}
+        return render(request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+        form = self.form_class(user=request.user, data=request.POST)
+        if form.is_valid():
+            user = form.save()
+            # Important to keep the user logged in after password change
+            update_session_auth_hash(request, user)
+            messages.success(request, 'Your password was successfully updated!')
+            return redirect('profile_settings')
+        else:
+            # The form will contain the error messages
+            messages.error(request, 'Please correct the errors below.')
+        
+        context = {'form': form}
+        return render(request, self.template_name, context)

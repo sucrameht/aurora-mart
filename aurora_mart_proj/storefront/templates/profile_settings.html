@@ -9,6 +9,15 @@
     <link rel="stylesheet" href="{% static 'storefront/css/profile_settings.css' %}">
 </head>
 <body>
+    {% if messages %}
+        <div class="message-container">
+            {% for message in messages %}
+                <div class="message {{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
 <div class="header">
         <div class="logo" onclick="window.location.href='{% url 'storefront_home' %}'">
             <img src="{% static 'storefront/images/AuroraMartLogo.png' %}" alt="AuroraMart Logo" class="logo-img">
@@ -44,10 +53,10 @@
                 <div class="card-title">Manage Addresses</div>
                 <div class="card-description">Add, edit, or remove your saved shipping addresses.</div>
             </a>
-            <a href="#" class="settings-card disabled">
+            <a href="{% url 'change_password' %}" class="settings-card">
                 <div class="card-icon">🔒</div>
                 <div class="card-title">Change Password</div>
-                <div class="card-description">Update your account password for security. (Coming Soon)</div>
+                <div class="card-description">Update your account password for security.</div>
             </a>
         </div>
     </div>
