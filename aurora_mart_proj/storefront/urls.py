@@ -15,4 +15,12 @@ urlpatterns = [
     path('chat/', ChatListView.as_view(), name='chat_list'),
     path('chat/start/<str:sku_code>/', StartChatView.as_view(), name='start_chat'),
     path('chat/thread/<int:thread_id>/', ChatThreadView.as_view(), name='chat_thread'),
+    path('product/<str:sku_code>/', ProductDetailView.as_view(), name='product_detail'),
+
+    path('profile/settings/', ProfileSettingsView.as_view(), name='profile_settings'),
+    path('profile/addresses/', ManageAddressesView.as_view(), name='manage_addresses'),
+    path('profile/addresses/edit/<int:pk>/', EditShippingAddressView.as_view(), name='edit_shipping_address'),
+    path('profile/addresses/delete/<int:pk>/', DeleteShippingAddressView.as_view(), name='delete_shipping_address'),
+    path('profile/change-password/', ChangePasswordView.as_view(), name='change_password'),
+    path('profile/my-vouchers/', MyVouchersView.as_view(), name='my_vouchers'),
 ]

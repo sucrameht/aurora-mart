@@ -14,6 +14,8 @@ from authentication.models import UserProfile
 import pandas as pd
 from django.apps import apps
 from django.db import transaction
+from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.forms import PasswordChangeForm
 
 APP_PATH = apps.get_app_config('storefront').path
 
@@ -143,19 +145,12 @@ class StorefrontView(ListView):
             queryset = queryset.order_by('-product_rating')
 
         categories = Product.objects.values_list('product_category', flat=True).distinct().order_by('product_category')
-        if request.user.is_authenticated:
-            cart_item_count = CartItem.objects.filter(user=request.user).aggregate(
-                total_quantity=Sum('quantity')
-            )['total_quantity'] or 0
-        else:
-            cart_item_count = request.session.get('cart_item_count', 0)
 
         context = {
             'products': queryset,
             'categories': categories,
             'active_category': active_category,
             'query': query,
-            'cart_item_count': cart_item_count,
             'sort': sort,
             'recommended_category': recommended_category,
         }
@@ -388,10 +383,6 @@ class ProfileView(LoginRequiredMixin, View):
         
         total_orders = user_transactions.count()
         completed_orders_count = completed_orders_list.count() 
-        
-        if request.user.is_authenticated:
-            cart_items_db = CartItem.objects.filter(user=request.user).select_related('product')
-            cart_item_count = sum(item.quantity for item in cart_items_db)
 
         context = {
             'profile': profile,
@@ -400,8 +391,7 @@ class ProfileView(LoginRequiredMixin, View):
             'completed_orders': completed_orders_count,
             'active_orders_list': active_orders_list,
             'completed_orders_list': completed_orders_list,
-            'cart_item_count': cart_item_count,
-            'active_tab': active_tab,  # --- ADD THIS ---
+            'active_tab': active_tab,
         }
         return render(request, self.template_name, context)
 
@@ -722,31 +712,28 @@ class EditProfileView(LoginRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
         user = request.user
-        # We can safely assume the profile exists now because of the get method
         profile = UserProfile.objects.get(user=request.user)
         
-        # Get data from the POST form
-        first_name = request.POST.get('first_name')
-        last_name = request.POST.get('last_name')
-        email = request.POST.get('email')
-        
-        # Get profile-specific data (add any other fields you have)
-        phone_number = request.POST.get('phone_number') # Assumes 'phone_number' on UserProfile
-        
-        # Update the User model
-        user.first_name = first_name
-        user.last_name = last_name
-        user.email = email
+        # Update User model
+        user.first_name = request.POST.get('first_name')
+        user.last_name = request.POST.get('last_name')
+        user.email = request.POST.get('email')
         user.save()
         
-        # Update the UserProfile model
-        profile.phone_number = phone_number
-        # profile.age = request.POST.get('age') # Example
-        # profile.household_size = request.POST.get('household_size') # Example
+        # Update UserProfile model
+        profile.phone_number = request.POST.get('phone_number')
+        profile.age = request.POST.get('age')
+        profile.household_size = request.POST.get('household_size')
+        profile.gender = request.POST.get('gender')
+        profile.has_children = request.POST.get('has_children') == 'true'
+        profile.employment_status = request.POST.get('employment_status')
+        profile.occupation = request.POST.get('occupation')
+        profile.education = request.POST.get('education')
+        profile.monthly_income_sgd = request.POST.get('monthly_income_sgd')
         profile.save()
         
-        messages.success(request, "Your profile has been updated.")
-        return redirect('profile') # Redirect back to the profile page
+        messages.success(request, "Your profile has been updated successfully.")
+        return redirect('profile')
 
 class WalletView(LoginRequiredMixin, View):
     template_name = 'wallet.html'
@@ -906,3 +893,140 @@ class ChatThreadView(LoginRequiredMixin, View):
             )
         
         return redirect('chat_thread', thread_id=thread.pk)
+
+class ProductDetailView(DetailView):
+    model = Product
+    template_name = 'product_detail.html'
+    context_object_name = 'product'
+    pk_url_kwarg = 'sku_code'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        product = self.get_object()
+
+        context['reviews'] = OrderItem.objects.filter(
+            product=product
+        ).filter(
+            # Find items where EITHER the rating is > 0
+            Q(rating__gt=0) | 
+            # OR the text_review is not null AND not an empty string
+            (Q(text_review__isnull=False) & ~Q(text_review=''))
+        ).select_related('transactions__user').order_by('-transactions__transaction_datetime')
+
+        # Get product recommendations
+        recommended_products = []
+        if ASSOCIATION_RULES_MODEL is not None:
+            recommended_skus = get_recommendations(
+                ASSOCIATION_RULES_MODEL, 
+                [product.sku_code], 
+                metric='lift',
+                top_n=5
+            )
+            recommended_products = Product.objects.filter(sku_code__in=recommended_skus)
+        
+        context['recommended_products'] = recommended_products
+            
+        return context
+
+class ProfileSettingsView(LoginRequiredMixin, View):
+    template_name = 'profile_settings.html'
+
+    def get(self, request, *args, **kwargs):
+        return render(request, self.template_name)
+
+
+class ManageAddressesView(LoginRequiredMixin, ListView):
+    model = ShippingAddress
+    template_name = 'manage_addresses.html'
+    context_object_name = 'addresses'
+
+    def get_queryset(self):
+        return ShippingAddress.objects.filter(user=self.request.user).order_by('nickname')
+
+
+class EditShippingAddressView(LoginRequiredMixin, View):
+    template_name = 'edit_shipping_address.html'
+
+    def get(self, request, *args, **kwargs):
+        address = get_object_or_404(ShippingAddress, pk=self.kwargs['pk'], user=request.user)
+        return render(request, self.template_name, {'address': address})
+
+    def post(self, request, *args, **kwargs):
+        address = get_object_or_404(ShippingAddress, pk=self.kwargs['pk'], user=request.user)
+        
+        address.nickname = request.POST.get('nickname')
+        address.first_name = request.POST.get('first_name')
+        address.last_name = request.POST.get('last_name')
+        address.phone = request.POST.get('phone')
+        address.address = request.POST.get('address')
+        address.city = request.POST.get('city')
+        address.state = request.POST.get('state')
+        address.postal_code = request.POST.get('postal_code')
+        
+        try:
+            address.save()
+            messages.success(request, f"Address '{address.nickname}' updated successfully.")
+        except Exception as e:
+            messages.error(request, f"Error updating address: {e}")
+
+        return redirect('manage_addresses')
+
+
+class DeleteShippingAddressView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        address = get_object_or_404(ShippingAddress, pk=self.kwargs['pk'], user=request.user)
+        try:
+            address.delete()
+            messages.success(request, "Address deleted successfully.")
+        except Exception as e:
+            messages.error(request, f"Error deleting address: {e}")
+        return redirect('manage_addresses')
+
+
+class ChangePasswordView(LoginRequiredMixin, View):
+    template_name = 'change_password.html'
+    form_class = PasswordChangeForm
+
+    def get(self, request, *args, **kwargs):
+        form = self.form_class(user=request.user)
+        context = {'form': form}
+        return render(request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+        form = self.form_class(user=request.user, data=request.POST)
+        if form.is_valid():
+            user = form.save()
+            # Important to keep the user logged in after password change
+            update_session_auth_hash(request, user)
+            messages.success(request, 'Your password was successfully updated!')
+            return redirect('profile_settings')
+        else:
+            # The form will contain the error messages
+            messages.error(request, 'Please correct the errors below.')
+        
+        context = {'form': form}
+        return render(request, self.template_name, context)
+
+
+class MyVouchersView(LoginRequiredMixin, ListView):
+    model = Voucher
+    template_name = 'my_vouchers.html'
+    context_object_name = 'vouchers'
+
+    def get_queryset(self):
+        """
+        Returns the vouchers associated with the current user's profile.
+        Orders them so that active vouchers appear before expired ones.
+        """
+        profile = get_object_or_404(UserProfile, user=self.request.user)
+        
+        # Annotate with an 'is_expired' field to sort by
+        today = date.today()
+        return profile.vouchers.annotate(
+            is_expired=Q(expiry_date__lt=today) | Q(is_active=False)
+        ).order_by('is_expired', '-expiry_date')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['today'] = date.today()
+        return context

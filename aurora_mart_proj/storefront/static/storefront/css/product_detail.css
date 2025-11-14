@@ -1,0 +1,205 @@
+/* storefront/static/storefront/css/product_detail.css */
+
+body {
+    background-color: #f8f9fa;
+}
+
+.detail-container {
+    max-width: 1000px;
+    margin: 30px auto;
+    padding: 0 20px;
+}
+
+.product-main-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    margin-bottom: 40px;
+}
+
+.product-image-gallery .main-product-image {
+    width: 100%;
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+.product-title-main {
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0 0 5px 0;
+}
+
+.product-category {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 15px;
+}
+
+.product-stats {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    margin-bottom: 20px;
+    font-size: 15px;
+}
+
+.rating-summary {
+    color: orange;
+    font-weight: 600;
+}
+
+.sold-count {
+    color: #555;
+    font-weight: 500;
+}
+
+.product-description {
+    font-size: 16px;
+    line-height: 1.6;
+    color: #444;
+    margin-bottom: 25px;
+}
+
+.price-main {
+    font-size: 36px;
+    font-weight: bold;
+    color: #007ca5;
+    margin-bottom: 25px;
+}
+
+.product-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.add-cart-main, .buy-now-main {
+    padding: 14px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+}
+
+.add-cart-main {
+    background-color: #f0f0f0;
+    color: #333;
+    border: 1px solid #ddd;
+}
+
+.buy-now-main {
+    background-color: #ff7f50;
+    color: white;
+}
+
+.chat-link {
+    display: block;
+    text-align: center;
+    margin-top: 20px;
+    color: #007ca5;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+/* Recommendations Section */
+.recommendations-section {
+    margin-bottom: 40px;
+}
+
+.recommendations-section h2, .reviews-section h2 {
+    font-size: 22px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 10px;
+}
+
+.product-grid-small {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 20px;
+}
+
+.product-card-small {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    overflow: hidden;
+}
+
+.product-card-small a {
+    text-decoration: none;
+    color: inherit;
+}
+
+.product-image-small img {
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+}
+
+.product-title-small {
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.price-small {
+    font-size: 16px;
+    font-weight: bold;
+    color: #007ca5;
+    padding: 0 10px 10px 10px;
+}
+
+/* Reviews Section */
+.reviews-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.review-card {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.review-author {
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.review-rating {
+    color: orange;
+    font-size: 18px;
+}
+
+.review-text {
+    font-style: italic;
+    color: #555;
+    margin: 10px 0;
+}
+
+.review-date {
+    font-size: 12px;
+    color: #888;
+    text-align: right;
+}

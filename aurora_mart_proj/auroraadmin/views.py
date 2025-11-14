@@ -26,6 +26,13 @@ import matplotlib.pyplot as plt
 from io import BytesIO
 
 from storefront.models import ChatThread, ChatMessage
+from django.http import HttpResponseForbidden, HttpResponse
+from django.utils import timezone
+from datetime import timedelta
+import matplotlib
+matplotlib.use('Agg')  # Setting non-GUI backend before importing pyplot
+import matplotlib.pyplot as plt
+from io import BytesIO
 
 SKU_MAPPINGS = {
     'Automotive': {

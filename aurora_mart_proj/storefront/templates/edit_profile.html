@@ -7,6 +7,7 @@
     <title>Edit Profile</title>
     <link rel="stylesheet" href="{% static 'storefront/css/storefront.css' %}">
     <link rel="stylesheet" href="{% static 'storefront/css/checkout.css' %}">
+    <link rel="stylesheet" href="{% static 'storefront/css/profile_settings.css' %}">
 </head>
 <body>
     <div class="header">
@@ -17,6 +18,7 @@
     </div>
 
     <div class="checkout-container">
+        <a href="{% url 'profile_settings' %}" class="back-link">&larr; Back to Settings</a>
         <form class="checkout-forms" method="POST" action="{% url 'edit_profile' %}">
             {% csrf_token %}
             
@@ -43,10 +45,61 @@
                     <label for="phone_number">Phone Number</label>
                     <input type="tel" id="phone_number" name="phone_number" value="{{ profile.phone_number|default:'' }}">
                 </div>
+
+                <hr>
+                <h3>Demographics</h3>
+                <p class="muted">This information helps us personalize your experience.</p>
+
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label for="age">Age</label>
+                        <input type="number" id="age" name="age" value="{{ profile.age|default:'' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="household_size">Household Size</label>
+                        <input type="number" id="household_size" name="household_size" value="{{ profile.household_size|default:'' }}">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="gender">Gender</label>
+                    <select id="gender" name="gender">
+                        <option value="Female" {% if profile.gender == 'Female' %}selected{% endif %}>Female</option>
+                        <option value="Male" {% if profile.gender == 'Male' %}selected{% endif %}>Male</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="has_children">Has Children</label>
+                    <select id="has_children" name="has_children">
+                        <option value="true" {% if profile.has_children %}selected{% endif %}>Yes</option>
+                        <option value="false" {% if not profile.has_children %}selected{% endif %}>No</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="employment_status">Employment Status</label>
+                    <input type="text" id="employment_status" name="employment_status" value="{{ profile.employment_status|default:'' }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="occupation">Occupation</label>
+                    <input type="text" id="occupation" name="occupation" value="{{ profile.occupation|default:'' }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="education">Education</label>
+                    <input type="text" id="education" name="education" value="{{ profile.education|default:'' }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="monthly_income_sgd">Monthly Income (SGD)</label>
+                    <input type="number" step="0.01" id="monthly_income_sgd" name="monthly_income_sgd" value="{{ profile.monthly_income_sgd|default:'' }}">
+                </div>
                 
                 <button type="submit" class="complete-payment-btn">Save Changes</button>
                 <br><br>
-                <a href="{% url 'profile' %}" class="cancel-link">Cancel and go back</a>
+                <a href="{% url 'profile_settings' %}" class="cancel-link">Cancel and go back</a>
             </div>
         </form>
     </div>

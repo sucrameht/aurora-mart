@@ -1,0 +1,72 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Vouchers - AuroraMart</title>
+    <link rel="stylesheet" href="{% static 'storefront/css/storefront.css' %}">
+    <link rel="stylesheet" href="{% static 'storefront/css/profile_settings.css' %}">
+    <link rel="stylesheet" href="{% static 'storefront/css/my_vouchers.css' %}">
+</head>
+<body>
+<div class="header">
+        <div class="logo" onclick="window.location.href='{% url 'storefront_home' %}'">
+            <img src="{% static 'storefront/images/AuroraMartLogo.png' %}" alt="AuroraMart Logo" class="logo-img">
+            <span class="logo-text">AuroraMart</span>
+        </div>
+        <div class="icons">
+            <a href="{% url 'view_cart' %}" class="icon icon-cart">
+                🛒
+                <span id="cart-count">{{ cart_item_count|default:0 }}</span>
+            </a>
+            <a href="{% url 'chat_list' %}" class="icon">💬</a>
+            <form id="logout-form" method="post" action="{% url 'auroraadmin:logout' %}" style="display:inline">
+                {% csrf_token %}
+                <button type="submit" class="logout-button">Logout</button>
+            </form>
+            {% if user.is_superuser %}
+            <a href="{% url 'auroraadmin:admin_dashboard' %}" class="admin-button">Admin</a>
+            {% endif %}
+        </div>
+    </div>
+
+<div class="settings-container">
+    <a href="{% url 'profile_settings' %}" class="back-link">&larr; Back to Settings</a>
+    <h1>My Vouchers</h1>
+
+    {% if vouchers %}
+        <div class="voucher-grid">
+            {% for voucher in vouchers %}
+                {% with is_expired=voucher.is_expired %}
+                <div class="voucher-card {% if is_expired %}expired{% endif %}">
+                    <div>
+                        <div class="voucher-title">{{ voucher.name }}</div>
+                        <div class="voucher-code">{{ voucher.code }}</div>
+                        <p class="voucher-description">{{ voucher.description }}</p>
+                    </div>
+                    <div>
+                        {% if voucher.expiry_date %}
+                            <p class="voucher-expiry">
+                                {% if is_expired %}
+                                    Expired on: {{ voucher.expiry_date|date:"d M Y" }}
+                                {% else %}
+                                    Expires on: {{ voucher.expiry_date|date:"d M Y" }}
+                                {% endif %}
+                            </p>
+                        {% else %}
+                            <p style="font-size: 13px; color: #28a745; font-weight: 500;">No expiry date</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endwith %}
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="no-vouchers">
+            <p>You don't have any vouchers at the moment.</p>
+        </div>
+    {% endif %}
+</div>
+</body>
+</html>

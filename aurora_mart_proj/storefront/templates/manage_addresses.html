@@ -1,0 +1,73 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Addresses - AuroraMart</title>
+    <link rel="stylesheet" href="{% static 'storefront/css/storefront.css' %}">
+    <link rel="stylesheet" href="{% static 'storefront/css/profile_settings.css' %}">
+</head>
+<body>
+<div class="header">
+        <div class="logo" onclick="window.location.href='{% url 'storefront_home' %}'">
+            <img src="{% static 'storefront/images/AuroraMartLogo.png' %}" alt="AuroraMart Logo" class="logo-img">
+            <span class="logo-text">AuroraMart</span>
+        </div>
+        <div class="icons">
+            <a href="{% url 'view_cart' %}" class="icon icon-cart">
+                🛒
+                <span id="cart-count">{{ cart_item_count|default:0 }}</span>
+            </a>
+            <a href="{% url 'chat_list' %}" class="icon">💬</a>
+            <form id="logout-form" method="post" action="{% url 'auroraadmin:logout' %}" style="display:inline">
+                {% csrf_token %}
+                <button type="submit" class="logout-button">Logout</button>
+            </form>
+            {% if user.is_superuser %}
+            <a href="{% url 'auroraadmin:admin_dashboard' %}" class="admin-button">Admin</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="settings-container">
+        <a href="{% url 'profile_settings' %}" class="back-link">&larr; Back to Settings</a>
+        <div class="page-header">
+            <h1>Manage Addresses</h1>
+            <a href="{% url 'add_shipping_address' %}?next=manage_addresses" class="btn-add-new">+ Add New Address</a>
+        </div>
+
+        {% if messages %}
+            <div class="messages-container">
+                {% for message in messages %}
+                    <div class="message {{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="address-list">
+            {% for address in addresses %}
+                <div class="address-card">
+                    <div class="address-details">
+                        <div class="address-nickname">{{ address.nickname }}</div>
+                        <div class="address-recipient">{{ address.first_name }} {{ address.last_name }}</div>
+                        <div class="address-full">
+                            {{ address.address }}, {{ address.city }}, {{ address.state }} {{ address.postal_code }}
+                        </div>
+                        <div class="address-phone">Phone: {{ address.phone }}</div>
+                    </div>
+                    <div class="address-actions">
+                        <a href="{% url 'edit_shipping_address' address.pk %}" class="action-btn edit">Edit</a>
+                        <form action="{% url 'delete_shipping_address' address.pk %}" method="POST" onsubmit="return confirm('Are you sure you want to delete this address?');">
+                            {% csrf_token %}
+                            <button type="submit" class="action-btn delete">Delete</button>
+                        </form>
+                    </div>
+                </div>
+            {% empty %}
+                <p>You have no saved addresses. Add one to get started!</p>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>
