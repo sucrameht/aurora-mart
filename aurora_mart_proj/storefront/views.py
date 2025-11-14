@@ -914,8 +914,6 @@ class ProductDetailView(DetailView):
         context = super().get_context_data(**kwargs)
         product = self.get_object()
 
-        # Get reviews for this product
-        # We filter OrderItems that have a rating or a text review
         context['reviews'] = OrderItem.objects.filter(
             product=product
         ).filter(
@@ -944,5 +942,60 @@ class ProductDetailView(DetailView):
                 total_quantity=Sum('quantity')
             )['total_quantity'] or 0
         else:
-            context['cart_item_count'] = self.request.session.get('cart_item_count', 0)     
+            context['cart_item_count'] = self.request.session.get('cart_item_count', 0)            
+            
         return context
+
+class ProfileSettingsView(LoginRequiredMixin, View):
+    template_name = 'profile_settings.html'
+
+    def get(self, request, *args, **kwargs):
+        return render(request, self.template_name)
+
+
+class ManageAddressesView(LoginRequiredMixin, ListView):
+    model = ShippingAddress
+    template_name = 'manage_addresses.html'
+    context_object_name = 'addresses'
+
+    def get_queryset(self):
+        return ShippingAddress.objects.filter(user=self.request.user).order_by('nickname')
+
+
+class EditShippingAddressView(LoginRequiredMixin, View):
+    template_name = 'edit_shipping_address.html'
+
+    def get(self, request, *args, **kwargs):
+        address = get_object_or_404(ShippingAddress, pk=self.kwargs['pk'], user=request.user)
+        return render(request, self.template_name, {'address': address})
+
+    def post(self, request, *args, **kwargs):
+        address = get_object_or_404(ShippingAddress, pk=self.kwargs['pk'], user=request.user)
+        
+        address.nickname = request.POST.get('nickname')
+        address.first_name = request.POST.get('first_name')
+        address.last_name = request.POST.get('last_name')
+        address.phone = request.POST.get('phone')
+        address.address = request.POST.get('address')
+        address.city = request.POST.get('city')
+        address.state = request.POST.get('state')
+        address.postal_code = request.POST.get('postal_code')
+        
+        try:
+            address.save()
+            messages.success(request, f"Address '{address.nickname}' updated successfully.")
+        except Exception as e:
+            messages.error(request, f"Error updating address: {e}")
+
+        return redirect('manage_addresses')
+
+
+class DeleteShippingAddressView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        address = get_object_or_404(ShippingAddress, pk=self.kwargs['pk'], user=request.user)
+        try:
+            address.delete()
+            messages.success(request, "Address deleted successfully.")
+        except Exception as e:
+            messages.error(request, f"Error deleting address: {e}")
+        return redirect('manage_addresses')

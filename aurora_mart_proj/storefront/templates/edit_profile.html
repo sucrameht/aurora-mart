@@ -7,6 +7,7 @@
     <title>Edit Profile</title>
     <link rel="stylesheet" href="{% static 'storefront/css/storefront.css' %}">
     <link rel="stylesheet" href="{% static 'storefront/css/checkout.css' %}">
+    <link rel="stylesheet" href="{% static 'storefront/css/profile_settings.css' %}">
 </head>
 <body>
     <div class="header">
@@ -17,6 +18,7 @@
     </div>
 
     <div class="checkout-container">
+        <a href="{% url 'profile_settings' %}" class="back-link">&larr; Back to Settings</a>
         <form class="checkout-forms" method="POST" action="{% url 'edit_profile' %}">
             {% csrf_token %}
             
@@ -97,7 +99,7 @@
                 
                 <button type="submit" class="complete-payment-btn">Save Changes</button>
                 <br><br>
-                <a href="{% url 'profile' %}" class="cancel-link">Cancel and go back</a>
+                <a href="{% url 'profile_settings' %}" class="cancel-link">Cancel and go back</a>
             </div>
         </form>
     </div>

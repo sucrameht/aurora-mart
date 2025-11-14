@@ -70,7 +70,7 @@
 
                 <button type="submit" class="complete-payment-btn">Save Address</button>
                 <br><br>
-                <a href="{% if request.GET.next == 'profile' %}{% url 'profile' %}{% else %}{% url 'checkout' %}{% endif %}" class="cancel-link">Cancel and go back</a>
+                <a href="{% if request.GET.next == 'manage_addresses' %}{% url 'manage_addresses' %}{% else %}{% url 'checkout' %}{% endif %}" class="cancel-link">Cancel and go back</a>
             </div>
         </form>
     </div>
