@@ -16,6 +16,7 @@
             <span class="logo-text">AuroraMart</span>
         </div>
         <div class="icons">
+            <a href="{% url 'chat_list' %}" class="icon">💬</a>
             <a href="{% url 'profile' %}" class="icon">👤</a>
             {% if user.is_superuser %}
             <a href="{% url 'auroraadmin:admin_dashboard' %}" class="admin-button">Admin</a>

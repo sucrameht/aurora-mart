@@ -1,0 +1,39 @@
+{% extends "auroraadmin/base.html" %}
+{% load static %}
+
+{% block messages %}{% endblock messages %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'storefront/css/chat.css' %}">
+{% endblock %}
+
+{% block main_content %}
+<div class="chat-container">
+    <h1 class="chat-main-title">Chat about {{ thread.product.product_name }}</h1>
+    <p class="chat-sub-title">With: {{ thread.customer.username }}</p>
+
+    <div class="chat-messages" id="chat-messages">
+        {% for message in messages %}
+            <div class="chat-message {% if message.sender == request.user %}sent{% else %}received{% endif %}">
+                <div class="message-bubble">
+                    <p class="message-sender"><strong>{% if message.sender == request.user %}You{% else %}{{ message.sender.username }}{% endif %}</strong></p>
+                    <p class="message-content">{{ message.message }}</p>
+                    <p class="message-timestamp">{{ message.timestamp|time:"H:i" }}</p>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <form method="post" class="chat-form">
+        {% csrf_token %}
+        <textarea name="message" placeholder="Type your reply..." required></textarea>
+        <button type="submit">Send Reply</button>
+    </form>
+</div>
+
+<script>
+    // Auto-scroll to the bottom of the chat messages
+    const chatMessages = document.getElementById('chat-messages');
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+</script>
+{% endblock %}
