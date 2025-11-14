@@ -136,7 +136,7 @@
 .message-content {
     margin: 0;
     font-size: 1rem;
-    white-space: pre-wrap; /* Respects newlines */
+    white-space: pre-wrap;
 }
 
 .message-timestamp {

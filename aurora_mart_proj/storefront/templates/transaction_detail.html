@@ -15,10 +15,7 @@
             <span class="logo-text">AuroraMart</span>
         </div>
         <div class="icons">
-            <a href="{% url 'view_cart' %}" class="icon icon-cart">
-                🛒
-                <span id="cart-count">{{ cart_item_count|default:0 }}</span>
-            </a>
+            <a href="{% url 'view_cart' %}" class="icon icon-cart">🛒</a>
             <a href="{% url 'profile' %}" class="icon">👤</a>
         </div>
     </div>

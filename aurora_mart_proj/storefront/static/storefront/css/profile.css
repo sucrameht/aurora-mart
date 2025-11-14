@@ -1,5 +1,5 @@
 body { 
-    background-color: #f0f8ff; /* Matches storefront body */
+    background-color: #f0f8ff;
     font-family: Arial, sans-serif; 
 }
 
@@ -56,10 +56,9 @@ body {
     top: 24px;
     right: 24px;
     display: flex;
-    gap: 12px; /* Adds space between icons */
+    gap: 12px;
 }
 
-/* Renamed from .card-edit-link */
 .card-icon-link {
     font-size: 20px;
     color: #888;
@@ -171,7 +170,7 @@ body {
 .btn-top-up {
     display: block;
     width: 90%;
-    background-color: #ff7f50; /* Orange from your image */
+    background-color: #ff7f50;
     color: white;
     text-align: center;
     padding: 12px;
@@ -185,7 +184,6 @@ body {
 }
 
 
-/* --- Orders Panel (Unchanged) --- */
 .tabs { 
     display: flex; 
     gap: 8px; 

@@ -1,117 +1,113 @@
 .detail-container {
         padding: 20px;
-        background-color: #f0f8ff; /* Light blue background */
-    }
+        background-color: #f0f8ff; 
+}
 
-    /* Back link */
-    .back-link {
-        display: inline-block;
-        margin-bottom: 20px;
-        color: #007ca5; /* Blue */
-        font-weight: 600;
-        text-decoration: none;
-    }
-    .back-link:hover {
-        text-decoration: underline;
-    }
+.back-link {
+    display: inline-block;
+    margin-bottom: 20px;
+    color: #007ca5;
+    font-weight: 600;
+    text-decoration: none;
+}
+.back-link:hover {
+    text-decoration: underline;
+}
 
-    /* Main content card */
-    .detail-card {
-        background-color: #ffffff;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-        overflow: hidden; /* Ensures table radius is respected */
-    }
+/* Main content card */
+.detail-card {
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
 
-    /* Header section with main details */
-    .detail-header {
-        padding: 25px;
-        border-bottom: 1px solid #eee;
-    }
+/* Header section with main details */
+.detail-header {
+    padding: 25px;
+    border-bottom: 1px solid #eee;
+}
 
-    .detail-title {
-        font-size: 1.8rem;
-        font-weight: 600;
-        color: #007ca5; /* Blue */
-        margin-bottom: 15px;
-    }
+.detail-title {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: #007ca5;
+    margin-bottom: 15px;
+}
 
-    /* Grid for summary fields */
-    .summary-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 20px;
-    }
+/* Grid for summary fields */
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
 
-    .summary-item {
-        font-size: 0.9rem;
-    }
-    .summary-label {
-        color: #777;
-        font-weight: 600;
-        display: block;
-        margin-bottom: 4px;
-        text-transform: uppercase;
-        font-size: 0.75rem;
-    }
-    .summary-value {
-        color: #333;
-        font-size: 1rem;
-    }
-    .summary-value.username {
-        font-weight: 600;
-    }
+.summary-item {
+    font-size: 0.9rem;
+}
+.summary-label {
+    color: #777;
+    font-weight: 600;
+    display: block;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+}
+.summary-value {
+    color: #333;
+    font-size: 1rem;
+}
+.summary-value.username {
+    font-weight: 600;
+}
 
+/* Item details table */
+.items-table {
+    width: 100%;
+    border-collapse: collapse;
+}
 
-    /* Item details table */
-    .items-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
+.items-table th,
+.items-table td {
+    padding: 12px 25px;
+    border-bottom: 1px solid #e0e0e0;
+    text-align: left;
+}
 
-    .items-table th,
-    .items-table td {
-        padding: 12px 25px; /* More padding */
-        border-bottom: 1px solid #e0e0e0;
-        text-align: left;
-    }
+.items-table th {
+    background-color: #f0f8ff;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #007ca5;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
 
-    .items-table th {
-        background-color: #f0f8ff; /* Light blue header */
-        font-size: 0.75rem;
-        font-weight: 600;
-        color: #007ca5; /* Blue text */
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-    }
+.items-table td {
+    font-size: 0.9rem;
+    color: #333;
+}
+.items-table .product-name {
+    font-weight: 600;
+    color: #111;
+}
 
-    .items-table td {
-        font-size: 0.9rem;
-        color: #333;
-    }
-    .items-table .product-name {
-        font-weight: 600;
-        color: #111;
-    }
+.text-center { text-align: center; }
+.text-right { text-align: right; }
 
-    /* Column alignments */
-    .text-center { text-align: center; }
-    .text-right { text-align: right; }
-
-    /* Footer for totals */
-    .items-footer {
-        padding: 20px 25px;
-        text-align: right;
-        background-color: #f9f9f9;
-    }
-    .total-label {
-        font-size: 1.1rem;
-        font-weight: 600;
-        color: #555;
-    }
-    .total-value {
-        font-size: 1.3rem;
-        font-weight: 700;
-        color: #007ca5; /* Blue */
-        margin-left: 15px;
-    }
+.items-footer {
+    padding: 20px 25px;
+    text-align: right;
+    background-color: #f9f9f9;
+}
+.total-label {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #555;
+}
+.total-value {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #007ca5;
+    margin-left: 15px;
+}
