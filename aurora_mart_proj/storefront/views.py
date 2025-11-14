@@ -145,19 +145,12 @@ class StorefrontView(ListView):
             queryset = queryset.order_by('-product_rating')
 
         categories = Product.objects.values_list('product_category', flat=True).distinct().order_by('product_category')
-        if request.user.is_authenticated:
-            cart_item_count = CartItem.objects.filter(user=request.user).aggregate(
-                total_quantity=Sum('quantity')
-            )['total_quantity'] or 0
-        else:
-            cart_item_count = request.session.get('cart_item_count', 0)
 
         context = {
             'products': queryset,
             'categories': categories,
             'active_category': active_category,
             'query': query,
-            'cart_item_count': cart_item_count,
             'sort': sort,
             'recommended_category': recommended_category,
         }
@@ -390,10 +383,6 @@ class ProfileView(LoginRequiredMixin, View):
         
         total_orders = user_transactions.count()
         completed_orders_count = completed_orders_list.count() 
-        
-        if request.user.is_authenticated:
-            cart_items_db = CartItem.objects.filter(user=request.user).select_related('product')
-            cart_item_count = sum(item.quantity for item in cart_items_db)
 
         context = {
             'profile': profile,
@@ -402,8 +391,7 @@ class ProfileView(LoginRequiredMixin, View):
             'completed_orders': completed_orders_count,
             'active_orders_list': active_orders_list,
             'completed_orders_list': completed_orders_list,
-            'cart_item_count': cart_item_count,
-            'active_tab': active_tab,  # --- ADD THIS ---
+            'active_tab': active_tab,
         }
         return render(request, self.template_name, context)
 
@@ -937,14 +925,6 @@ class ProductDetailView(DetailView):
             recommended_products = Product.objects.filter(sku_code__in=recommended_skus)
         
         context['recommended_products'] = recommended_products
-        
-        # Get cart count for the header
-        if self.request.user.is_authenticated:
-            context['cart_item_count'] = CartItem.objects.filter(user=self.request.user).aggregate(
-                total_quantity=Sum('quantity')
-            )['total_quantity'] or 0
-        else:
-            context['cart_item_count'] = self.request.session.get('cart_item_count', 0)            
             
         return context
 
@@ -1026,3 +1006,27 @@ class ChangePasswordView(LoginRequiredMixin, View):
         
         context = {'form': form}
         return render(request, self.template_name, context)
+
+
+class MyVouchersView(LoginRequiredMixin, ListView):
+    model = Voucher
+    template_name = 'my_vouchers.html'
+    context_object_name = 'vouchers'
+
+    def get_queryset(self):
+        """
+        Returns the vouchers associated with the current user's profile.
+        Orders them so that active vouchers appear before expired ones.
+        """
+        profile = get_object_or_404(UserProfile, user=self.request.user)
+        
+        # Annotate with an 'is_expired' field to sort by
+        today = date.today()
+        return profile.vouchers.annotate(
+            is_expired=Q(expiry_date__lt=today) | Q(is_active=False)
+        ).order_by('is_expired', '-expiry_date')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['today'] = date.today()
+        return context
