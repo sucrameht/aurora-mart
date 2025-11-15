@@ -271,6 +271,8 @@ body {
     text-align: left;
     position: relative;
     animation: fadeIn 0.3s ease;
+    max-height: 80vh;
+    overflow-y: auto;
   }
   
   .css-modal-content img {
