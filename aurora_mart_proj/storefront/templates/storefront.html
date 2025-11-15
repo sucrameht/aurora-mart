@@ -97,16 +97,16 @@
                 </a>
     
                 <div class="buttons">
-                    {% if user.is_authenticated %}
-                        <a href="{% url 'buy_now' product.sku_code %}" class="buy-now"><i class="fas fa-bolt"></i> Buy Now</a>
-                    {% else %}
-                        <a href="{% url 'login' %}?next={{ request.path }}" class="buy-now"><i class="fas fa-bolt"></i> Buy Now</a>
-                    {% endif %}
-                    <form action="{% url 'storefront_home' %}" method="POST" style="display:inline;">
+                    <form action="{% url 'buy_now' product.sku_code %}" method="GET" class="buy-now-form">
+                        <input type="hidden" name="quantity" id="buy-now-quantity-{{ product.sku_code }}">
+                        <button type="submit" class="buy-now" onclick="document.getElementById('buy-now-quantity-{{ product.sku_code }}').value = document.getElementById('quantity-{{ product.sku_code }}').value;"><i class="fas fa-bolt"></i> Buy Now</button>
+                    </form>
+                    <form action="{% url 'storefront_home' %}" method="POST" class="add-to-cart-form">
                         {% csrf_token %}
                         <input type="hidden" name="action" value="add">
                         <input type="hidden" name="sku_code" value="{{ product.sku_code }}">
                         <button type="submit" class="add-cart"><i class="fas fa-cart-plus"></i> Add</button>
+                        <input type="number" name="quantity" value="1" min="1" class="quantity-input-detail" id="quantity-{{ product.sku_code }}">
                     </form>
                 </div>
             </div>
@@ -127,6 +127,7 @@
                         <input type="hidden" name="action" value="add">
                         <input type="hidden" name="sku_code" value="{{ product.sku_code }}">
                         <button type="submit" class="add-cart"><i class="fas fa-cart-plus"></i> Add to Cart</button>
+                        <input type="number" name="quantity" value="1" min="1" class="quantity-input-detail">
                     </form>
                     <br/>
                     <a href="{% url 'start_chat' product.sku_code %}" class="buy-now"><i class="fas fa-comments"></i> Chat with Seller</a>

@@ -50,14 +50,21 @@
                 
                 <div class="price-main">${{ product.unit_price }}</div>
                 
-                <div class="product-actions">
-                    <form action="{% url 'storefront_home' %}" method="POST" style="display:contents;">
+                <div class="product-actions-wrapper">
+                    <form action="{% url 'storefront_home' %}" method="POST" class="add-to-cart-form-detail">
                         {% csrf_token %}
                         <input type="hidden" name="action" value="add">
                         <input type="hidden" name="sku_code" value="{{ product.sku_code }}">
+                        <div class="quantity-selector">
+                            <label for="quantity-detail">Quantity:</label>
+                            <input type="number" id="quantity-detail" name="quantity" value="1" min="1" class="quantity-input-detail">
+                        </div>
                         <button type="submit" class="add-cart-main"><i class="fas fa-cart-plus"></i> Add to Cart</button>
                     </form>
-                    <a href="{% url 'buy_now' product.sku_code %}" class="buy-now-main"><i class="fas fa-bolt"></i> Buy Now</a>
+                    <form action="{% url 'buy_now' product.sku_code %}" method="GET" class="buy-now-form-detail">
+                        <input type="hidden" name="quantity" id="buy-now-quantity-detail">
+                        <button type="submit" class="buy-now-main" onclick="document.getElementById('buy-now-quantity-detail').value = document.getElementById('quantity-detail').value;"><i class="fas fa-bolt"></i> Buy Now</button>
+                    </form>
                 </div>
                  <a href="{% url 'start_chat' product.sku_code %}" class="chat-link"><i class="fas fa-comments"></i> Chat with Seller about this product</a>
             </div>
