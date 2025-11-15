@@ -151,7 +151,7 @@ class CartView(View):
                 subtotal += total_item_price
         else:
             cart_items = CartItem.objects.filter(user=request.user).select_related('product')
-            subtotal = sum(item.total_price for item in cart_items)
+            subtotal = sum(item.total_price for item in cart_items if item.is_selected)
             cart_skus = [item.product.sku_code for item in cart_items]
     
         recommended_products = []
@@ -219,6 +219,15 @@ class CartView(View):
             sku = form.cleaned_data['sku_code']
             quantity = form.cleaned_data['quantity']
             voucher_code = form.cleaned_data['voucher_code']
+
+            if action == 'toggle_selection':
+                sku = request.POST.get('sku_code')
+                try:
+                    item = CartItem.objects.get(user=request.user, product__sku_code=sku)
+                    item.is_selected = not item.is_selected
+                    item.save()
+                except CartItem.DoesNotExist:
+                    messages.error(request, "Item not in cart.")
 
             if request.user.is_authenticated:
                 if action == 'update':

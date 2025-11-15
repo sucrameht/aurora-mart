@@ -61,6 +61,12 @@
                 <div class="cart-items-list">
                     {% for item in cart_items %}
                     <div class="cart-item-card">
+                        <form action="{% url 'view_cart' %}" method="POST" class="cart-item-select">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="toggle_selection">
+                            <input type="hidden" name="sku_code" value="{{ item.product.sku_code }}">
+                            <input type="checkbox" name="is_selected" {% if item.is_selected %}checked{% endif %} onchange="this.form.submit()">
+                        </form>
                         <img src="https://nus.edu.sg/images/default-source/identity-images/NUS_logo_full-horizontal.jpg" alt="{{ item.product.product_name }}" class="cart-item-img">
                         <div class="cart-item-details">
                             <a href="{% url 'product_detail' item.product.sku_code %}" class="cart-item-link">

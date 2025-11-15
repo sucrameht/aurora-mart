@@ -28,11 +28,11 @@ class CheckoutView(LoginRequiredMixin, View):
 
         else:
             # --- REGULAR CART CHECKOUT LOGIC ---
-            cart_items_db = CartItem.objects.filter(user=request.user).select_related('product')
+            cart_items_db = CartItem.objects.filter(user=request.user, is_selected=True).select_related('product')
             
             if not cart_items_db.exists():
-                messages.warning(request, "Your cart is empty. Add some products before checking out.")
-                return redirect('storefront_home')
+                messages.warning(request, "You have no items selected for checkout.")
+                return redirect('view_cart')
 
             cart_items = []
             subtotal = Decimal('0.00')
@@ -141,9 +141,9 @@ class CheckoutView(LoginRequiredMixin, View):
 
         else:
             # --- Handle "Regular Cart" ---
-            cart_items_db = CartItem.objects.filter(user=request.user).select_related('product')
+            cart_items_db = CartItem.objects.filter(user=request.user, is_selected=True).select_related('product')
             if not cart_items_db.exists():
-                messages.error(request, "Your cart is empty.")
+                messages.error(request, "Your cart is empty or no items are selected.")
                 return redirect('view_cart')
 
             subtotal = Decimal('0.00')
@@ -234,7 +234,7 @@ class CheckoutView(LoginRequiredMixin, View):
         if buy_now_item_session:
             del request.session['buy_now_item']
         else:
-            CartItem.objects.filter(user=request.user).delete()
+            CartItem.objects.filter(user=request.user, is_selected=True).delete()
 
         messages.success(request, f"Your order has been placed!")
         return redirect('profile')
