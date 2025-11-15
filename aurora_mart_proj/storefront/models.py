@@ -19,7 +19,7 @@ class Product(models.Model):
         ordering = ['product_category', 'product_name']
 
 class Transactions(models.Model):
-    user = models.ForeignKey(User, on_delete=models.RESTRICT, related_name="transactions")
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="transactions")
     transaction_datetime = models.DateTimeField()
 
     shipping_first_name = models.CharField(max_length=100, blank=True)
