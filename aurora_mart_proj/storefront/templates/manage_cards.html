@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Payment Methods - AuroraMart</title>
+    <title>Manage Cards - AuroraMart</title>
     <link rel="stylesheet" href="{% static 'storefront/css/storefront.css' %}">
     <link rel="stylesheet" href="{% static 'storefront/css/profile_settings.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
@@ -48,8 +48,8 @@
     <div class="settings-container">
         <a href="{% url 'profile_settings' %}" class="back-link">&larr; Back to Settings</a>
         <div class="page-header">
-            <h1>Manage Payment Methods</h1>
-            <a href="{% url 'add_card' %}?next=manage_payment_methods" class="btn-add-new">+ Add New Card</a>
+            <h1>Manage Cards</h1>
+            <a href="{% url 'add_card' %}?next=manage_cards" class="btn-add-new">+ Add New Card</a>
         </div>
 
         {% if messages %}
