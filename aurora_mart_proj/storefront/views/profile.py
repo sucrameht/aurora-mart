@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.views.generic import ListView, View
 from datetime import date
 from django.contrib.auth.mixins import LoginRequiredMixin
-from authentication.models import UserProfile
+from authentication.models import UserProfile, WalletHistory
 from django.contrib.auth import update_session_auth_hash, logout
 from django.contrib.auth.forms import PasswordChangeForm
 from django import forms
@@ -141,8 +141,10 @@ class WalletView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         # Get profile, or create it if it doesn't exist
         profile, created = UserProfile.objects.get_or_create(user=request.user)
+        history = profile.wallet_history.all()
         context = {
-            'profile': profile
+            'profile': profile,
+            'history': history,
         }
         return render(request, self.template_name, context)
 
@@ -157,6 +159,14 @@ class WalletView(LoginRequiredMixin, View):
             else:
                 profile.wallet_balance += top_up_amount
                 profile.save()
+                
+                # Create a history record
+                WalletHistory.objects.create(
+                    user_profile=profile,
+                    transaction_type='TOPUP',
+                    amount=top_up_amount
+                )
+                
                 messages.success(request, f"Successfully added ${top_up_amount} to your wallet.")
         
         except:
