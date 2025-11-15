@@ -1,30 +1,13 @@
+{% extends 'storefront/base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Address - AuroraMart</title>
-    <link rel="stylesheet" href="{% static 'storefront/css/storefront.css' %}">
-    <link rel="stylesheet" href="{% static 'storefront/css/checkout.css' %}">
-</head>
-<body>
-    {% if messages %}
-        <div class="message-container">
-            {% for message in messages %}
-                <div class="message {{ message.tags }}">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        </div>
-    {% endif %}
-    <div class="header">
-        <div class="logo" onclick="window.location.href='{% url 'storefront_home' %}'">
-            <img src="{% static 'storefront/images/AuroraMartLogo.png' %}" alt="AuroraMart Logo" class="logo-img">
-            <span class="logo-text">AuroraMart</span>
-        </div>
-    </div>
 
+{% block title %}Edit Address - AuroraMart{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'storefront/css/checkout.css' %}">
+{% endblock %}
+
+{% block content %}
     <div class="checkout-container" style="max-width: 700px;">
         <form class="checkout-forms" method="POST">
             {% csrf_token %}
@@ -77,5 +60,4 @@
             </div>
         </form>
     </div>
-</body>
-</html>
+{% endblock %}

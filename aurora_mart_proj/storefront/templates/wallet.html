@@ -1,35 +1,20 @@
+{% extends 'storefront/base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Wallet</title>
-    <link rel="stylesheet" href="{% static 'storefront/css/storefront.css' %}">
-    <link rel="stylesheet" href="{% static 'storefront/css/checkout.css' %}">
-    <link rel="stylesheet" href="{% static 'storefront/css/cart.css' %}"> </head>
-<body>
-    <div class="header">
-        <div class="logo" onclick="window.location.href='{% url 'storefront_home' %}'">
-            <img src="{% static 'storefront/images/AuroraMartLogo.png' %}" alt="AuroraMart Logo" class="logo-img">
-            <span class="logo-text">AuroraMart</span>
-        </div>
-    </div>
 
+{% block title %}My Wallet{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'storefront/css/checkout.css' %}">
+    <link rel="stylesheet" href="{% static 'storefront/css/cart.css' %}">
+{% endblock %}
+
+{% block content %}
     <div class="checkout-container">
         <form class="checkout-forms" method="POST" action="{% url 'wallet' %}">
             {% csrf_token %}
             
             <div class="form-card">
                 <h2>AuroraMart Wallet</h2>
-                
-                {% if messages %}
-                <div class.messages-container>
-                    {% for message in messages %}
-                        <div class="message {{ message.tags }}">{{ message }}</div>
-                    {% endfor %}
-                </div>
-                {% endif %}
 
                 <div class.stat" style="text-align: left; background: #e6f7ff; margin-bottom: 20px; padding: 15px; border-radius: 8px;">
                     <div class.stat-label" style="font-size: 14px; color: #555;">Current Balance</div>
@@ -71,5 +56,4 @@
             </div>
         </div>
     </div>
-</body>
-</html>
+{% endblock %}

@@ -1,31 +1,14 @@
+{% extends 'storefront/base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Profile</title>
-    <link rel="stylesheet" href="{% static 'storefront/css/storefront.css' %}">
+
+{% block title %}Edit Profile{% endblock %}
+
+{% block extra_head %}
     <link rel="stylesheet" href="{% static 'storefront/css/checkout.css' %}">
     <link rel="stylesheet" href="{% static 'storefront/css/profile_settings.css' %}">
-</head>
-<body>
-    {% if messages %}
-        <div class="message-container">
-            {% for message in messages %}
-                <div class="message {{ message.tags }}">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        </div>
-    {% endif %}
-    <div class="header">
-        <div class="logo" onclick="window.location.href='{% url 'storefront_home' %}'">
-            <img src="{% static 'storefront/images/AuroraMartLogo.png' %}" alt="AuroraMart Logo" class="logo-img">
-            <span class="logo-text">AuroraMart</span>
-        </div>
-    </div>
+{% endblock %}
 
+{% block content %}
     <div class="checkout-container">
         <a href="{% url 'profile_settings' %}" class="back-link">&larr; Back to Settings</a>
         <form class="checkout-forms" method="POST" action="{% url 'edit_profile' %}">
@@ -112,5 +95,4 @@
             </div>
         </form>
     </div>
-</body>
-</html>
+{% endblock %}

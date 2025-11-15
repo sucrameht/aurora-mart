@@ -1,64 +1,19 @@
+{% extends 'storefront/base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Cards - AuroraMart</title>
-    <link rel="stylesheet" href="{% static 'storefront/css/storefront.css' %}">
-    <link rel="stylesheet" href="{% static 'storefront/css/profile_settings.css' %}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
-</head>
-<body>
-{% if messages %}
-    <div class="message-container">
-        {% for message in messages %}
-            <div class="message {{ message.tags }}">
-                {{ message }}
-            </div>
-        {% endfor %}
-    </div>
-{% endif %}
-<div class="header">
-        <div class="logo" onclick="window.location.href='{% url 'storefront_home' %}'">
-            <img src="{% static 'storefront/images/AuroraMartLogo.png' %}" alt="AuroraMart Logo" class="logo-img">
-            <span class="logo-text">AuroraMart</span>
-        </div>
-        <div class="icons">
-            <a href="{% url 'view_cart' %}" class="icon icon-cart">
-                <i class="fas fa-shopping-cart"></i>
-                <span id="cart-count">{{ cart_item_count|default:0 }}</span>
-            </a>
-            <a href="{% url 'chat_list' %}" class="icon">
-                <i class="fas fa-comments"></i>
-            </a>
-            <a href="{% url 'profile' %}" class="icon">
-                <i class="fas fa-user"></i>
-            </a>
-            <form id="logout-form" method="post" action="{% url 'auroraadmin:logout' %}" style="display:inline">
-                {% csrf_token %}
-                <button type="submit" class="logout-button">Logout</button>
-            </form>
-            {% if user.is_superuser %}
-            <a href="{% url 'auroraadmin:admin_dashboard' %}" class="admin-button">Admin</a>
-            {% endif %}
-        </div>
-    </div>
 
+{% block title %}Manage Cards - AuroraMart{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'storefront/css/profile_settings.css' %}">
+{% endblock %}
+
+{% block content %}
     <div class="settings-container">
         <a href="{% url 'profile_settings' %}" class="back-link">&larr; Back to Settings</a>
         <div class="page-header">
             <h1>Manage Cards</h1>
             <a href="{% url 'add_card' %}?next=manage_cards" class="btn-add-new">+ Add New Card</a>
         </div>
-
-        {% if messages %}
-            <div class="messages-container">
-                {% for message in messages %}
-                    <div class="message {{ message.tags }}">{{ message }}</div>
-                {% endfor %}
-            </div>
-        {% endif %}
 
         <div class="address-list">
             {% for card in cards %}
@@ -84,5 +39,4 @@
             {% endfor %}
         </div>
     </div>
-</body>
-</html>
+{% endblock %}

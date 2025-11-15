@@ -1,34 +1,13 @@
+{% extends 'storefront/base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Review Order #{{ order.pk }}</title>
-    <link rel="stylesheet" href="{% static 'storefront/css/storefront.css' %}">
-    <link rel="stylesheet" href="{% static 'storefront/css/reviews.css' %}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
-</head>
-<body>
-    <div class="header">
-        <div class="logo" onclick="window.location.href='{% url 'storefront_home' %}'">
-            <img src="{% static 'storefront/images/AuroraMartLogo.png' %}" alt="AuroraMart Logo" class="logo-img">
-            <span class="logo-text">AuroraMart</span>
-        </div>
-        <div class="icons">
-            <a href="{% url 'view_cart' %}" class="icon icon-cart">
-                <i class="fas fa-shopping-cart"></i>
-                <span id="cart-count">{{ cart_item_count|default:0 }}</span>
-            </a>
-            <a href="{% url 'chat_list' %}" class="icon">
-                <i class="fas fa-comments"></i>
-            </a>
-            <a href="{% url 'profile' %}" class="icon">
-                <i class="fas fa-user"></i>
-            </a>
-        </div>
-    </div>
 
+{% block title %}Review Order #{{ order.pk }}{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'storefront/css/reviews.css' %}">
+{% endblock %}
+
+{% block content %}
     <div class="review-container">
         <h1>Review Your Order</h1>
         <p>Order #{{ order.pk }} - Placed on {{ order.transaction_datetime|date:"F d, Y" }}</p>
@@ -56,5 +35,4 @@
             <button type="submit" class="submit-review-btn">Submit Review</button>
         </form>
     </div>
-</body>
-</html>
+{% endblock %}
