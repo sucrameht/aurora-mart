@@ -261,6 +261,23 @@ body {
     cursor: pointer;
 }
 
+.my-vouchers-link {
+    text-align: right;
+    margin-top: -12px;
+    margin-bottom: 20px;
+}
+
+.my-vouchers-link a {
+    font-size: 13px;
+    color: #007ca5;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.my-vouchers-link a:hover {
+    text-decoration: underline;
+}
+
 .summary-line {
     display: flex;
     justify-content: space-between;

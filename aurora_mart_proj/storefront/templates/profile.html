@@ -135,7 +135,7 @@
                     <br/>
                     <div class="order-status">{{ order.status }}</div>
                     {% if order.status == 'Payment Made' %}
-                        <a href="{% url 'cancel_order' order.pk %}" class="review-button">Cancel Order</a>
+                        <a href="{% url 'cancel_order' order.pk %}" class="refund-button">Cancel Order</a>
                     {% endif %}
                 </div>
             </div>
@@ -160,7 +160,7 @@
                     <div class="order-status">{{ order.status }}</div>
                     {% if order.status == 'Delivery Completed' %}
                         <a href="{% url 'rate_order' order.pk %}" class="review-button">Review</a>
-                        <a href="{% url 'request_refund' order.pk %}" class="review-button">Request Refund</a>
+                        <a href="{% url 'request_refund' order.pk %}" class="refund-button">Request Refund</a>
                     {% endif %}
                 </div>
             </div>

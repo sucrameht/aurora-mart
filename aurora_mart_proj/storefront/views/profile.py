@@ -7,8 +7,9 @@ from django.views.generic import ListView, View
 from datetime import date
 from django.contrib.auth.mixins import LoginRequiredMixin
 from authentication.models import UserProfile
-from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth import update_session_auth_hash, logout
 from django.contrib.auth.forms import PasswordChangeForm
+from django import forms
 
 
 class ProfileView(LoginRequiredMixin, View):
@@ -179,6 +180,15 @@ class ManageAddressesView(LoginRequiredMixin, ListView):
         return ShippingAddress.objects.filter(user=self.request.user).order_by('nickname')
 
 
+class ManagePaymentMethodsView(LoginRequiredMixin, ListView):
+    model = Card
+    template_name = 'manage_payment_methods.html'
+    context_object_name = 'cards'
+
+    def get_queryset(self):
+        return Card.objects.filter(user=self.request.user).order_by('nickname')
+
+
 class EditShippingAddressView(LoginRequiredMixin, View):
     template_name = 'edit_shipping_address.html'
 
@@ -207,6 +217,30 @@ class EditShippingAddressView(LoginRequiredMixin, View):
         return redirect('manage_addresses')
 
 
+class EditCardView(LoginRequiredMixin, View):
+    template_name = 'edit_card.html'
+
+    def get(self, request, *args, **kwargs):
+        card = get_object_or_404(Card, pk=self.kwargs['pk'], user=request.user)
+        return render(request, self.template_name, {'card': card})
+
+    def post(self, request, *args, **kwargs):
+        card = get_object_or_404(Card, pk=self.kwargs['pk'], user=request.user)
+        
+        card.nickname = request.POST.get('nickname')
+        card.cardholder_name = request.POST.get('cardholder_name')
+        card.expiry_month = request.POST.get('expiry_month')
+        card.expiry_year = request.POST.get('expiry_year')
+        
+        try:
+            card.save()
+            messages.success(request, f"Card '{card.nickname}' updated successfully.")
+        except Exception as e:
+            messages.error(request, f"Error updating card: {e}")
+
+        return redirect('manage_payment_methods')
+
+
 class DeleteShippingAddressView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         address = get_object_or_404(ShippingAddress, pk=self.kwargs['pk'], user=request.user)
@@ -216,6 +250,17 @@ class DeleteShippingAddressView(LoginRequiredMixin, View):
         except Exception as e:
             messages.error(request, f"Error deleting address: {e}")
         return redirect('manage_addresses')
+
+
+class DeleteCardView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        card = get_object_or_404(Card, pk=self.kwargs['pk'], user=request.user)
+        try:
+            card.delete()
+            messages.success(request, "Card deleted successfully.")
+        except Exception as e:
+            messages.error(request, f"Error deleting card: {e}")
+        return redirect('manage_payment_methods')
 
 
 class ChangePasswordView(LoginRequiredMixin, View):
@@ -265,3 +310,29 @@ class MyVouchersView(LoginRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         context['today'] = date.today()
         return context
+
+class DeleteAccountView(LoginRequiredMixin, View):
+    template_name = 'delete_account.html'
+    
+    class PasswordConfirmationForm(forms.Form):
+        password = forms.CharField(widget=forms.PasswordInput, label="Confirm Your Password")
+
+    def get(self, request, *args, **kwargs):
+        form = self.PasswordConfirmationForm()
+        return render(request, self.template_name, {'form': form})
+
+    def post(self, request, *args, **kwargs):
+        form = self.PasswordConfirmationForm(request.POST)
+        if form.is_valid():
+            user = request.user
+            if user.check_password(form.cleaned_data['password']):
+                # Log the user out before deleting
+                logout(request)
+                # Delete the user
+                user.delete()
+                messages.success(request, "Your account has been permanently deleted.")
+                return redirect('storefront_home')
+            else:
+                messages.error(request, "Incorrect password. Account deletion failed.")
+        
+        return render(request, self.template_name, {'form': form})
