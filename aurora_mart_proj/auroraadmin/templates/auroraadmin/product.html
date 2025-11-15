@@ -12,7 +12,7 @@
         <div class="row-control">
             <form method="GET" action="{% url 'auroraadmin:product' %}" class="search-filter-group">
                 <input type="text" name="q" class="search-input" placeholder="Search products..." value="{{ search_query|default:'' }}">
-                <button tpe="submit" class="filter-button">Check</button>
+                <button type="submit" class="filter-button">Check</button>
             </form>
             {% if search_query %}
                 <form method="GET" action="{% url 'auroraadmin:product' %}" >
@@ -24,7 +24,7 @@
 
     <div style="margin-bottom: 20px;">
         <form method="GET" action="{% url 'auroraadmin:product' %}" style="display:inline-block">
-            <!-- preserve exisiting search querty -->
+            <!-- preserve existing search query -->
             <input type="hidden" name="q" value="{{ search_query|default:'' }}">
             <label for="category-select" style="font-weight:600; margin-right:8px;">Category:</label>
             <select id="category-filter" name="category" onchange="this.form.submit()" style="padding:6px 10px; border-radius:6px; border:1px solid #ddd;">
@@ -45,6 +45,11 @@
         </a>
     </div>
 
+    <!-- Product Count -->
+    <div style="margin-bottom: 15px;">
+        <h3 style="color: #333; font-size: 1.1em;">All Products ({{ page_obj.paginator.count }})</h3>
+    </div>
+
     <table class="product-table">
         <thead>
             <tr>
@@ -58,7 +63,7 @@
             </tr>
         </thead>
         <tbody>
-            {% for product in products %}
+            {% for product in page_obj %}
             <tr>
                 <td>{{ product.sku_code }}</td>
                 <td><a href="{% url 'auroraadmin:product_actions' product.sku_code %}" style="color:#00bfff; text-decoration:none;">{{ product.product_name }}</a></td>
@@ -85,6 +90,25 @@
             {% endfor %}
         </tbody>
     </table>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="pagination" style="margin-top: 30px; text-align: center;">
+        {% if page_obj.has_previous %}
+            <a href="?page=1&q={{ search_query|default:'' }}&category={{ selected_category|default:'All' }}" class="filter-button" style="text-decoration: none; margin: 0 5px;">&laquo; First</a>
+            <a href="?page={{ page_obj.previous_page_number }}&q={{ search_query|default:'' }}&category={{ selected_category|default:'All' }}" class="filter-button" style="text-decoration: none; margin: 0 5px;">Previous</a>
+        {% endif %}
+        
+        <span style="margin: 0 15px; font-weight: 600;">
+            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+        </span>
+        
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}&q={{ search_query|default:'' }}&category={{ selected_category|default:'All' }}" class="filter-button" style="text-decoration: none; margin: 0 5px;">Next</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}&q={{ search_query|default:'' }}&category={{ selected_category|default:'All' }}" class="filter-button" style="text-decoration: none; margin: 0 5px;">Last &raquo;</a>
+        {% endif %}
+    </div>
+    {% endif %}
 </div>
 
 {% endblock main_content %}

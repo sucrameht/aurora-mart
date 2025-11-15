@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import analytics_view, ProductInventoryView, AddProductView, DeleteProductView, TransactionListView, TransactionDetailView, VoucherManagementView, CustomerListView, CustomerVoucherAssignView, ProductActionsView, AdminUserView, AdminChatListView, AdminChatThreadView, DashboardView, GenderChartView, SalesTrendChartView, RevenueByCategoryChartView
+from .views import analytics_view, ProductInventoryView, AddProductView, DeleteProductView, TransactionListView, TransactionDetailView, VoucherManagementView, CustomerListView, CustomerVoucherAssignView, ProductActionsView, AdminUserView, AdminChatListView, AdminChatThreadView, DashboardView, GenderChartView, SalesTrendChartView, RevenueByCategoryChartView, TopBuyersChartView
 from django.contrib.auth.views import LogoutView
 
 app_name = 'auroraadmin'
@@ -20,6 +20,7 @@ urlpatterns = [
     path('charts/gender/<str:time_frame>/', GenderChartView.as_view(), name='gender_chart'),
     path('charts/sales-trend/<str:time_frame>/', SalesTrendChartView.as_view(), name='sales_trend_chart'),
     path('charts/revenue_category/<str:time_frame>/', RevenueByCategoryChartView.as_view(), name='revenue_category_chart'),
+    path('charts/top-buyers/<str:time_frame>/', TopBuyersChartView.as_view(), name='top_buyers_chart'),
     path('logout/', LogoutView.as_view(next_page='login'), name='logout'),
     path('chat/', AdminChatListView.as_view(), name='admin_chat_list'),
     path('chat/thread/<int:thread_id>/', AdminChatThreadView.as_view(), name='admin_chat_thread'),

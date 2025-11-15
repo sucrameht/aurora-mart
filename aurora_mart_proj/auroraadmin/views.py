@@ -174,23 +174,29 @@ def _create_empty_chart(title):
     """
     Creates a placeholder chart image with a "No Data" message.
     """
-    plt.figure(figsize=(8, 4))
-    plt.text(0.5, 0.5, "No data available for " + title, 
-             ha='center', va='center', fontsize=12, color='gray')
-    plt.gca().axis('off')
+    plt.close('all')  # Clear any existing matplotlib state
+    fig, ax = plt.subplots(figsize=(8, 4))
+    ax.text(0.5, 0.5, "No data available", 
+             ha='center', va='center', fontsize=14, color='gray', fontweight='bold')
+    ax.axis('off')
     plt.tight_layout()
     
     buffer = BytesIO()
-    plt.savefig(buffer, format='png', bbox_inches='tight')
-    plt.close()
+    fig.savefig(buffer, format='png', bbox_inches='tight', dpi=100)
+    plt.close(fig)
     buffer.seek(0)
-    return HttpResponse(buffer.getvalue(), content_type='image/png')
+    response = HttpResponse(buffer.getvalue(), content_type='image/png')
+    response['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
+    response['Pragma'] = 'no-cache'
+    response['Expires'] = '0'
+    return response
 
 # dispatch is the method that redirects to the right functions after all the checks have been cleared
 @method_decorator(login_required(login_url='/login'), name='dispatch')
 @method_decorator(user_passes_test(is_staff, login_url='/login'), name='dispatch')
 class ProductInventoryView(View):
     template_name = 'auroraadmin/product.html'
+    paginate_by = 20
    
     def get(self, request, *args, **kwargs):
         # query and filter set up
@@ -215,9 +221,15 @@ class ProductInventoryView(View):
         # all unique categories for the filter dropdown
         categories = Product.objects.values_list('product_category', flat=True).distinct().order_by('product_category')
 
+        # Pagination
+        paginator = Paginator(productsSet, self.paginate_by)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+
         # prepare context
         context = {
-            'products': productsSet,
+            'products': page_obj,
+            'page_obj': page_obj,
             'categories': categories,
             'search_query': search_query,
             'category_filter': category_filter,
@@ -727,6 +739,7 @@ class DashboardView(View):
     template_name = 'auroraadmin/dashboard.html'
     def get(self, request):
         time_frame = request.GET.get('time_frame', '1m') # default 1 month
+        selected_category = request.GET.get('category', 'all') # default all categories
         now = timezone.now()
 
         # determine start-current frame
@@ -765,7 +778,12 @@ class DashboardView(View):
             ) + F('voucher_value')
         )
 
-        product_quantity_by_period = OrderItem.objects.filter(transactions__in=filtered_transactions).values(
+        # Filter by category if selected
+        product_quantity_by_period = OrderItem.objects.filter(transactions__in=filtered_transactions)
+        if selected_category != 'all':
+            product_quantity_by_period = product_quantity_by_period.filter(product__product_category=selected_category)
+        
+        product_quantity_by_period = product_quantity_by_period.values(
             'product__product_name', 'product__sku_code', 'product__product_category'
         ).annotate(
             total_sold=Sum('quantity_purchased')
@@ -775,19 +793,28 @@ class DashboardView(View):
         total_transactions = filtered_transactions.count()
         avg_order_value = total_revenue / total_transactions if total_transactions > 0 else 0
         voucher_savings = filtered_transactions.aggregate(savings=Sum('voucher_value'))['savings'] or 0
+        
+        # Count pending orders (Payment Made but not yet Delivered to Warehouse)
+        pending_orders = filtered_transactions.filter(status='Payment Made').count()
 
         top_products = product_quantity_by_period.order_by('-total_sold')[:5]
         bottom_products = product_quantity_by_period.order_by('total_sold')[:5]
+        
+        # Get all available categories for filter dropdown
+        all_categories = Product.objects.values_list('product_category', flat=True).distinct().order_by('product_category')
         
         context = {
             'total_revenue': total_revenue,
             'total_transactions': total_transactions,
             'avg_order_value': avg_order_value,
             'voucher_savings': -voucher_savings,
+            'pending_orders': pending_orders,
             'top_products': top_products,
             'bottom_products': bottom_products,
             'time_frame': time_frame,
             'period_label': period_label,
+            'selected_category': selected_category,
+            'all_categories': all_categories,
         }
 
         return render(request, self.template_name, context)
@@ -828,13 +855,26 @@ class GenderChartView(View):
         # Clear any existing matplotlib state
         plt.close('all')
         
-        fig = plt.figure(num=1, figsize=(6, 5), dpi=100, clear=True)
-        plt.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90, colors=['#007ca5', '#28a745', '#ffc107'])
-        plt.title(f'Customer Gender Distribution ({time_frame})', pad=20)
+        fig, ax = plt.subplots(num=1, figsize=(8, 6), dpi=100, clear=True)
+        # Set transparent background
+        fig.patch.set_alpha(0.0)
+        ax.patch.set_alpha(0.0)
+        
+        # Add counts to pie chart labels
+        def make_autopct(values):
+            def my_autopct(pct):
+                total = sum(values)
+                val = int(round(pct*total/100.0))
+                return f'{pct:.1f}%\n({val})'
+            return my_autopct
+        
+        ax.pie(sizes, labels=labels, autopct=make_autopct(sizes), startangle=90, 
+               colors=['#007ca5', '#28a745', '#ffc107'], textprops={'fontsize': 11, 'color': 'white'})
         plt.tight_layout(pad=2.0)
         
         buffer = BytesIO()
-        fig.savefig(buffer, format='png', bbox_inches='tight', dpi=100, pad_inches=0.2)
+        fig.savefig(buffer, format='png', bbox_inches='tight', dpi=100, pad_inches=0.2, 
+                   facecolor='none', edgecolor='none', transparent=True)
         plt.close(fig)
         buffer.seek(0)
         response = HttpResponse(buffer.getvalue(), content_type='image/png')
@@ -890,6 +930,7 @@ class AdminChatThreadView(LoginRequiredMixin, UserPassesTestMixin, View):
 @method_decorator(user_passes_test(is_staff, login_url='/login/'), name='dispatch')
 class SalesTrendChartView(View):
     def get(self, request, time_frame):
+        selected_category = request.GET.get('category', 'all')
         now = timezone.now()
         start_date = None
 
@@ -920,6 +961,12 @@ class SalesTrendChartView(View):
         filtered_transactions = Transactions.objects.all()
         if start_date:
             filtered_transactions = filtered_transactions.filter(transaction_datetime__gte=start_date)
+        
+        # Filter by category if selected
+        if selected_category != 'all':
+            filtered_transactions = filtered_transactions.filter(
+                items__product__product_category=selected_category
+            ).distinct()
 
         filtered_transactions = filtered_transactions.annotate(
             final_total=Sum(F('items__quantity_purchased') * F('items__price_at_purchase')) + F('voucher_value')
@@ -948,21 +995,37 @@ class SalesTrendChartView(View):
                 month = item['date'].month
                 quarter = (month - 1) // 3 + 1
                 dates.append(f"{year}-Q{quarter}")
-        revenues = [item['revenue'] for item in sales_trend]
+        revenues = [float(item['revenue']) for item in sales_trend]
 
         # Clear any existing matplotlib state
         plt.close('all')
         
-        fig = plt.figure(num=2, figsize=(8, 5), dpi=100, clear=True)
-        plt.plot(dates, revenues, marker='o', linewidth=2, markersize=6)
-        plt.title(f'Sales Trend ({time_frame})', pad=20)
-        plt.xlabel('Period', labelpad=10)
-        plt.ylabel('Revenue (S$)', labelpad=10)
+        fig, ax = plt.subplots(num=2, figsize=(10, 6), dpi=100, clear=True)
+        # Set transparent background
+        fig.patch.set_alpha(0.0)
+        ax.patch.set_alpha(0.0)
+        
+        ax.plot(dates, revenues, marker='o', linewidth=2, markersize=6, color='#4299e1')
+        
+        # Add value labels next to each point
+        for i, revenue in enumerate(revenues):
+            ax.text(i, revenue, f'${revenue:.0f}', 
+                   ha='left', va='bottom', fontsize=9, fontweight='bold', color='white')
+        
+        ax.set_xlabel('Period', labelpad=10, fontsize=11, color='white')
+        ax.set_ylabel('Revenue (S$)', labelpad=10, fontsize=11, color='white')
+        ax.tick_params(axis='x', labelsize=10, colors='white')
+        ax.tick_params(axis='y', labelsize=10, colors='white')
+        ax.spines['bottom'].set_color('white')
+        ax.spines['top'].set_color('white')
+        ax.spines['left'].set_color('white')
+        ax.spines['right'].set_color('white')
         plt.xticks(rotation=45, ha='right')
         plt.tight_layout(pad=2.0)
 
         buffer = BytesIO()
-        fig.savefig(buffer, format='png', bbox_inches='tight', dpi=100, pad_inches=0.2)
+        fig.savefig(buffer, format='png', bbox_inches='tight', dpi=100, pad_inches=0.2,
+                   facecolor='none', edgecolor='none', transparent=True)
         plt.close(fig)
         buffer.seek(0)
 
@@ -976,6 +1039,7 @@ class RevenueByCategoryChartView(View):
     def get(self, request, time_frame):
         now = timezone.now()
         start_date = None
+        selected_category = request.GET.get('category', 'all')
 
         # Determine start date (same logic as DashboardView)
         if time_frame == '1w':
@@ -994,38 +1058,157 @@ class RevenueByCategoryChartView(View):
         if start_date:
             filtered_transactions = filtered_transactions.filter(transaction_datetime__gte=start_date)
 
-        # Get revenue by category
-        revenue_by_category = OrderItem.objects.filter(transactions__in=filtered_transactions).values(
-            'product__product_category'
-        ).annotate(
-            total_revenue=Sum(
-                F('quantity_purchased') * F('price_at_purchase') + F('transactions__voucher_value'),
-                default=Decimal('0.0'),
-                output_field=DecimalField()
-            )
-        ).order_by('-total_revenue')[:10]  # Top 10 categories
+        # If category is selected, show subcategories; otherwise show categories
+        order_items = OrderItem.objects.filter(transactions__in=filtered_transactions)
+        
+        if selected_category != 'all':
+            # Filter by category and group by subcategory
+            order_items = order_items.filter(product__product_category=selected_category)
+            revenue_data = order_items.values(
+                'product__product_subcategory'
+            ).annotate(
+                total_revenue=Sum(
+                    F('quantity_purchased') * F('price_at_purchase') + F('transactions__voucher_value'),
+                    default=Decimal('0.0'),
+                    output_field=DecimalField()
+                )
+            ).order_by('-total_revenue')[:10]
+            
+            if not revenue_data:
+                return _create_empty_chart(f"Revenue by Subcategory in {selected_category} ({time_frame})")
+            
+            labels = [item['product__product_subcategory'] or 'Uncategorized' for item in revenue_data]
+        else:
+            # Group by category
+            revenue_data = order_items.values(
+                'product__product_category'
+            ).annotate(
+                total_revenue=Sum(
+                    F('quantity_purchased') * F('price_at_purchase') + F('transactions__voucher_value'),
+                    default=Decimal('0.0'),
+                    output_field=DecimalField()
+                )
+            ).order_by('-total_revenue')[:10]
+            
+            if not revenue_data:
+                return _create_empty_chart(f"Revenue by Category ({time_frame})")
+            
+            labels = [item['product__product_category'] or 'Uncategorized' for item in revenue_data]
 
-        if not revenue_by_category:
-            return _create_empty_chart(f"Revenue by Category ({time_frame})")
-
-        # Prepare data for bar chart
-        categories = [item['product__product_category'] or 'Uncategorized' for item in revenue_by_category]
-        revenues = [float(item['total_revenue']) for item in revenue_by_category]
+        revenues = [float(item['total_revenue']) for item in revenue_data]
 
         # Clear any existing matplotlib state
         plt.close('all')
         
-        # Create vertical bar chart
-        fig = plt.figure(num=3, figsize=(8, 5), dpi=100, clear=True)
-        plt.bar(categories, revenues, color='#28a745')  # Vertical bars
-        plt.title(f'Revenue by Product Category ({time_frame})', pad=20)
-        plt.xlabel('Category', labelpad=10)
-        plt.ylabel('Revenue (S$)', labelpad=10)
+        # Create vertical bar chart - wider for better readability
+        fig, ax = plt.subplots(num=3, figsize=(14, 7), dpi=100, clear=True)
+        # Set transparent background
+        fig.patch.set_alpha(0.0)
+        ax.patch.set_alpha(0.0)
+        
+        bars = ax.bar(labels, revenues, color='#28a745')  # Vertical bars
+        
+        # Add value labels on top of each bar
+        for bar in bars:
+            height = bar.get_height()
+            ax.text(bar.get_x() + bar.get_width()/2., height,
+                    f'${height:.0f}',
+                    ha='center', va='bottom', fontsize=10, fontweight='bold', color='white')
+        
+        ax.set_xlabel('Subcategory' if selected_category != 'all' else 'Category', labelpad=12, fontsize=11, color='white')
+        ax.set_ylabel('Revenue (S$)', labelpad=12, fontsize=11, color='white')
+        ax.tick_params(axis='x', labelsize=10, colors='white')
+        ax.tick_params(axis='y', labelsize=10, colors='white')
+        ax.spines['bottom'].set_color('white')
+        ax.spines['top'].set_color('white')
+        ax.spines['left'].set_color('white')
+        ax.spines['right'].set_color('white')
         plt.xticks(rotation=45, ha='right')
         plt.tight_layout(pad=2.0)
 
         buffer = BytesIO()
-        fig.savefig(buffer, format='png', bbox_inches='tight', dpi=100, pad_inches=0.2)
+        fig.savefig(buffer, format='png', bbox_inches='tight', dpi=100, pad_inches=0.2,
+                   facecolor='none', edgecolor='none', transparent=True)
+        plt.close(fig)
+        buffer.seek(0)
+
+        response = HttpResponse(buffer.getvalue(), content_type='image/png')
+        response['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
+        response['Pragma'] = 'no-cache'
+        response['Expires'] = '0'
+        return response
+
+
+class TopBuyersChartView(View):
+    """Horizontal bar chart showing top 5 buyers by total transaction amount for the time frame."""
+    def get(self, request, time_frame):
+        now = timezone.now()
+        start_date = None
+
+        # Determine start date (same logic as DashboardView)
+        if time_frame == '1w':
+            start_date = now - timedelta(weeks=1)
+        elif time_frame == '1m':
+            start_date = now - timedelta(days=30)
+        elif time_frame == '3m':
+            start_date = now - timedelta(days=90)
+        elif time_frame == '6m':
+            start_date = now - timedelta(days=180)
+        elif time_frame == '1y':
+            start_date = now - timedelta(days=365)
+
+        # Filter transactions for the period
+        filtered_transactions = Transactions.objects.all()
+        if start_date:
+            filtered_transactions = filtered_transactions.filter(transaction_datetime__gte=start_date)
+
+        # Aggregate total spent per user (only users with at least one transaction will be present)
+        buyers = filtered_transactions.values('user__username').annotate(
+            total_spent=Sum(
+                F('items__quantity_purchased') * F('items__price_at_purchase') + F('voucher_value'),
+                default=Decimal('0.0'),
+                output_field=DecimalField()
+            )
+        ).order_by('-total_spent')[:5]
+
+        if not buyers:
+            return _create_empty_chart(f"Top Buyers ({time_frame})")
+
+        labels = [b['user__username'] or 'Unknown' for b in buyers]
+        amounts = [float(b['total_spent']) for b in buyers]
+
+        # reverse so the largest appears at the top in a horizontal bar chart
+        labels = labels[::-1]
+        amounts = amounts[::-1]
+
+        plt.close('all')
+        fig, ax = plt.subplots(num=10, figsize=(12, 7), dpi=100, clear=True)
+        # Set transparent background
+        fig.patch.set_alpha(0.0)
+        ax.patch.set_alpha(0.0)
+        
+        bars = ax.barh(labels, amounts, color='#667eea')
+        
+        # Add value labels beside each bar
+        for bar in bars:
+            width = bar.get_width()
+            ax.text(width, bar.get_y() + bar.get_height()/2.,
+                   f'${width:.2f}',
+                   ha='left', va='center', fontsize=10, fontweight='bold', color='white')
+        
+        ax.set_xlabel('Total Spent (S$)', labelpad=12, fontsize=11, color='white')
+        ax.set_ylabel('Customer', labelpad=12, fontsize=11, color='white')
+        ax.tick_params(axis='x', labelsize=10, colors='white')
+        ax.tick_params(axis='y', labelsize=10, colors='white')
+        ax.spines['bottom'].set_color('white')
+        ax.spines['top'].set_color('white')
+        ax.spines['left'].set_color('white')
+        ax.spines['right'].set_color('white')
+        plt.tight_layout(pad=2.0)
+
+        buffer = BytesIO()
+        fig.savefig(buffer, format='png', bbox_inches='tight', dpi=100, pad_inches=0.2,
+                   facecolor='none', edgecolor='none', transparent=True)
         plt.close(fig)
         buffer.seek(0)
 

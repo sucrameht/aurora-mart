@@ -14,59 +14,93 @@
     <div class="time-frame-selector">
         <h3>Select Time Frame:</h3>
         <div class="time-frame-links">
-            <a href="?time_frame=1w" class="{% if time_frame == '1w' %}active{% endif %}">1 Week</a>
-            <a href="?time_frame=1m" class="{% if time_frame == '1m' %}active{% endif %}">1 Month</a>
-            <a href="?time_frame=6m" class="{% if time_frame == '6m' %}active{% endif %}">6 Months</a>
-            <a href="?time_frame=1y" class="{% if time_frame == '1y' %}active{% endif %}">1 Year</a>
-            <a href="?time_frame=all" class="{% if time_frame == 'all' %}active{% endif %}">All Time</a>
+            <a href="?time_frame=1w&category={{ selected_category }}" class="{% if time_frame == '1w' %}active{% endif %}">1 Week</a>
+            <a href="?time_frame=1m&category={{ selected_category }}" class="{% if time_frame == '1m' %}active{% endif %}">1 Month</a>
+            <a href="?time_frame=6m&category={{ selected_category }}" class="{% if time_frame == '6m' %}active{% endif %}">6 Months</a>
+            <a href="?time_frame=1y&category={{ selected_category }}" class="{% if time_frame == '1y' %}active{% endif %}">1 Year</a>
+            <a href="?time_frame=all&category={{ selected_category }}" class="{% if time_frame == 'all' %}active{% endif %}">All Time</a>
         </div>
+    </div>
+
+    <!-- Category Selector -->
+    <div class="category-selector">
+        <h3>Filter by Category:</h3>
+        <div class="category-links">
+            <a href="?time_frame={{ time_frame }}&category=all" class="{% if selected_category == 'all' %}active{% endif %}">All Categories</a>
+            {% for category in all_categories %}
+            <a href="?time_frame={{ time_frame }}&category={{ category }}" class="{% if selected_category == category %}active{% endif %}">{{ category }}</a>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- KPI Section Header -->
+    <div class="kpi-section-header">
+        <h2>Key Performance Indicators ({{ period_label }})</h2>
     </div>
     
     <!-- KPI Cards -->
     <div class="kpi-cards">
         <div class="kpi-card">
-            <p>S${{ total_revenue|floatformat:2 }}</p>
             <h4>Total Revenue</h4>
+            <p>S${{ total_revenue|floatformat:2 }}</p>
         </div>
         <div class="kpi-card">
-            <p>{{ total_transactions }}</p>
             <h4>Total Orders</h4>
+            <p>{{ total_transactions }}</p>
         </div>
         <div class="kpi-card">
-            <p>S${{ avg_order_value|floatformat:2 }}</p>
             <h4>Average Order Value</h4>
+            <p>S${{ avg_order_value|floatformat:2 }}</p>
         </div>
         <div class="kpi-card">
-            <p>S${{ voucher_savings|floatformat:2 }}</p>
             <h4>Total Voucher Amount</h4>
+            <p>S${{ voucher_savings|floatformat:2 }}</p>
+        </div>
+        <div class="kpi-card">
+            <h4>Pending Orders</h4>
+            <p>{{ pending_orders }}</p>
         </div>
     </div>
     
-    <!-- Charts -->
+    <!-- Category-Filtered Section Header -->
+    <div class="category-section-header">
+        <h2>{% if selected_category != 'all' %}Category Analysis: {{ selected_category }}{% else %}Overall Category Analysis{% endif %}</h2>
+    </div>
+    
+    <!-- Charts: 2x2 layout. Left column is wider to give Revenue chart more room -->
     <div class="charts">
-        <div class="chart-container">
-            <h3>Customer Gender Distribution</h3>
+        <div class="chart-container chart-revenue">
+            <h3>{% if selected_category != 'all' %}Revenue by {{ selected_category }} Subcategories ({{ period_label }}){% else %}Revenue by Product Category ({{ period_label }}){% endif %}</h3>
             <div class="chart">
-                <img src="{% url 'auroraadmin:gender_chart' time_frame %}?chart=gender&v={% now "U" %}" alt="Gender Distribution Chart" onerror="console.error('Failed to load gender chart');">
+                <img src="{% url 'auroraadmin:revenue_category_chart' time_frame %}?category={{ selected_category }}&v={% now "U" %}" alt="Revenue by Category Bar Chart" onerror="console.error('Failed to load revenue chart');">
             </div>
         </div>
-        <div class="chart-container">
-            <h3>Sales Trend</h3>
+
+        <div class="chart-container chart-pie">
+            <h3>Customer Gender Distribution ({{ period_label }})</h3>
             <div class="chart">
-                <img src="{% url 'auroraadmin:sales_trend_chart' time_frame %}?chart=sales&v={% now "U" %}" alt="Sales Trend Chart" onerror="console.error('Failed to load sales chart');">
+                <img src="{% url 'auroraadmin:gender_chart' time_frame %}?v={% now "U" %}" alt="Gender Distribution Chart" onerror="console.error('Failed to load gender chart');">
             </div>
         </div>
-        <div class="chart-container">
-            <h3>Revenue by Category</h3>
+
+        <div class="chart-container chart-sales">
+            <h3>{% if selected_category != 'all' %}Sales Trend for {{ selected_category }} ({{ period_label }}){% else %}Sales Trend ({{ period_label }}){% endif %}</h3>
             <div class="chart">
-                <img src="{% url 'auroraadmin:revenue_category_chart' time_frame %}?chart=revenue&v={% now "U" %}" alt="Revenue by Category Bar Chart" onerror="console.error('Failed to load revenue chart');">
+                <img src="{% url 'auroraadmin:sales_trend_chart' time_frame %}?category={{ selected_category }}&v={% now "U" %}" alt="Sales Trend Chart" onerror="console.error('Failed to load sales chart');">
+            </div>
+        </div>
+
+        <div class="chart-container chart-buyers">
+            <h3>Top 5 Buyers ({{ period_label }})</h3>
+            <div class="chart">
+                <img src="{% url 'auroraadmin:top_buyers_chart' time_frame %}?v={% now "U" %}" alt="Top Buyers Chart" onerror="console.error('Failed to load buyers chart');">
             </div>
         </div>
     </div>
     
     <!-- Top Products -->
     <div class="top-products">
-        <h3>Top 5 Selling Products ({{ period_label }})</h3>
+        <h3>Top 5 Selling Products{% if selected_category != 'all' %} in {{ selected_category }}{% endif %} ({{ period_label }})</h3>
         <table class="products-table">
             <thead>
                 <tr>
@@ -76,20 +110,32 @@
                 </tr>
             </thead>
             <tbody>
-                {% for product in top_products %}
-                <tr>
-                    <td>{{ product.product__product_name }}</td>
-                    <td>{{ product.product__product_category }}</td> 
-                    <td>{{ product.total_sold }}</td>
-                </tr>
-                {% endfor %}
+                {% if top_products %}
+                    {% for product in top_products %}
+                    <tr>
+                        <td>{{ product.product__product_name }}</td>
+                        <td>{{ product.product__product_category }}</td> 
+                        <td>{{ product.total_sold }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="3" style="text-align: center; color: #999;">
+                            {% if selected_category != 'all' %}
+                                No products in this category have been purchased during this time period.
+                            {% else %}
+                                No products have been purchased during this time period.
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endif %}
             </tbody>
         </table>
     </div>
 
     <!-- Bottom Products -->
     <div class="bottom-products">
-        <h3>Bottom 5 Selling Products ({{ period_label }})</h3>
+        <h3>Bottom 5 Selling Products{% if selected_category != 'all' %} in {{ selected_category }}{% endif %} ({{ period_label }})</h3>
         <table class="products-table">
             <thead>
                 <tr>
@@ -99,13 +145,25 @@
                 </tr>
             </thead>
             <tbody>
-                {% for product in bottom_products %}
-                <tr>
-                    <td>{{ product.product__product_name }}</td>
-                    <td>{{ product.product__product_category }}</td>
-                    <td>{{ product.total_sold }}</td>
-                </tr>
-                {% endfor %}
+                {% if bottom_products %}
+                    {% for product in bottom_products %}
+                    <tr>
+                        <td>{{ product.product__product_name }}</td>
+                        <td>{{ product.product__product_category }}</td>
+                        <td>{{ product.total_sold }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="3" style="text-align: center; color: #999;">
+                            {% if selected_category != 'all' %}
+                                No products in this category have been purchased during this time period.
+                            {% else %}
+                                No products have been purchased during this time period.
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endif %}
             </tbody>
         </table>
     </div>
