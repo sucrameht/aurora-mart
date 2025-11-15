@@ -24,14 +24,14 @@ class ProfileView(LoginRequiredMixin, View):
             profile = None
 
         user_transactions = Transactions.objects.filter(user=user)
-        
-        completed_orders_list = user_transactions.filter(
-            status='Delivery Completed'
-        ).order_by('-transaction_datetime')
 
-        active_orders_list = user_transactions.exclude(
-            status='Delivery Completed'
-        ).order_by('-transaction_datetime')
+        active_statuses = ['Payment Made', 'Delivered to Warehouse']
+        active_orders_list = user_transactions.filter(status__in=active_statuses).order_by('-transaction_datetime')
+
+        completed_orders_list = user_transactions.filter(status='Delivery Completed').order_by('-transaction_datetime')
+
+        other_statuses = ['Cancelled', 'Request for Refund', 'Refund Approved', 'Refund Rejected']
+        other_orders_list = user_transactions.filter(status__in=other_statuses).order_by('-transaction_datetime')
         
         total_orders = user_transactions.count()
         completed_orders_count = completed_orders_list.count() 
@@ -43,6 +43,7 @@ class ProfileView(LoginRequiredMixin, View):
             'completed_orders': completed_orders_count,
             'active_orders_list': active_orders_list,
             'completed_orders_list': completed_orders_list,
+            'other_orders_list': other_orders_list,
             'active_tab': active_tab,
         }
         return render(request, self.template_name, context)

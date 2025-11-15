@@ -109,56 +109,85 @@
            href="{% url 'profile' %}?tab=completed">
            Completed ({{ completed_orders_list.count }})
         </a>
+
+        <a class="tab-button {% if active_tab == 'others' %}active{% endif %}"
+            href="{% url 'profile' %}?tab=others">
+            Others ({{ other_orders_list.count }})
+        </a>
     </div>
 
     <div class="orders-list">
         
         {% if active_tab == 'active' %}
             
-            {% if active_orders_list %}
-                {% for order in active_orders_list %}
-                <div class="order-card" onclick="window.location.href='{% url 'customer_order_detail' order.pk %}'" style="cursor: pointer;">
-                    <div class="order-left">
-                        <div class="order-id">Order #{{ forloop.revcounter }}</div>
-                        <br/>
-                        <div class="order-date">{{ order.transaction_datetime|date:"Y-m-d" }}</div>
-                        <div class="order-items">
-                            {{ order.num_of_products }} item{{ order.num_of_products|pluralize }}
-                        </div>
-                    </div>
-                    <div class="order-right">
-                        <div class="order-total">${{ order.total_spent|default:"0.00" }}</div>
-                        <br/>
-                        <div class="order-status">{{ order.status }}</div> 
+            {% for order in active_orders_list %}
+            <div class="order-card">
+                <div class="order-left" onclick="window.location.href='{% url 'customer_order_detail' order.pk %}'" style="cursor: pointer; flex-grow: 1;">
+                    <div class="order-id">Order #{{ forloop.revcounter }}</div>
+                    <br/>
+                    <div class="order-date">{{ order.transaction_datetime|date:"Y-m-d" }}</div>
+                    <div class="order-items">
+                        {{ order.num_of_products }} item{{ order.num_of_products|pluralize }}
                     </div>
                 </div>
-                {% endfor %}
-            {% else %}
+                <div class="order-right">
+                    <div class="order-total">${{ order.total_spent|default:"0.00" }}</div>
+                    <br/>
+                    <div class="order-status">{{ order.status }}</div>
+                    {% if order.status == 'Payment Made' %}
+                        <a href="{% url 'cancel_order' order.pk %}" class="review-button">Cancel Order</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
                 <div class="empty-order">You have no active orders.</div>
-            {% endif %}
+            {% endfor %}
 
-        {% else %}  {% if completed_orders_list %}
-                {% for order in completed_orders_list %}
-                <div class="order-card">
-                    <div class="order-left" onclick="window.location.href='{% url 'customer_order_detail' order.pk %}'" style="cursor: pointer; flex-grow: 1;">
-                        <div class="order-id">Order #{{ forloop.revcounter }}</div>
-                        <br/>
-                        <div class="order-date">{{ order.transaction_datetime|date:"Y-m-d" }}</div>
-                        <div class="order-items">
-                            {{ order.num_of_products }} item{{ order.num_of_products|pluralize }}
-                        </div>
-                    </div>
-                    <div class="order-right">
-                        <div class="order-total">${{ order.total_spent|default:"0.00" }}</div>
-                        <br/>
-                        <div class="order-status">{{ order.status }}</div>
-                        <a href="{% url 'rate_order' order.pk %}" class="review-button">Review</a>
+        {% elif active_tab == 'completed' %}
+            {% for order in completed_orders_list %}
+            <div class="order-card">
+                <div class="order-left" onclick="window.location.href='{% url 'customer_order_detail' order.pk %}'" style="cursor: pointer; flex-grow: 1;">
+                    <div class="order-id">Order #{{ forloop.revcounter }}</div>
+                    <br/>
+                    <div class="order-date">{{ order.transaction_datetime|date:"Y-m-d" }}</div>
+                    <div class="order-items">
+                        {{ order.num_of_products }} item{{ order.num_of_products|pluralize }}
                     </div>
                 </div>
-                {% endfor %}
-            {% else %}
+                <div class="order-right">
+                    <div class="order-total">${{ order.total_spent|default:"0.00" }}</div>
+                    <br/>
+                    <div class="order-status">{{ order.status }}</div>
+                    {% if order.status == 'Delivery Completed' %}
+                        <a href="{% url 'rate_order' order.pk %}" class="review-button">Review</a>
+                        <a href="{% url 'request_refund' order.pk %}" class="review-button">Request Refund</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
                 <div class="empty-order">No completed orders to show.</div>
-            {% endif %}
+            {% endfor %}
+
+        {% elif active_tab == 'others' %}
+            {% for order in other_orders_list %}
+            <div class="order-card" onclick="window.location.href='{% url 'customer_order_detail' order.pk %}'" style="cursor: pointer;">
+                <div class="order-left">
+                    <div class="order-id">Order #{{ forloop.revcounter }}</div>
+                    <br/>
+                    <div class="order-date">{{ order.transaction_datetime|date:"Y-m-d" }}</div>
+                    <div class="order-items">
+                        {{ order.num_of_products }} item{{ order.num_of_products|pluralize }}
+                    </div>
+                </div>
+                <div class="order-right">
+                    <div class="order-total">${{ order.total_spent|default:"0.00" }}</div>
+                    <br/>
+                    <div class="order-status">{{ order.status }}</div> 
+                </div>
+            </div>
+            {% empty %}
+                <div class="empty-order">You have no other orders.</div>
+            {% endfor %}
 
         {% endif %}
     </div>
