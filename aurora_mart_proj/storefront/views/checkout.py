@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.views.generic import View
 from datetime import date, datetime
 from django.contrib.auth.mixins import LoginRequiredMixin
-from authentication.models import UserProfile
+from authentication.models import UserProfile, WalletHistory
 from django.db import transaction
 from ..forms import CardForm
 
@@ -221,6 +221,14 @@ class CheckoutView(LoginRequiredMixin, View):
             voucher_value=discount,
             payment_method=payment_method,
         )
+
+        if payment_method == 'wallet':
+            WalletHistory.objects.create(
+                user_profile=profile,
+                transaction_type='PURCHASE',
+                amount=-total,
+                related_transaction=new_transaction
+            )
 
         items_to_create = []
         for item_data in items_to_process:

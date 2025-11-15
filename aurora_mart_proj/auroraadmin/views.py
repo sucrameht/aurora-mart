@@ -14,7 +14,7 @@ from django.db.models import Sum, F, DecimalField, Max, Count, Avg
 from django.db.models.functions import TruncDay, TruncWeek, TruncMonth, TruncQuarter
 from decimal import Decimal
 from django.core.paginator import Paginator
-from authentication.models import UserProfile
+from authentication.models import UserProfile, WalletHistory
 from django.contrib.auth.models import User
 import secrets, string
 from django.http import HttpResponseForbidden, HttpResponse
@@ -1474,9 +1474,39 @@ class RefundRequestsView(View):
         transaction = get_object_or_404(Transactions, pk=transaction_id)
 
         if action == 'approve':
-            transaction.status = 'Refund Approved'
-            transaction.save()
-            messages.success(request, f"Refund for order #{transaction.pk} has been approved.")
+            # Calculate the total amount to be refunded
+            total_refund = sum(item.quantity_purchased * item.price_at_purchase for item in transaction.items.all())
+            
+            # The voucher value is stored as a positive number, so we subtract it
+            final_refund_amount = total_refund - transaction.voucher_value
+
+            # Get the user and their profile
+            user = transaction.user
+            if user:
+                try:
+                    profile = user.userprofile
+                    profile.wallet_balance += final_refund_amount
+                    profile.save()
+                    
+                    # Create a history record for the refund
+                    WalletHistory.objects.create(
+                        user_profile=profile,
+                        transaction_type='REFUND',
+                        amount=final_refund_amount,
+                        related_transaction=transaction
+                    )
+                    
+                    transaction.status = 'Refund Approved'
+                    transaction.save()
+                    messages.success(request, f"Refund for order #{transaction.pk} has been approved. ${final_refund_amount} was credited to {user.username}'s wallet.")
+                
+                except UserProfile.DoesNotExist:
+                    messages.error(request, f"Could not process refund. User profile for {user.username} not found.")
+                except Exception as e:
+                    messages.error(request, f"An unexpected error occurred: {e}")
+            else:
+                messages.error(request, f"Could not process refund. The user for this transaction no longer exists.")
+
         elif action == 'reject':
             transaction.status = 'Refund Rejected'
             transaction.save()

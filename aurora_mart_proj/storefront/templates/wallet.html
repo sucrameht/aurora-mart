@@ -49,6 +49,27 @@
                 <a href="{% url 'profile' %}" class="cancel-link">Back to Profile</a>
             </div>
         </form>
+
+        <div class="order-summary-card" style="margin-top: 20px;">
+            <h2>Wallet History</h2>
+            <div class="summary-items">
+                {% for entry in history %}
+                <div class="summary-line">
+                    <span>
+                        {{ entry.get_transaction_type_display }} on {{ entry.timestamp|date:"d M Y, H:i" }}
+                        {% if entry.related_transaction %}
+                            <small>(Order #{{ entry.related_transaction.id }})</small>
+                        {% endif %}
+                    </span>
+                    <span style="color: {% if entry.amount > 0 %}#28a745{% else %}#dc3545{% endif %};">
+                        ${{ entry.amount }}
+                    </span>
+                </div>
+                {% empty %}
+                <p>No wallet history yet.</p>
+                {% endfor %}
+            </div>
+        </div>
     </div>
 </body>
 </html>
