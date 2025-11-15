@@ -23,6 +23,11 @@ urlpatterns = [
     path('profile/addresses/', ManageAddressesView.as_view(), name='manage_addresses'),
     path('profile/addresses/edit/<int:pk>/', EditShippingAddressView.as_view(), name='edit_shipping_address'),
     path('profile/addresses/delete/<int:pk>/', DeleteShippingAddressView.as_view(), name='delete_shipping_address'),
+    path('profile/payment-methods/', ManagePaymentMethodsView.as_view(), name='manage_payment_methods'),
+    path('profile/payment-methods/edit/<int:pk>/', EditCardView.as_view(), name='edit_card'),
+    path('profile/payment-methods/delete/<int:pk>/', DeleteCardView.as_view(), name='delete_card'),
     path('profile/change-password/', ChangePasswordView.as_view(), name='change_password'),
     path('profile/my-vouchers/', MyVouchersView.as_view(), name='my_vouchers'),
+    path('profile/delete-account/', DeleteAccountView.as_view(), name='delete_account'),
+    path('add-card/', AddCardView.as_view(), name='add_card'),
 ]
