@@ -125,6 +125,17 @@ class ShippingAddress(models.Model):
         # Prevent a user from having two addresses with the same nickname
         unique_together = ('user', 'nickname')
 
+class Card(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="cards")
+    nickname = models.CharField(max_length=100)
+    cardholder_name = models.CharField(max_length=255)
+    last_four = models.CharField(max_length=4)
+    expiry_month = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(12)])
+    expiry_year = models.IntegerField()
+
+    class Meta:
+        unique_together = ('user', 'nickname')
+
 class ChatThread(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='chat_threads')
     customer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chat_threads')
