@@ -1,51 +1,9 @@
+{% extends 'storefront/base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AuroraMart Storefront</title>
-    <link rel="stylesheet" href="{% static 'storefront/css/storefront.css' %}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
-</head>
-<body>
-    {% if messages %}
-        <div class="message-container">
-            {% for message in messages %}
-                <div class="message {{ message.tags }}">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        </div>
-    {% endif %}
-    <div class="header">
-        <div class="logo" onclick="window.location.href='{% url 'storefront_home' %}'">
-            <img src="{% static 'storefront/images/AuroraMartLogo.png' %}" alt="AuroraMart Logo" class="logo-img">
-            <span class="logo-text">AuroraMart</span>
-        </div>
-        <form action="" method="GET" class="search-form">
-            <input type="search" name="query" class="search-bar" placeholder="Search products..." value="{{ request.GET.query }}">
-            {% if sort %}<input type="hidden" name="sort" value="{{ sort }}">{% endif %} 
 
-            <input type="hidden" name="category" value="{{ active_category|default:'All' }}">
-        </form>
-        <div class="icons">
-            <a href="{% url 'view_cart' %}" class="icon icon-cart">
-                <i class="fas fa-shopping-cart"></i>
-                <span id="cart-count">{{ cart_item_count|default:0 }}</span>
-            </a>
-            <a href="{% url 'chat_list' %}" class="icon">
-                <i class="fas fa-comments"></i>
-            </a>
-            <a href="{% url 'profile' %}" class="icon">
-                <i class="fas fa-user"></i>
-            </a>
-            {% if user.is_superuser %}
-            <a href="{% url 'auroraadmin:admin_dashboard' %}" class="admin-button">Admin</a>
-            {% endif %}
-        </div>
-    </div>
+{% block title %}AuroraMart Storefront{% endblock %}
 
+{% block content %}
     <div class="banner">
         <p>Personalised for you.</p>
         <h2>Based on your interests, we recommend {{ recommended_category|default:'Electronics' }}</h2>
@@ -139,6 +97,4 @@
             <p>No products found.</p>
         {% endfor %}
     </div>    
-
-</body>
-</html>
+{% endblock %}

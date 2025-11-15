@@ -1,37 +1,13 @@
+{% extends 'storefront/base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Chats - AuroraMart</title>
-    <link rel="stylesheet" href="{% static 'storefront/css/storefront.css' %}">
-    <link rel="stylesheet" href="{% static 'storefront/css/chat.css' %}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
-</head>
-<body>
-    <div class="header">
-        <div class="logo" onclick="window.location.href='{% url 'storefront_home' %}'">
-            <img src="{% static 'storefront/images/AuroraMartLogo.png' %}" alt="AuroraMart Logo" class="logo-img">
-            <span class="logo-text">AuroraMart</span>
-        </div>
-        <div class="icons">
-            <a href="{% url 'view_cart' %}" class="icon icon-cart">
-                <i class="fas fa-shopping-cart"></i>
-                <span id="cart-count">{{ cart_item_count|default:0 }}</span>
-            </a>
-            <a href="{% url 'chat_list' %}" class="icon">
-                <i class="fas fa-comments"></i>
-            </a>
-            <a href="{% url 'profile' %}" class="icon">
-                <i class="fas fa-user"></i>
-            </a>
-            {% if user.is_superuser %}
-            <a href="{% url 'auroraadmin:admin_dashboard' %}" class="admin-button">Admin</a>
-            {% endif %}
-        </div>
-    </div>
 
+{% block title %}My Chats - AuroraMart{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'storefront/css/chat.css' %}">
+{% endblock %}
+
+{% block content %}
     <div class="chat-container">
         <h1 class="chat-main-title">My Inquiries</h1>
         <div class="chat-list">
@@ -53,5 +29,4 @@
             {% endfor %}
         </div>
     </div>
-</body>
-</html>
+{% endblock %}

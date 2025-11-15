@@ -1,21 +1,10 @@
+{% extends 'storefront/base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add New Card - AuroraMart</title>
-    
-    <!-- Links to your CSS -->
-    <link rel="stylesheet" href="{% static 'storefront/css/storefront.css' %}">
-    <link rel="stylesheet" href="{% static 'storefront/css/checkout.css' %}">
-    
-    <!-- Link to Font Awesome for header icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
-    <!-- 
-      Styles for validation errors, moved from the old file.
-    -->
+{% block title %}Add New Card - AuroraMart{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'storefront/css/checkout.css' %}">
     <style>
         .form-error-summary {
             background-color: #f8d7da;
@@ -35,81 +24,11 @@
             font-weight: 600;
             margin-top: 5px;
         }
-        /* Added styles for the message container (copied from profile.css) */
-        .message-container {
-            padding: 1rem;
-            position: fixed;
-            top: 100px; /* Below header */
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1000;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            min-width: 300px;
-            text-align: center;
-        }
-        .message.success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        .message.error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        .message.warning {
-            background-color: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeeba;
-        }
     </style>
-</head>
-<body>
-    <div class="header">
-        <div class="logo" onclick="window.location.href='{% url 'storefront_home' %}'">
-            <img src="{% static 'storefront/images/AuroraMartLogo.png' %}" alt="AuroraMart Logo" class="logo-img">
-            <span class="logo-text">AuroraMart</span>
-        </div>
-        <div class="icons">
-            <a href="{% url 'view_cart' %}" class="icon icon-cart">
-                <i class="fas fa-shopping-cart"></i>
-                <span id="cart-count">{{ cart_item_count|default:0 }}</span>
-            </a>
-            <a href="{% url 'chat_list' %}" class="icon">
-                <i class="fas fa-comments"></i>
-            </a>
-            <a href="{% url 'profile' %}" class="icon">
-                <i class="fas fa-user"></i>
-            </a>
-            <form id="logout-form" method="post" action="{% url 'auroraadmin:logout' %}" style="display:inline">
-                {% csrf_token %}
-                <button type="submit" class="logout-button">Logout</button>
-            </form>
-            {% if user.is_superuser %}
-            <a href="{% url 'auroraadmin:admin_dashboard' %}" class="admin-button">Admin</a>
-            {% endif %}
-        </div>
-    </div>
+{% endblock %}
 
-    <!-- 
-      NEW: Added the message display block (copied from profile.html)
-      This will show "Card saved!" messages from the view.
-    -->
-    {% if messages %}
-        <div class="message-container">
-            {% for message in messages %}
-                <div class="message {{ message.tags }}">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        </div>
-    {% endif %}
-
-    <!-- 
-      This is the original form content, now inside the new body.
-    -->
-    <div class="checkout-container" style="padding-top: 100px;"> <!-- Added padding to clear the header -->
+{% block content %}
+    <div class="checkout-container">
         <form class="checkout-forms" method="POST" action="{% url 'add_card' %}?next={{ request.GET.next }}">
             {% csrf_token %}
             
@@ -177,6 +96,4 @@
             </div>
         </form>
     </div>
-
-</body>
-</html>
+{% endblock %}

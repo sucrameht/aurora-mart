@@ -1,18 +1,13 @@
+{% extends 'storefront/base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add New Address</title>
-    <link rel="stylesheet" href="{% static 'storefront/css/storefront.css' %}">
+
+{% block title %}Add New Address{% endblock %}
+
+{% block extra_head %}
     <link rel="stylesheet" href="{% static 'storefront/css/checkout.css' %}">
-</head>
-<body>
+{% endblock %}
 
-    <div class="header">
-        </div>
-
+{% block content %}
     <div class="checkout-container">
         <form class="checkout-forms" method="POST" 
               action="{% url 'add_shipping_address' %}?next={{ request.GET.next }}">
@@ -74,6 +69,4 @@
             </div>
         </form>
     </div>
-    
-</body>
-</html>
+{% endblock %}

@@ -1,0 +1,85 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AuroraMart{% endblock %}</title>
+    
+    <!-- Links to your CSS -->
+    <link rel="stylesheet" href="{% static 'storefront/css/storefront.css' %}">
+    
+    <!-- Link to Font Awesome for header icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+    <style>
+        /* Added styles for the message container (copied from profile.css) */
+        .message-container {
+            position: fixed;
+            bottom: 10px;
+            right: 20px;
+            z-index: 9999;
+        }
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .message.warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <div class="header">
+        <div class="logo" onclick="window.location.href='{% url 'storefront_home' %}'">
+            <img src="{% static 'storefront/images/AuroraMartLogo.png' %}" alt="AuroraMart Logo" class="logo-img">
+            <span class="logo-text">AuroraMart</span>
+        </div>
+        <div class="icons">
+            <a href="{% url 'view_cart' %}" class="icon icon-cart">
+                <i class="fas fa-shopping-cart"></i>
+                <span id="cart-count">{{ cart_item_count|default:0 }}</span>
+            </a>
+            <a href="{% url 'chat_list' %}" class="icon">
+                <i class="fas fa-comments"></i>
+            </a>
+            <a href="{% url 'profile' %}" class="icon">
+                <i class="fas fa-user"></i>
+            </a>
+            <form id="logout-form" method="post" action="{% url 'auroraadmin:logout' %}" style="display:inline">
+                {% csrf_token %}
+                <button type="submit" class="logout-button">Logout</button>
+            </form>
+            {% if user.is_superuser %}
+            <a href="{% url 'auroraadmin:admin_dashboard' %}" class="admin-button">Admin</a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if messages %}
+        <div class="message-container">
+            {% for message in messages %}
+                <div class="message {{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="content-wrapper">
+        {% block content %}
+        {% endblock %}
+    </div>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
