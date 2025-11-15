@@ -1,3 +1,10 @@
+/* ====================================
+   DASHBOARD - KPI ANALYTICS
+   ==================================== */
+
+/* -------------------- 
+   Container & Layout 
+   -------------------- */
 .dashboard-container { 
     max-width: 100%; 
     margin: 0 auto; 
@@ -6,13 +13,14 @@
     min-height: 100vh;
 }
 
+/* -------------------- 
+   Header 
+   -------------------- */
 .dashboard-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 30px;
-    padding-bottom: 0;
-    border-bottom: none;
 }
 
 .dashboard-title {
@@ -23,33 +31,32 @@
     text-transform: uppercase;
 }
 
+/* -------------------- 
+   Time Frame Selector 
+   -------------------- */
 .time-frame-selector { 
     margin-bottom: 30px; 
     text-align: right;
-    position: relative;
 }
+
 .time-frame-selector h3 { 
     display: none;
 }
-.time-frame-selector a { 
-    margin: 0;
-    text-decoration: none; 
-}
+
 .time-frame-links {
     display: flex;
     justify-content: flex-end;
     gap: 0;
-    flex-wrap: nowrap;
     background-color: rgba(74, 85, 104, 0.4);
-    border-radius: 6px;
+    border-radius: 8px;
     padding: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
+
 .time-frame-links a {
-    display: inline-block;
-    padding: 8px 20px;
+    padding: 10px 24px;
     background-color: transparent;
-    border: none;
-    border-radius: 4px;
+    border-radius: 6px;
     text-decoration: none;
     color: #a0aec0;
     font-weight: 500;
@@ -62,19 +69,23 @@
 .time-frame-links a:hover {
     background-color: rgba(255, 255, 255, 0.1);
     color: #e2e8f0;
+    transform: translateY(-1px);
 }
 
 .time-frame-links a.active {
-    background-color: #718096;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: #ffffff;
     font-weight: 600;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
-/* Category Selector - modern style */
+/* -------------------- 
+   Category Selector 
+   -------------------- */
 .category-selector { 
     margin-bottom: 30px; 
-    text-align: left;
 }
+
 .category-selector h3 { 
     margin-bottom: 12px;
     font-size: 0.75rem;
@@ -83,57 +94,51 @@
     letter-spacing: 1.5px;
     font-weight: 600;
 }
+
 .category-links {
     display: flex;
     justify-content: flex-start;
     gap: 10px;
     flex-wrap: wrap;
 }
+
 .category-links a {
-    display: inline-block;
-    padding: 8px 18px;
+    padding: 10px 20px;
     background-color: rgba(74, 85, 104, 0.3);
     border: 1px solid rgba(203, 213, 224, 0.1);
-    border-radius: 6px;
+    border-radius: 8px;
     text-decoration: none;
     color: #cbd5e0;
     font-weight: 500;
     font-size: 0.9em;
     transition: all 0.3s ease;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
 .category-links a:hover {
     background-color: rgba(74, 85, 104, 0.5);
     border-color: rgba(203, 213, 224, 0.3);
     transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
 .category-links a.active {
-    background-color: #4a5568;
+    background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
     color: #ffffff;
     border-color: #4a5568;
     font-weight: 600;
+    box-shadow: 0 4px 12px rgba(74, 85, 104, 0.5);
 }
 
-/* Section Headers */
+/* -------------------- 
+   Section Headers 
+   -------------------- */
 .kpi-section-header {
     display: none;
 }
 
-.kpi-section-header h2 {
-    margin: 0;
-    font-size: 1.5em;
-    color: #007bff;
-    font-weight: 600;
-}
-
 .category-section-header {
     margin: 40px 0 25px 0;
-    padding: 0;
-    background-color: transparent;
-    border-left: none;
-    border-radius: 0;
-    box-shadow: none;
 }
 
 .category-section-header h2 {
@@ -145,7 +150,9 @@
     letter-spacing: 1.5px;
 }
 
-/* KPI Cards */
+/* -------------------- 
+   KPI Cards 
+   -------------------- */
 .kpi-cards {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -155,105 +162,61 @@
 
 .kpi-card {
     position: relative;
-    padding: 25px;
+    padding: 28px 25px;
     background: rgba(45, 55, 72, 0.6);
     backdrop-filter: blur(10px);
     border-radius: 12px;
     border: 1px solid rgba(203, 213, 224, 0.1);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
     transition: all 0.3s ease;
     overflow: hidden;
 }
 
+/* KPI Card Gradient Top Borders */
 .kpi-card::before {
     content: '';
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
-    height: 3px;
+    height: 4px;
     background: linear-gradient(90deg, #4299e1, #667eea);
 }
 
-.kpi-card:nth-child(2)::before {
-    background: linear-gradient(90deg, #48bb78, #38b2ac);
-}
-
-.kpi-card:nth-child(3)::before {
-    background: linear-gradient(90deg, #ed8936, #f6ad55);
-}
-
-.kpi-card:nth-child(4)::before {
-    background: linear-gradient(90deg, #ed64a6, #f687b3);
-}
-
-.kpi-card:nth-child(5)::before {
-    background: linear-gradient(90deg, #9f7aea, #b794f4);
-}
+.kpi-card:nth-child(2)::before { background: linear-gradient(90deg, #48bb78, #38b2ac); }
+.kpi-card:nth-child(3)::before { background: linear-gradient(90deg, #ed8936, #f6ad55); }
+.kpi-card:nth-child(4)::before { background: linear-gradient(90deg, #ed64a6, #f687b3); }
+.kpi-card:nth-child(5)::before { background: linear-gradient(90deg, #9f7aea, #b794f4); }
 
 .kpi-card h4 {
     font-size: 0.75rem;
     color: #a0aec0;
-    margin: 0 0 12px 0;
+    margin: 0 0 14px 0;
     text-transform: uppercase;
     letter-spacing: 1px;
     font-weight: 600;
 }
 
 .kpi-card p {
-    font-size: 2.2em;
+    font-size: 2.4em;
     font-weight: 700;
     color: #e2e8f0;
     margin: 0;
     line-height: 1;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .kpi-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
-    border-color: rgba(203, 213, 224, 0.2);
+    border-color: rgba(203, 213, 224, 0.3);
 }
 
-.products-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-    background: rgba(45, 55, 72, 0.6);
-    backdrop-filter: blur(10px);
-    border-radius: 12px;
-    overflow: hidden;
-    border: 1px solid rgba(203, 213, 224, 0.1);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-}
-
-.products-table th,
-.products-table td {
-    padding: 12px;
-    text-align: left;
-    border-bottom: 1px solid #ddd;
-}
-
-.products-table th {
-    background-color: #f0f8ff;
-    font-weight: bold;
-}
-
-.products-table tr:nth-child(even) {
-    background-color: #f9f9f9; 
-}
-.products-table tr:nth-child(odd) {
-    background-color: #ffffff;
-}
-.products-table tr:hover {
-    background-color: #e6f7ff;
-}
-
+/* -------------------- 
+   Charts Grid 
+   -------------------- */
 .charts {
     display: grid;
-    /* 2x2 grid layout */
     grid-template-columns: repeat(2, 1fr);
     gap: 25px;
     margin-top: 24px;
@@ -263,7 +226,6 @@
 .chart-container {
     display: flex;
     flex-direction: column;
-    align-items: stretch;
     background: rgba(45, 55, 72, 0.6);
     backdrop-filter: blur(10px);
     padding: 25px;
@@ -280,7 +242,6 @@
 }
 
 .chart-container h3 {
-    text-align: left;
     font-size: 0.85rem;
     color: #cbd5e0;
     margin: 0 0 20px 0;
@@ -289,16 +250,14 @@
     letter-spacing: 1px;
 }
 
-
 .chart {
     width: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 400px;
-    background-color: #000000;
+    background-color: transparent;
     border-radius: 8px;
-    padding: 0;
     overflow: hidden;
 }
 
@@ -310,13 +269,9 @@
     display: block;
 }
 
-/* Specific sizing for charts - strict 2x2 grid */
-.chart-revenue .chart { min-height: 400px; }
-.chart-pie .chart { min-height: 400px; }
-.chart-sales .chart { min-height: 400px; }
-.chart-buyers .chart { min-height: 400px; }
-
-/* Product Tables Dark Theme */
+/* -------------------- 
+   Product Tables 
+   -------------------- */
 .top-products,
 .bottom-products {
     margin-bottom: 30px;
@@ -336,13 +291,13 @@
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
-    margin-top: 10px;
     background: rgba(45, 55, 72, 0.6);
     backdrop-filter: blur(10px);
     border-radius: 12px;
     overflow: hidden;
     border: 1px solid rgba(203, 213, 224, 0.1);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    table-layout: fixed; /* Makes column widths predictable */
 }
 
 .products-table th,
@@ -352,6 +307,22 @@
     border-bottom: 1px solid rgba(203, 213, 224, 0.08);
     color: #e2e8f0;
     font-size: 0.95rem;
+}
+
+/* Fixed column widths */
+.products-table th:nth-child(1),
+.products-table td:nth-child(1) {
+    width: 50%; /* Name column */
+}
+
+.products-table th:nth-child(2),
+.products-table td:nth-child(2) {
+    width: 30%; /* Category column */
+}
+
+.products-table th:nth-child(3),
+.products-table td:nth-child(3) {
+    width: 20%; /* Num Sold column */
 }
 
 .products-table thead th {
@@ -387,7 +358,6 @@
     border-bottom: none;
 }
 
-/* Empty state styling */
 .products-table tbody tr td[colspan] {
     text-align: center;
     padding: 40px;
@@ -395,18 +365,63 @@
     font-style: italic;
 }
 
-/* Responsive adjustments */
+/* -------------------- 
+   Responsive Design 
+   -------------------- */
 @media (max-width: 1200px) {
     .charts {
         grid-template-columns: repeat(2, 1fr);
     }
-    .chart-revenue .chart { min-height: 380px; }
+    
+    .chart {
+        min-height: 380px;
+    }
 }
 
 @media (max-width: 768px) {
+    .dashboard-container {
+        padding: 20px;
+    }
+    
+    .dashboard-title {
+        font-size: 1.4rem;
+    }
+    
+    .kpi-cards {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
     .charts {
         grid-template-columns: 1fr;
         gap: 18px;
+    }
+    
+    .time-frame-links {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    
+    .time-frame-links a {
+        padding: 8px 16px;
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .dashboard-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .time-frame-selector {
+        text-align: left;
+        width: 100%;
+    }
+    
+    .time-frame-links {
+        justify-content: flex-start;
     }
 }
 

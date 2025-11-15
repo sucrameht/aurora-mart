@@ -1031,7 +1031,7 @@ class GenderChartView(View):
         # Clear any existing matplotlib state
         plt.close('all')
         
-        fig, ax = plt.subplots(num=1, figsize=(6, 5), dpi=100, clear=True)
+        fig, ax = plt.subplots(num=1, figsize=(9, 6), dpi=100, clear=True)
         # Set transparent background
         fig.patch.set_alpha(0.0)
         ax.patch.set_alpha(0.0)
@@ -1277,7 +1277,7 @@ class RevenueByCategoryChartView(View):
         plt.close('all')
         
         # Create vertical bar chart - wider for better readability
-        fig, ax = plt.subplots(num=3, figsize=(14, 7), dpi=100, clear=True)
+        fig, ax = plt.subplots(num=3, figsize=(12, 8), dpi=100, clear=True)
         # Set transparent background
         fig.patch.set_alpha(0.0)
         ax.patch.set_alpha(0.0)
