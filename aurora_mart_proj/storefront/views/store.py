@@ -98,26 +98,28 @@ class StorefrontView(ListView):
             cart = request.session.get('cart', {})
 
             if not request.user.is_authenticated:
-                cart[sku] = cart.get(sku, 0) + 1
+                quantity = int(request.POST.get('quantity', 1))
+                cart[sku] = cart.get(sku, 0) + quantity
                 request.session['cart'] = cart
                 request.session['cart_item_count'] = sum(cart.values())
-                messages.success(request, "Item added to cart! Please log in to save your cart.")
+                messages.success(request, f"{quantity} item(s) added to cart! Please log in to save your cart.")
                 return redirect('storefront_home')
 
             if action == 'add':
                 try:
+                    quantity = int(request.POST.get('quantity', 1))
                     product = Product.objects.get(sku_code=sku)
                     cart_item, created = CartItem.objects.get_or_create(
                         user=request.user, 
                         product=product,
-                        defaults={'quantity': 1}  # Use 'defaults'
+                        defaults={'quantity': quantity}
                     )
                     
                     if not created:
-                        cart_item.quantity += 1
-                        cart_item.save() #
+                        cart_item.quantity += quantity
+                        cart_item.save()
                     
-                    messages.success(request, "Item added to cart!")
+                    messages.success(request, f"{quantity} item(s) added to cart!")
                 
                 except Product.DoesNotExist:
                     messages.error(request, "Product not found.")
@@ -130,6 +132,10 @@ class CartView(View):
     template_name = 'cart.html'
 
     def get(self, request, *args, **kwargs):
+        # Clear any "buy now" item from the session when visiting the cart
+        if 'buy_now_item' in request.session:
+            del request.session['buy_now_item']
+
         # Handle displaying the cart (your existing get_context_data logic)
         if not request.user.is_authenticated:
             cart = request.session.get('cart', {})
@@ -306,10 +312,17 @@ class BuyNowView(LoginRequiredMixin, View):
         sku_code = self.kwargs.get('sku_code')
         product = get_object_or_404(Product, sku_code=sku_code)
         
+        try:
+            quantity = int(request.GET.get('quantity', 1))
+            if quantity < 1:
+                quantity = 1
+        except (ValueError, TypeError):
+            quantity = 1
+
         # Store the single item in the session for checkout
         request.session['buy_now_item'] = {
             'sku_code': product.sku_code,
-            'quantity': 1,
+            'quantity': quantity,
             'price': str(product.unit_price) 
         }
         

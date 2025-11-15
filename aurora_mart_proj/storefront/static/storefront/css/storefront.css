@@ -436,3 +436,65 @@ body {
     border-radius: 6px;
     font-weight: 600;
 }
+
+.add-to-cart-form, .buy-now-form {
+    display: contents; /* This makes the form a non-visual wrapper */
+}
+
+.add-to-cart-form-detail, .buy-now-form-detail {
+    display: contents;
+}
+
+.product-actions-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.add-to-cart-form-detail, .buy-now-form-detail {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.add-cart-main, .buy-now-main {
+    flex-grow: 1;
+    padding: 12px;
+    border-radius: 6px;
+    font-weight: 600;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.add-cart-main {
+    background-color: #f0f0f0;
+    color: #333;
+    border: 1px solid #ddd;
+}
+
+.buy-now-main {
+    background-color: #ff7f50;
+    color: white;
+}
+
+.quantity-selector {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.quantity-input-detail {
+    width: 60px;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    text-align: center;
+    font-size: 16px;
+}

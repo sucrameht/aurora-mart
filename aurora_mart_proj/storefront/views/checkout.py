@@ -17,12 +17,14 @@ class CheckoutView(LoginRequiredMixin, View):
 
         if buy_now_item_session:
             product = get_object_or_404(Product, sku_code=buy_now_item_session['sku_code'])
+            quantity = buy_now_item_session.get('quantity', 1)
+            total_price = product.unit_price * quantity
             cart_items = [{
                 'product': product,
-                'quantity': 1,
-                'total_price': product.unit_price
+                'quantity': quantity,
+                'total_price': total_price
             }]
-            subtotal = product.unit_price
+            subtotal = total_price
             discount = Decimal('0.00') # No vouchers for buy now
             total = subtotal
 
@@ -128,15 +130,16 @@ class CheckoutView(LoginRequiredMixin, View):
         if buy_now_item_session:
             # --- Handle "Buy Now" ---
             product = get_object_or_404(Product, sku_code=buy_now_item_session['sku_code'])
+            quantity = buy_now_item_session.get('quantity', 1)
             
             # Stock Check
-            if product.quantity_on_hand < 1:
-                messages.error(request, f"Sorry, {product.product_name} is out of stock.")
+            if product.quantity_on_hand < quantity:
+                messages.error(request, f"Sorry, there are only {product.quantity_on_hand} units of {product.product_name} available.")
                 del request.session['buy_now_item']
                 return redirect('storefront_home')
             
-            items_to_process.append({'product': product, 'quantity': 1})
-            total = product.unit_price
+            items_to_process.append({'product': product, 'quantity': quantity})
+            total = product.unit_price * quantity
             # No vouchers, so discount remains 0 and voucher_obj remains None
 
         else:
