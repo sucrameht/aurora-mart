@@ -5,6 +5,15 @@
 
 {% block content %}
 <link rel="stylesheet" href="{% static 'storefront/css/delete_account.css' %}">
+{% if messages %}
+    <div class="message-container">
+        {% for message in messages %}
+            <div class="message {{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
 <div class="form-container">
     <h2>Delete Account</h2>
     <p>Please enter your password to confirm that you want to permanently delete your account. This action cannot be undone.</p>

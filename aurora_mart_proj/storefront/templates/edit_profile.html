@@ -10,6 +10,15 @@
     <link rel="stylesheet" href="{% static 'storefront/css/profile_settings.css' %}">
 </head>
 <body>
+    {% if messages %}
+        <div class="message-container">
+            {% for message in messages %}
+                <div class="message {{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
     <div class="header">
         <div class="logo" onclick="window.location.href='{% url 'storefront_home' %}'">
             <img src="{% static 'storefront/images/AuroraMartLogo.png' %}" alt="AuroraMart Logo" class="logo-img">
