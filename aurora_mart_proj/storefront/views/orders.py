@@ -3,6 +3,7 @@ from ..models import *
 from django.contrib import messages
 from django.views.generic import View, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db import transaction as db_transaction
 
 class CustomerTransactionDetailView(LoginRequiredMixin, DetailView):
     model = Transactions
@@ -80,12 +81,24 @@ class CancelOrderView(LoginRequiredMixin, View):
         return render(request, self.template_name, {'transaction': transaction})
 
     def post(self, request, *args, **kwargs):
-        transaction = get_object_or_404(Transactions, pk=self.kwargs.get('pk'), user=request.user)
-        if transaction.status == 'Payment Made':
-            transaction.status = 'Cancelled'
-            transaction.notes = request.POST.get('reason', '')
-            transaction.save()
-            messages.success(request, "Your order has been successfully cancelled.")
+        transaction_obj = get_object_or_404(Transactions, pk=self.kwargs.get('pk'), user=request.user)
+        if transaction_obj.status == 'Payment Made':
+            try:
+                with db_transaction.atomic():
+                    transaction_obj.status = 'Cancelled'
+                    transaction_obj.notes = request.POST.get('reason', '')
+
+                    # Restock items
+                    for item in transaction_obj.items.all():
+                        product = item.product
+                        product.quantity_on_hand += item.quantity_purchased
+                        product.save()
+                    
+                    transaction_obj.save()
+                
+                messages.success(request, "Your order has been successfully cancelled and items have been restocked.")
+            except Exception as e:
+                messages.error(request, f"An error occurred while cancelling your order: {e}")
         else:
             messages.error(request, "This order cannot be cancelled at its current stage.")
         return redirect('profile')
