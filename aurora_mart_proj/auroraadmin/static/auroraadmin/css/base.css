@@ -53,13 +53,13 @@ body {
 .storefront-button, .logout-button {
     text-decoration: none;
     color: white;
-    background-color: #00bfff;
+    background-color: #007ca5;
     padding: 8px 12px;
     border-radius: 6px;
     font-weight: 600;
 }
 .storefront-button:hover, .logout-button:hover {
-    background-color: #009acd;
+    background-color: #007ca5;
 }
 .sidebar {
     width: 220px;
