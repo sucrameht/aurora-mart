@@ -190,9 +190,9 @@ class ManageAddressesView(LoginRequiredMixin, ListView):
         return ShippingAddress.objects.filter(user=self.request.user).order_by('nickname')
 
 
-class ManagePaymentMethodsView(LoginRequiredMixin, ListView):
+class ManageCardsView(LoginRequiredMixin, ListView):
     model = Card
-    template_name = 'manage_payment_methods.html'
+    template_name = 'manage_cards.html'
     context_object_name = 'cards'
 
     def get_queryset(self):
@@ -248,7 +248,7 @@ class EditCardView(LoginRequiredMixin, View):
         except Exception as e:
             messages.error(request, f"Error updating card: {e}")
 
-        return redirect('manage_payment_methods')
+        return redirect('manage_cards')
 
 
 class DeleteShippingAddressView(LoginRequiredMixin, View):
@@ -270,7 +270,7 @@ class DeleteCardView(LoginRequiredMixin, View):
             messages.success(request, "Card deleted successfully.")
         except Exception as e:
             messages.error(request, f"Error deleting card: {e}")
-        return redirect('manage_payment_methods')
+        return redirect('manage_cards')
 
 
 class ChangePasswordView(LoginRequiredMixin, View):
