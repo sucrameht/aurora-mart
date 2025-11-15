@@ -132,6 +132,9 @@
                             <input type="text" id="voucher_code" name="voucher_code" placeholder="Enter code" value="{{ current_voucher_code|default:'' }}">
                             <button type="submit" class="apply-btn">Apply</button>
                         </div>
+                        <div class="my-vouchers-link">
+                            <a href="{% url 'my_vouchers' %}">View My Vouchers</a>
+                        </div>
                     </form>
 
                     {% if applied_voucher %}
