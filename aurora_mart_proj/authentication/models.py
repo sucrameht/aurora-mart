@@ -1,6 +1,28 @@
 from django.db import models
 from django.contrib.auth.models import User
-from storefront.models import Voucher
+from storefront.models import Voucher, Transactions
+
+
+class WalletHistory(models.Model):
+    TRANSACTION_TYPES = [
+        ('TOPUP', 'Top-up'),
+        ('PURCHASE', 'Purchase'),
+        ('REFUND', 'Refund'),
+    ]
+
+    user_profile = models.ForeignKey('UserProfile', on_delete=models.CASCADE, related_name='wallet_history')
+    transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPES)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    related_transaction = models.ForeignKey(Transactions, on_delete=models.SET_NULL, null=True, blank=True)
+
+    class Meta:
+        ordering = ['-timestamp']
+        verbose_name_plural = "Wallet Histories"
+
+    def __str__(self):
+        return f"{self.user_profile.user.username} - {self.get_transaction_type_display()} - {self.amount}"
+
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
