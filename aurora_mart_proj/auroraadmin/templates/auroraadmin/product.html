@@ -40,7 +40,7 @@
         {% endif %}
 
         <!--Add Product Button-->
-        <a href="{% url 'auroraadmin:product_add' %}" class="filter-button" style="float:right; background-color:#00bfff; color:white; border:none; text-decoration:none;">
+        <a href="{% url 'auroraadmin:product_add' %}" class="filter-button" style="float:right; background-color:#007ca5; color:white; border:none; text-decoration:none;">
             + Add Product
         </a>
     </div>
@@ -60,8 +60,12 @@
         <tbody>
             {% for product in products %}
             <tr>
-                <td>{{ product.sku_code }}</td>
-                <td><a href="{% url 'auroraadmin:product_actions' product.sku_code %}" style="color:#00bfff; text-decoration:none;">{{ product.product_name }}</a></td>
+                <td>
+                    <a href="{% url 'product_detail' product.sku_code %}" class="table-product-link" target="_blank">
+                        {{ product.sku_code }}
+                    </a>
+                </td>
+                <td><a href="{% url 'auroraadmin:product_actions' product.sku_code %}" style="color:#007ca5; text-decoration:none;">{{ product.product_name }}</a></td>
                 <td><span class="category-badge">{{ product.product_category }}</span></td>
                 <td>${{ product.unit_price|floatformat:2 }}</td>
                 <td>{{ product.quantity_on_hand }}</td>

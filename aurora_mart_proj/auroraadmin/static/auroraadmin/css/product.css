@@ -1,9 +1,7 @@
-/* --- Custom Styles for Product Inventory Table --- */
 
-/* Container for the whole page content */
 .inventory-container {
     padding: 20px;
-    background-color: #ffffff; /* Use a white background for the table area */
+    background-color: #ffffff;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); /* Soft shadow for the card effect */
 }
@@ -134,18 +132,6 @@
     margin-left: 5px;
 }
 
-.edit-button {
-    background-color: #00bfff;
-    color: white;
-    border: 1px solid #00bfff;
-}
-
-.view-button {
-    background-color: #f0f8ff;
-    color: #00bfff;
-    border: 1px solid #00bfff;
-}
-
 .inline-edit-form { 
     display: flex; 
     align-items: center; 
@@ -156,7 +142,7 @@
 .inline-edit-input { 
     width: 60px; 
     padding: 5px; 
-    border: 1px solid #00bfff; 
+    border: 1px solid #007ca5; 
     border-radius: 4px; 
     text-align: center; 
 }
@@ -183,11 +169,11 @@
     display: inline-block; 
 }
 
-.edit-button:hover { 
-    background-color: 
-    #009acd; 
-    border-color: #009acd; 
+.table-product-link {
+    text-decoration: none;
+    color: inherit; /* Inherits the color from the <td> */
 }
-.view-button:hover { 
-    background-color: #e6f6ff; 
+
+.table-product-link:hover {
+    text-decoration: underline;
 }
