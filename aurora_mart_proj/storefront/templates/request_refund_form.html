@@ -45,7 +45,7 @@
     {% endif %}
 
     <div class="form-container">
-        <h1 class="form-title">Request Refund for Order #{{ transaction.pk }}</h1>
+        <h1 class="form-title">Request Refund for Order</h1>
         <p class="form-description">Please provide a reason for your refund request. This will be sent to the administrator for review.</p>
         
         <form method="post" action="{% url 'request_refund' transaction.pk %}">
