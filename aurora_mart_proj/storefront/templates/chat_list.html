@@ -7,6 +7,7 @@
     <title>My Chats - AuroraMart</title>
     <link rel="stylesheet" href="{% static 'storefront/css/storefront.css' %}">
     <link rel="stylesheet" href="{% static 'storefront/css/chat.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
 </head>
 <body>
     <div class="header">
@@ -16,10 +17,15 @@
         </div>
         <div class="icons">
             <a href="{% url 'view_cart' %}" class="icon icon-cart">
-                🛒
+                <i class="fas fa-shopping-cart"></i>
                 <span id="cart-count">{{ cart_item_count|default:0 }}</span>
             </a>
-            <a href="{% url 'profile' %}" class="icon">👤</a>
+            <a href="{% url 'chat_list' %}" class="icon">
+                <i class="fas fa-comments"></i>
+            </a>
+            <a href="{% url 'profile' %}" class="icon">
+                <i class="fas fa-user"></i>
+            </a>
             {% if user.is_superuser %}
             <a href="{% url 'auroraadmin:admin_dashboard' %}" class="admin-button">Admin</a>
             {% endif %}

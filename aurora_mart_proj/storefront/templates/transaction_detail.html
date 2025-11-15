@@ -7,6 +7,7 @@
     <title>Order Details - AuroraMart</title>
     <link rel="stylesheet" href="{% static 'storefront/css/storefront.css' %}">
     <link rel="stylesheet" href="{% static 'storefront/css/transaction.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
 </head>
 <body>
     <div class="header">
@@ -15,13 +16,21 @@
             <span class="logo-text">AuroraMart</span>
         </div>
         <div class="icons">
-            <a href="{% url 'view_cart' %}" class="icon icon-cart">🛒</a>
-            <a href="{% url 'profile' %}" class="icon">👤</a>
+            <a href="{% url 'view_cart' %}" class="icon icon-cart">
+                <i class="fas fa-shopping-cart"></i>
+                <span id="cart-count">{{ cart_item_count|default:0 }}</span>
+            </a>
+            <a href="{% url 'chat_list' %}" class="icon">
+                <i class="fas fa-comments"></i>
+            </a>
+            <a href="{% url 'profile' %}" class="icon">
+                <i class="fas fa-user"></i>
+            </a>
         </div>
     </div>
 
 <div class="detail-container">
-    <a href="{% url 'profile' %}" class="back-link">&larr; Back</a>
+    <a href="{% url 'profile' %}" class="back-link"><i class="fas fa-arrow-left"></i> Back</a>
     <div class="detail-card">
         <div class="detail-header">
             <h1 class="detail-title">Order Details</h1>

@@ -56,15 +56,21 @@ body {
 
 .icons {
     display: flex;
-    gap: 20px;
+    align-items: center;
+    gap: 25px;
     margin-left: 20px;
 }
 
 .icon {
-    font-size: 22px;
+    font-size: 24px;
     cursor: pointer;
-    color: #333;
+    color: #888;
     text-decoration: none;
+    transition: color 0.2s ease-in-out;
+}
+
+.icon:hover {
+    color: #007ca5;
 }
 
 .banner {
@@ -319,7 +325,7 @@ body {
     margin-top: auto;
 }
 
-.buy-now {
+.product-card .buy-now {
     background-color: #ff7f50;
     color: white;
     padding: 10px 16px;
