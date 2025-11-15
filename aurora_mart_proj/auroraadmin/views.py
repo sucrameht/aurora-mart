@@ -918,6 +918,14 @@ class DashboardView(View):
         selected_category = request.GET.get('category', 'all') # default all categories
         now = timezone.now()
 
+        # company current status
+        total_customers = User.objects.filter(is_staff=False).count()
+        total_delivery_admins = User.objects.filter(is_staff=True, userprofile__is_delivery_admin=True).count()
+        total_staff_count = User.objects.filter(is_staff=True).count()
+        # "Employees" are all staff members who are NOT delivery admins
+        total_employees = total_staff_count - total_delivery_admins
+        global_pending_orders = Transactions.objects.filter(status='Payment Made').count()
+
         # determine start-current frame
         if time_frame == '1w':
             start_date = now - timedelta(weeks=1)
@@ -945,8 +953,10 @@ class DashboardView(View):
         filtered_transactions = Transactions.objects.all()
         if start_date: # gte (>= start date)
             filtered_transactions = filtered_transactions.filter(transaction_datetime__gte=start_date)
-        
-        filtered_transactions = filtered_transactions.annotate(
+
+        completed_transactions = filtered_transactions.filter(status='Delivery Completed')
+
+        completed_transactions = completed_transactions.annotate(
             total_spent=Sum(
                 F('items__quantity_purchased') * F('items__price_at_purchase'),
                 default=Decimal('0.0'),
@@ -955,7 +965,7 @@ class DashboardView(View):
         )
 
         # Filter by category if selected
-        product_quantity_by_period = OrderItem.objects.filter(transactions__in=filtered_transactions)
+        product_quantity_by_period = OrderItem.objects.filter(transactions__in=completed_transactions)
         if selected_category != 'all':
             product_quantity_by_period = product_quantity_by_period.filter(product__product_category=selected_category)
         
@@ -965,13 +975,10 @@ class DashboardView(View):
             total_sold=Sum('quantity_purchased')
         )
 
-        total_revenue = filtered_transactions.aggregate(total=Sum('total_spent'))['total'] or 0
-        total_transactions = filtered_transactions.count()
-        avg_order_value = total_revenue / total_transactions if total_transactions > 0 else 0
-        voucher_savings = filtered_transactions.aggregate(savings=Sum('voucher_value'))['savings'] or 0
-        
-        # Count pending orders (Payment Made but not yet Delivered to Warehouse)
-        pending_orders = filtered_transactions.filter(status='Payment Made').count()
+        total_revenue = completed_transactions.aggregate(total=Sum('total_spent'))['total'] or 0
+        total_completed_transactions = completed_transactions.count()
+        avg_order_value = total_revenue / total_completed_transactions if total_completed_transactions > 0 else 0
+        voucher_savings = completed_transactions.aggregate(savings=Sum('voucher_value'))['savings'] or 0
 
         top_products = product_quantity_by_period.order_by('-total_sold')[:5]
         bottom_products = product_quantity_by_period.order_by('total_sold')[:5]
@@ -980,11 +987,19 @@ class DashboardView(View):
         all_categories = Product.objects.values_list('product_category', flat=True).distinct().order_by('product_category')
         
         context = {
+            # NEW Current Status KPIs
+            'total_customers': total_customers,
+            'total_employees': total_employees,
+            'total_delivery_admins': total_delivery_admins,
+            'global_pending_orders': global_pending_orders,
+
+            # Time-Filtered KPIs
             'total_revenue': total_revenue,
-            'total_transactions': total_transactions,
+            'total_transactions': total_completed_transactions, # Use this corrected value
             'avg_order_value': avg_order_value,
-            'voucher_savings': -voucher_savings,
-            'pending_orders': pending_orders,
+            'voucher_savings': -voucher_savings, # Keeping the negation from your original code
+            
+            # Page state
             'top_products': top_products,
             'bottom_products': bottom_products,
             'time_frame': time_frame,
@@ -1014,7 +1029,7 @@ class GenderChartView(View):
         elif time_frame == '1y':
             start_date = now - timedelta(days=365)
 
-        transactions = Transactions.objects.all()
+        transactions = Transactions.objects.filter(status='Delivery Completed')
         if start_date:
             transactions = transactions.filter(transaction_datetime__gte=start_date)
 
@@ -1134,7 +1149,7 @@ class SalesTrendChartView(View):
             trunc_func = TruncQuarter
             date_format = None  # Custom formatting below
 
-        filtered_transactions = Transactions.objects.all()
+        filtered_transactions = Transactions.objects.filter(status='Delivery Completed')
         if start_date:
             filtered_transactions = filtered_transactions.filter(transaction_datetime__gte=start_date)
         
@@ -1230,7 +1245,7 @@ class RevenueByCategoryChartView(View):
             start_date = now - timedelta(days=365)
 
         # Filter transactions
-        filtered_transactions = Transactions.objects.all()
+        filtered_transactions = Transactions.objects.filter(status='Delivery Completed')
         if start_date:
             filtered_transactions = filtered_transactions.filter(transaction_datetime__gte=start_date)
 
@@ -1333,7 +1348,7 @@ class TopBuyersChartView(View):
             start_date = now - timedelta(days=365)
 
         # Filter transactions for the period
-        filtered_transactions = Transactions.objects.all()
+        filtered_transactions = Transactions.objects.filter(status='Delivery Completed')
         if start_date:
             filtered_transactions = filtered_transactions.filter(transaction_datetime__gte=start_date)
 

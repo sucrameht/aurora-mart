@@ -8,8 +8,37 @@
 {% block main_content %}
 <div class="dashboard-container">
     <div class="dashboard-header">
-        <h1 class="dashboard-title">KPI Dashboard - {{ period_label }}</h1>
+        <h1 class="dashboard-title">KPI Dashboard</h1>
     </div>
+
+    <!-- Company Current Status Section -->
+    <div class="category-section-header">
+        <h2>Company Current Status</h2>
+    </div>
+    <div class="kpi-cards">
+        <div class="kpi-card">
+            <h4>Total Customers</h4>
+            <p>{{ total_customers }}</p>
+        </div>
+        <div class="kpi-card">
+            <h4>Total Employees</h4>
+            <p>{{ total_employees }}</p>
+        </div>
+        <div class="kpi-card">
+            <h4>Delivery Admins</h4>
+            <p>{{ total_delivery_admins }}</p>
+        </div>
+        <div class="kpi-card">
+            <h4>Pending Orders</h4>
+            <p>{{ global_pending_orders }}</p>
+        </div>
+    </div>
+
+    <!-- Time Period Metrics Section -->
+    <div class="kpi-section-header">
+        <h2>Performance Metrics ({{ period_label }})</h2>
+    </div>
+    
     <!-- Time Frame Selector -->
     <div class="time-frame-selector">
         <h3>Select Time Frame:</h3>
@@ -20,22 +49,6 @@
             <a href="?time_frame=1y&category={{ selected_category }}" class="{% if time_frame == '1y' %}active{% endif %}">1 Year</a>
             <a href="?time_frame=all&category={{ selected_category }}" class="{% if time_frame == 'all' %}active{% endif %}">All Time</a>
         </div>
-    </div>
-
-    <!-- Category Selector -->
-    <div class="category-selector">
-        <h3>Filter by Category:</h3>
-        <div class="category-links">
-            <a href="?time_frame={{ time_frame }}&category=all" class="{% if selected_category == 'all' %}active{% endif %}">All Categories</a>
-            {% for category in all_categories %}
-            <a href="?time_frame={{ time_frame }}&category={{ category }}" class="{% if selected_category == category %}active{% endif %}">{{ category }}</a>
-            {% endfor %}
-        </div>
-    </div>
-    
-    <!-- KPI Section Header -->
-    <div class="kpi-section-header">
-        <h2>Key Performance Indicators ({{ period_label }})</h2>
     </div>
     
     <!-- KPI Cards -->
@@ -56,9 +69,16 @@
             <h4>Total Voucher Amount</h4>
             <p>S${{ voucher_savings|floatformat:2 }}</p>
         </div>
-        <div class="kpi-card">
-            <h4>Pending Orders</h4>
-            <p>{{ pending_orders }}</p>
+    </div>
+
+    <!-- Category Selector -->
+    <div class="category-selector">
+        <h3>Filter by Category:</h3>
+        <div class="category-links">
+            <a href="?time_frame={{ time_frame }}&category=all" class="{% if selected_category == 'all' %}active{% endif %}">All Categories</a>
+            {% for category in all_categories %}
+            <a href="?time_frame={{ time_frame }}&category={{ category }}" class="{% if selected_category == category %}active{% endif %}">{{ category }}</a>
+            {% endfor %}
         </div>
     </div>
     

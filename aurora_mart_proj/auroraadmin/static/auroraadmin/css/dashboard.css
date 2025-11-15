@@ -35,7 +35,8 @@
    Time Frame Selector 
    -------------------- */
 .time-frame-selector { 
-    margin-bottom: 30px; 
+    margin-bottom: 25px;
+    margin-top: 15px;
     text-align: right;
 }
 
@@ -133,18 +134,25 @@
 /* -------------------- 
    Section Headers 
    -------------------- */
-.kpi-section-header {
-    display: none;
-}
-
+.kpi-section-header,
 .category-section-header {
-    margin: 40px 0 25px 0;
+    margin: 45px 0 20px 0;
+    padding: 15px 20px;
+    background: rgba(74, 85, 104, 0.3);
+    border-left: 4px solid #667eea;
+    border-radius: 8px;
 }
 
+.kpi-section-header:first-of-type,
+.category-section-header:first-of-type {
+    margin-top: 0;
+}
+
+.kpi-section-header h2,
 .category-section-header h2 {
     margin: 0;
-    font-size: 0.75rem;
-    color: #a0aec0;
+    font-size: 1rem;
+    color: #e2e8f0;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 1.5px;
@@ -157,7 +165,7 @@
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 20px;
-    margin-bottom: 40px;
+    margin-bottom: 35px;
 }
 
 .kpi-card {
