@@ -292,6 +292,32 @@ body {
   .css-close:hover {
     color: #000;
   }
+
+  .css-modal-content .buy-now {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px; 
+    
+    text-decoration: none;
+    padding: 10px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    text-align: center;
+    border: 1px solid #ddd;
+    transition: background-color 0.2s;
+  }
+
+  .css-modal-content .buy-now {
+    background-color: #ff7f50;
+    color: white;
+    border-color: #ff7f50;
+    margin-top: 10px;
+  }
+  .css-modal-content .buy-now:hover {
+    background-color: #e86a3c;
+  }
   
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(-10px); }
