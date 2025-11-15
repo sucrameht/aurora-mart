@@ -79,6 +79,7 @@ class CartItem(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="cart_items")
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.IntegerField()
+    is_selected = models.BooleanField(default=True)
 
     class Meta:
         unique_together = ('user', 'product')

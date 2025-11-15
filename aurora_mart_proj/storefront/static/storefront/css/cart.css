@@ -85,20 +85,23 @@ body {
     border-radius: 6px;
     font-weight: 600;
     transition: background-color 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .continue-shopping-btn:hover {
     background-color: #0056b3;
 }
 
-
-/* --- Filled Cart Styles --- */
 .continue-shopping-link {
     text-decoration: none;
     color: #007ca5;
     font-weight: 600;
     font-size: 15px;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     margin-bottom: 15px;
 }
 
@@ -413,4 +416,13 @@ body {
 
 .btn-add-recommendation:hover {
     background-color: #005f7f;
+}
+
+.cart-item-link {
+    text-decoration: none;
+    color: inherit; /* This will make it use the surrounding text color */
+}
+
+.cart-item-link:hover .cart-item-name {
+    text-decoration: underline; /* Optional: add a hover effect */
 }

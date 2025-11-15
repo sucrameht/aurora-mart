@@ -1,5 +1,5 @@
 .actions-container { 
-    max-width: 600px; 
+    max-width: 1200px; 
     margin: 20px auto; 
     padding: 20px; 
     background: #fff; 
@@ -11,7 +11,7 @@
     margin-bottom: 20px; 
 }
 .product-info h2 { 
-    margin-bottom: 10px; 
+    margin-bottom: 0px; 
 }
 .product-info p { 
     margin: 5px 0; 
@@ -56,6 +56,8 @@
     text-decoration: none; 
     display: inline-block; 
     padding: 8px 12px; 
+    border-radius: 4px; 
+    font-size: 14px;
     align-self: flex-start;
 }
 .back-link { 
@@ -64,4 +66,29 @@
 .back-link a { 
     color: #007bff; 
     text-decoration: none; 
+}
+
+.product-info-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.view-storefront-btn {
+    display: inline-block;
+    padding: 8px 12px;
+    background: #007ca5;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background-color 0.2s;
+    flex-shrink: 0;
+    margin-left: 15px;
+}
+
+.view-storefront-btn:hover {
+    background: #005f7f;
 }

@@ -7,6 +7,7 @@
     <title>{{ product.product_name }} - AuroraMart</title>
     <link rel="stylesheet" href="{% static 'storefront/css/storefront.css' %}">
     <link rel="stylesheet" href="{% static 'storefront/css/product_detail.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
 </head>
 <body>
     <div class="header">
@@ -16,11 +17,15 @@
         </div>
         <div class="icons">
             <a href="{% url 'view_cart' %}" class="icon icon-cart">
-                🛒
+                <i class="fas fa-shopping-cart"></i>
                 <span id="cart-count">{{ cart_item_count|default:0 }}</span>
             </a>
-            <a href="{% url 'chat_list' %}" class="icon">💬</a>
-            <a href="{% url 'profile' %}" class="icon">👤</a>
+            <a href="{% url 'chat_list' %}" class="icon">
+                <i class="fas fa-comments"></i>
+            </a>
+            <a href="{% url 'profile' %}" class="icon">
+                <i class="fas fa-user"></i>
+            </a>
             {% if user.is_superuser %}
             <a href="{% url 'auroraadmin:admin_dashboard' %}" class="admin-button">Admin</a>
             {% endif %}
@@ -50,11 +55,11 @@
                         {% csrf_token %}
                         <input type="hidden" name="action" value="add">
                         <input type="hidden" name="sku_code" value="{{ product.sku_code }}">
-                        <button type="submit" class="add-cart-main">🛒 Add to Cart</button>
+                        <button type="submit" class="add-cart-main"><i class="fas fa-cart-plus"></i> Add to Cart</button>
                     </form>
-                    <a href="{% url 'buy_now' product.sku_code %}" class="buy-now-main">⚡️ Buy Now</a>
+                    <a href="{% url 'buy_now' product.sku_code %}" class="buy-now-main"><i class="fas fa-bolt"></i> Buy Now</a>
                 </div>
-                 <a href="{% url 'start_chat' product.sku_code %}" class="chat-link">💬 Chat with Seller about this product</a>
+                 <a href="{% url 'start_chat' product.sku_code %}" class="chat-link"><i class="fas fa-comments"></i> Chat with Seller about this product</a>
             </div>
         </div>
 

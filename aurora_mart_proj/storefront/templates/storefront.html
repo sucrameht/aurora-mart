@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AuroraMart Storefront</title>
     <link rel="stylesheet" href="{% static 'storefront/css/storefront.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
 </head>
 <body>
     {% if messages %}
@@ -30,11 +31,15 @@
         </form>
         <div class="icons">
             <a href="{% url 'view_cart' %}" class="icon icon-cart">
-                🛒
+                <i class="fas fa-shopping-cart"></i>
                 <span id="cart-count">{{ cart_item_count|default:0 }}</span>
             </a>
-            <a href="{% url 'chat_list' %}" class="icon">💬</a>
-            <a href="{% url 'profile' %}" class="icon">👤</a>
+            <a href="{% url 'chat_list' %}" class="icon">
+                <i class="fas fa-comments"></i>
+            </a>
+            <a href="{% url 'profile' %}" class="icon">
+                <i class="fas fa-user"></i>
+            </a>
             {% if user.is_superuser %}
             <a href="{% url 'auroraadmin:admin_dashboard' %}" class="admin-button">Admin</a>
             {% endif %}
@@ -93,15 +98,15 @@
     
                 <div class="buttons">
                     {% if user.is_authenticated %}
-                        <a href="{% url 'buy_now' product.sku_code %}" class="buy-now">⚡️ Buy Now</a>
+                        <a href="{% url 'buy_now' product.sku_code %}" class="buy-now"><i class="fas fa-bolt"></i> Buy Now</a>
                     {% else %}
-                        <a href="{% url 'login' %}?next={{ request.path }}" class="buy-now">⚡️ Buy Now</a>
+                        <a href="{% url 'login' %}?next={{ request.path }}" class="buy-now"><i class="fas fa-bolt"></i> Buy Now</a>
                     {% endif %}
                     <form action="{% url 'storefront_home' %}" method="POST" style="display:inline;">
                         {% csrf_token %}
                         <input type="hidden" name="action" value="add">
                         <input type="hidden" name="sku_code" value="{{ product.sku_code }}">
-                        <button type="submit" class="add-cart">🛒 Add</button>
+                        <button type="submit" class="add-cart"><i class="fas fa-cart-plus"></i> Add</button>
                     </form>
                 </div>
             </div>
@@ -121,12 +126,12 @@
                         {% csrf_token %}
                         <input type="hidden" name="action" value="add">
                         <input type="hidden" name="sku_code" value="{{ product.sku_code }}">
-                        <button type="submit" class="add-cart">🛒 Add to Cart</button>
+                        <button type="submit" class="add-cart"><i class="fas fa-cart-plus"></i> Add to Cart</button>
                     </form>
                     <br/>
-                    <a href="{% url 'start_chat' product.sku_code %}" class="buy-now">💬 Chat with Seller</a>
+                    <a href="{% url 'start_chat' product.sku_code %}" class="buy-now"><i class="fas fa-comments"></i> Chat with Seller</a>
     
-                    <a href="{% url 'product_detail' product.sku_code %}" class="buy-now">🔎 View Full Details</a>
+                    <a href="{% url 'product_detail' product.sku_code %}" class="buy-now"><i class="fas fa-search-plus"></i> View Full Details</a>
                 </div>
             </div>
         {% empty %}

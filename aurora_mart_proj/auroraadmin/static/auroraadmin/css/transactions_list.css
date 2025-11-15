@@ -1,10 +1,8 @@
 .transactions-container {
     padding: 20px;
-    background-color: #ffffff;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    /* Set the background of the page itself */
-    background-color: #f0f8ff; /* Light blue from storefront.css */
+    background-color: #f0f8ff;
 }
 
 .transactions-header {

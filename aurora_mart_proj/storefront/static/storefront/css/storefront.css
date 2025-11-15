@@ -56,15 +56,21 @@ body {
 
 .icons {
     display: flex;
-    gap: 20px;
+    align-items: center;
+    gap: 25px;
     margin-left: 20px;
 }
 
 .icon {
-    font-size: 22px;
+    font-size: 24px;
     cursor: pointer;
-    color: #333;
+    color: #888;
     text-decoration: none;
+    transition: color 0.2s ease-in-out;
+}
+
+.icon:hover {
+    color: #007ca5;
 }
 
 .banner {
@@ -111,7 +117,7 @@ body {
 }
 
 .tab.active {
-    background-color: #00bfff;
+    background-color: #007ca5;
     color: white;
     font-weight: bold;
 }
@@ -286,6 +292,32 @@ body {
   .css-close:hover {
     color: #000;
   }
+
+  .css-modal-content .buy-now {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px; 
+    
+    text-decoration: none;
+    padding: 10px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    text-align: center;
+    border: 1px solid #ddd;
+    transition: background-color 0.2s;
+  }
+
+  .css-modal-content .buy-now {
+    background-color: #ff7f50;
+    color: white;
+    border-color: #ff7f50;
+    margin-top: 10px;
+  }
+  .css-modal-content .buy-now:hover {
+    background-color: #e86a3c;
+  }
   
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(-10px); }
@@ -319,7 +351,7 @@ body {
     margin-top: auto;
 }
 
-.buy-now {
+.product-card .buy-now {
     background-color: #ff7f50;
     color: white;
     padding: 10px 16px;

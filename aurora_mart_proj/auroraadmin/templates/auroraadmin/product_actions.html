@@ -8,7 +8,12 @@
 
 <div class="actions-container">
     <div class="product-info">
-        <h2>Actions for {{ product.product_name }}</h2>
+        <div class="product-info-header">
+            <h2>Actions for {{ product.product_name }}</h2>
+            <a href="{% url 'product_detail' product.sku_code %}" class="view-storefront-btn" target="_blank">
+                View on Storefront
+            </a>
+        </div>
         <p><strong>SKU:</strong> {{ product.sku_code }}</p>
     </div>
 

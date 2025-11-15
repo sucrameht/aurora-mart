@@ -16,10 +16,12 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from .views import LandingPageView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('aurora_admin/', include('auroraadmin.urls')),
+    path('', LandingPageView.as_view(), name='landing_page'),
     path('', include('authentication.urls')),
     path('storefront/', include('storefront.urls')),
 ]

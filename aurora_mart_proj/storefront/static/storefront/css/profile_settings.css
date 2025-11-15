@@ -38,7 +38,7 @@ body {
     border-radius: 12px;
     padding: 35px;
     text-decoration: none;
-    color: inherit;
+    color: #333;
     box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     transition: transform 0.2s, box-shadow 0.2s;
     width: 75%;
@@ -54,17 +54,19 @@ body {
 .card-icon {
     font-size: 36px;
     margin-bottom: 15px;
+    color: #007ca5;
 }
 
 .card-title {
     font-size: 18px;
     font-weight: 600;
     margin-bottom: 8px;
+    color: #007ca5;
 }
 
 .card-description {
     font-size: 14px;
-    color: #666;
+    color: #555;
     line-height: 1.5;
 }
 
