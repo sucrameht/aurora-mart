@@ -47,5 +47,6 @@ class ChatThreadView(LoginRequiredMixin, View):
                 sender=request.user,
                 message=message
             )
+            thread.save()
         
         return redirect('chat_thread', thread_id=thread.pk)
