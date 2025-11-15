@@ -147,7 +147,11 @@
                 <div class="summary-items">
                     {% for item in cart_items %}
                     <div class="summary-line">
-                        <span>{{ item.product.product_name }} x{{ item.quantity }}</span>
+                        <span>
+                            <a href="{% url 'product_detail' item.product.sku_code %}" class="summary-item-link">
+                                {{ item.product.product_name }}
+                            </a> x{{ item.quantity }}
+                        </span>
                         <span>${{ item.total_price }}</span>
                     </div>
                     {% endfor %}

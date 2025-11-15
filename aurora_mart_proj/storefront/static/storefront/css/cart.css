@@ -414,3 +414,12 @@ body {
 .btn-add-recommendation:hover {
     background-color: #005f7f;
 }
+
+.cart-item-link {
+    text-decoration: none;
+    color: inherit; /* This will make it use the surrounding text color */
+}
+
+.cart-item-link:hover .cart-item-name {
+    text-decoration: underline; /* Optional: add a hover effect */
+}

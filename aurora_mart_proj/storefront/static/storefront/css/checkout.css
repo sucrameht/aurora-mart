@@ -248,3 +248,12 @@ body {
 .btn-load-address:hover {
     background-color: #e0e0e0;
 }
+
+.summary-item-link {
+    text-decoration: none;
+    color: inherit;
+}
+
+.summary-item-link:hover {
+    text-decoration: underline;
+}

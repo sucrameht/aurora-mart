@@ -54,7 +54,11 @@
                 {% for item in transaction.items.all %}
                 <tr>
                     <td>{{ item.product.sku_code }}</td>
-                    <td class="product-name">{{ item.product.product_name }}</td>
+                    <td class="product-name">
+                        <a href="{% url 'product_detail' item.product.sku_code %}" class="table-product-link">
+                            {{ item.product.product_name }}
+                        </a>
+                    </td>
                     <td class="text-center">{{ item.quantity_purchased }}</td>
                     <td class="text-right">S${{ item.price_at_purchase|floatformat:2 }}</td>
                     <td class="text-right">S${{ item.subtotal_products_bought|floatformat:2 }}</td>

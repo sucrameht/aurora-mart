@@ -111,3 +111,12 @@
     color: #007ca5;
     margin-left: 15px;
 }
+
+.table-product-link {
+    text-decoration: none;
+    color: inherit;
+}
+
+.table-product-link:hover {
+    text-decoration: underline;
+}

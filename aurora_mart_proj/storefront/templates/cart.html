@@ -54,7 +54,9 @@
                     <div class="cart-item-card">
                         <img src="https://nus.edu.sg/images/default-source/identity-images/NUS_logo_full-horizontal.jpg" alt="{{ item.product.product_name }}" class="cart-item-img">
                         <div class="cart-item-details">
-                            <span class="cart-item-name">{{ item.product.product_name }}</span>
+                            <a href="{% url 'product_detail' item.product.sku_code %}" class="cart-item-link">
+                                <span class="cart-item-name">{{ item.product.product_name }}</span>
+                            </a>
                             <span class="cart-item-category">{{ item.product.product_category }}</span>
                             <span class="cart-item-price">${{ item.product.unit_price }}</span>
                         </div>
