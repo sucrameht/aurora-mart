@@ -855,7 +855,7 @@ class GenderChartView(View):
         # Clear any existing matplotlib state
         plt.close('all')
         
-        fig, ax = plt.subplots(num=1, figsize=(8, 6), dpi=100, clear=True)
+        fig, ax = plt.subplots(num=1, figsize=(6, 5), dpi=100, clear=True)
         # Set transparent background
         fig.patch.set_alpha(0.0)
         ax.patch.set_alpha(0.0)
@@ -870,10 +870,10 @@ class GenderChartView(View):
         
         ax.pie(sizes, labels=labels, autopct=make_autopct(sizes), startangle=90, 
                colors=['#007ca5', '#28a745', '#ffc107'], textprops={'fontsize': 11, 'color': 'white'})
-        plt.tight_layout(pad=2.0)
+        plt.tight_layout(pad=0.5)
         
         buffer = BytesIO()
-        fig.savefig(buffer, format='png', bbox_inches='tight', dpi=100, pad_inches=0.2, 
+        fig.savefig(buffer, format='png', bbox_inches='tight', dpi=100, pad_inches=0.05, 
                    facecolor='none', edgecolor='none', transparent=True)
         plt.close(fig)
         buffer.seek(0)
@@ -1021,10 +1021,10 @@ class SalesTrendChartView(View):
         ax.spines['left'].set_color('white')
         ax.spines['right'].set_color('white')
         plt.xticks(rotation=45, ha='right')
-        plt.tight_layout(pad=2.0)
+        plt.tight_layout(pad=0.5)
 
         buffer = BytesIO()
-        fig.savefig(buffer, format='png', bbox_inches='tight', dpi=100, pad_inches=0.2,
+        fig.savefig(buffer, format='png', bbox_inches='tight', dpi=100, pad_inches=0.05,
                    facecolor='none', edgecolor='none', transparent=True)
         plt.close(fig)
         buffer.seek(0)
@@ -1124,10 +1124,10 @@ class RevenueByCategoryChartView(View):
         ax.spines['left'].set_color('white')
         ax.spines['right'].set_color('white')
         plt.xticks(rotation=45, ha='right')
-        plt.tight_layout(pad=2.0)
+        plt.tight_layout(pad=0.5)
 
         buffer = BytesIO()
-        fig.savefig(buffer, format='png', bbox_inches='tight', dpi=100, pad_inches=0.2,
+        fig.savefig(buffer, format='png', bbox_inches='tight', dpi=100, pad_inches=0.05,
                    facecolor='none', edgecolor='none', transparent=True)
         plt.close(fig)
         buffer.seek(0)
@@ -1204,10 +1204,10 @@ class TopBuyersChartView(View):
         ax.spines['top'].set_color('white')
         ax.spines['left'].set_color('white')
         ax.spines['right'].set_color('white')
-        plt.tight_layout(pad=2.0)
+        plt.tight_layout(pad=0.5)
 
         buffer = BytesIO()
-        fig.savefig(buffer, format='png', bbox_inches='tight', dpi=100, pad_inches=0.2,
+        fig.savefig(buffer, format='png', bbox_inches='tight', dpi=100, pad_inches=0.05,
                    facecolor='none', edgecolor='none', transparent=True)
         plt.close(fig)
         buffer.seek(0)
