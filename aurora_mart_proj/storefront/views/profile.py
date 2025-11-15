@@ -10,6 +10,8 @@ from authentication.models import UserProfile, WalletHistory
 from django.contrib.auth import update_session_auth_hash, logout
 from django.contrib.auth.forms import PasswordChangeForm
 from django import forms
+from ..forms import CardForm
+from django.db import transaction
 
 
 class ProfileView(LoginRequiredMixin, View):
@@ -141,38 +143,95 @@ class WalletView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         # Get profile, or create it if it doesn't exist
         profile, created = UserProfile.objects.get_or_create(user=request.user)
-        history = profile.wallet_history.all()
+        history = profile.wallet_history.all().order_by('-timestamp')
+
+        saved_cards = Card.objects.filter(user=request.user)
+        selected_card = None
+        selected_card_id = request.GET.get('selected_card') 
+
+        if selected_card_id:
+            try:
+                selected_card = Card.objects.get(id=selected_card_id, user=request.user)
+            except Card.DoesNotExist:
+                pass
+        
         context = {
             'profile': profile,
             'history': history,
+            'saved_cards': saved_cards,
+            'selected_card': selected_card,
         }
         return render(request, self.template_name, context)
 
+    @transaction.atomic
     def post(self, request, *args, **kwargs):
         profile = UserProfile.objects.get(user=request.user)
+        
         try:
-            # Get the amount from the form
             top_up_amount = Decimal(request.POST.get('top_up_amount'))
-            
             if top_up_amount <= 0:
                 messages.error(request, "Top-up amount must be positive.")
-            else:
-                profile.wallet_balance += top_up_amount
-                profile.save()
-                
-                # Create a history record
-                WalletHistory.objects.create(
-                    user_profile=profile,
-                    transaction_type='TOPUP',
-                    amount=top_up_amount
-                )
-                
-                messages.success(request, f"Successfully added ${top_up_amount} to your wallet.")
-        
-        except:
+                return redirect('wallet')
+        except (ValueError, TypeError):
             messages.error(request, "Invalid amount entered. Please enter a number.")
-            
-        return redirect('wallet') # Redirect back to the same page
+            return redirect('wallet')
+
+        selected_card_id = request.POST.get('selected_card')
+        
+        # Logic for handling payment
+        if selected_card_id:
+            # Using a saved card
+            try:
+                card = Card.objects.get(id=selected_card_id, user=request.user)
+                # In a real scenario, you'd process payment with the card token.
+                # For this simulation, we just approve it.
+                print(f"Processing top-up with saved card: {card.nickname}")
+            except Card.DoesNotExist:
+                messages.error(request, "The selected card was not found.")
+                return redirect('wallet')
+        else:
+            # Using a new card
+            card_form = CardForm(request.POST)
+            if card_form.is_valid():
+                # In a real app, you would NOT save the full card number.
+                # You'd send it to a payment gateway and get a token.
+                # For this project, we save the last 4 digits.
+                new_card = Card.objects.create(
+                    user=request.user,
+                    nickname=card_form.cleaned_data.get('nickname') or f"Card ending in {card_form.cleaned_data['card_number'][-4:]}",
+                    cardholder_name=card_form.cleaned_data['cardholder_name'],
+                    last_four=card_form.cleaned_data['card_number'][-4:],
+                    expiry_month=card_form.cleaned_data['expiry_month'],
+                    expiry_year=card_form.cleaned_data['expiry_year'],
+                )
+                print(f"Processing top-up with new card: {new_card.nickname}")
+            else:
+                # Re-render the page with the form errors
+                messages.error(request, "There was an error with your card details. Please check and try again.")
+                
+                history = profile.wallet_history.all().order_by('-timestamp')
+                saved_cards = Card.objects.filter(user=request.user)
+                context = {
+                    'profile': profile,
+                    'history': history,
+                    'saved_cards': saved_cards,
+                    'selected_card': None, # Don't pre-select a card on error
+                    'card_form': card_form, # Pass the invalid form back to the template
+                }
+                return render(request, self.template_name, context)
+
+        # If payment is successful, update wallet
+        profile.wallet_balance += top_up_amount
+        profile.save()
+        
+        WalletHistory.objects.create(
+            user_profile=profile,
+            transaction_type='TOPUP',
+            amount=top_up_amount
+        )
+        
+        messages.success(request, f"Successfully added ${top_up_amount} to your wallet.")
+        return redirect('wallet')
 
 class ProfileSettingsView(LoginRequiredMixin, View):
     template_name = 'profile_settings.html'

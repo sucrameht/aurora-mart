@@ -10,49 +10,120 @@
 
 {% block content %}
     <div class="checkout-container">
-        <form class="checkout-forms" method="POST" action="{% url 'wallet' %}">
-            {% csrf_token %}
-            
-            <div class="form-card">
-                <h2>AuroraMart Wallet</h2>
+        <div class="checkout-layout">
+            <form class="checkout-forms" method="POST" action="{% url 'wallet' %}">
+                {% csrf_token %}
+                
+                <div class="form-card">
+                    <h2>AuroraMart Wallet</h2>
 
-                <div class.stat" style="text-align: left; background: #e6f7ff; margin-bottom: 20px; padding: 15px; border-radius: 8px;">
-                    <div class.stat-label" style="font-size: 14px; color: #555;">Current Balance</div>
-                    <div class.stat-number" style="font-size: 28px; font-weight: 700; color: #007ca5;">
-                        ${{ profile.wallet_balance|default:'0.00' }}
+                    <div class="stat" style="text-align: left; background: #e6f7ff; margin-bottom: 20px; padding: 15px; border-radius: 8px;">
+                        <div class="stat-label" style="font-size: 14px; color: #555;">Current Balance</div>
+                        <div class="stat-number" style="font-size: 28px; font-weight: 700; color: #007ca5;">
+                            ${{ profile.wallet_balance|default:'0.00' }}
+                        </div>
                     </div>
-                </div>
 
-                <div class="form-group">
-                    <label for="top_up_amount">Top-up Amount</label>
-                    <input type="number" step="0.01" id="top_up_amount" name="top_up_amount" 
-                           placeholder="e.g., 50.00" required>
-                </div>
+                    <div class="form-group">
+                        <label for="top_up_amount">Top-up Amount</label>
+                        <input type="number" step="0.01" id="top_up_amount" name="top_up_amount" 
+                               placeholder="e.g., 50.00" required>
+                    </div>
 
-                <button type="submit" class="complete-payment-btn">Add Funds</button>
-                <br><br>
-                <a href="{% url 'profile' %}" class="cancel-link">Back to Profile</a>
-            </div>
-        </form>
+                    <hr class="form-divider">
+                    
+                    <h3>Payment Method</h3>
 
-        <div class="order-summary-card" style="margin-top: 20px;">
-            <h2>Wallet History</h2>
-            <div class="summary-items">
-                {% for entry in history %}
-                <div class="summary-line">
-                    <span>
-                        {{ entry.get_transaction_type_display }} on {{ entry.timestamp|date:"d M Y, H:i" }}
-                        {% if entry.related_transaction %}
-                            <small>(Order #{{ entry.related_transaction.id }})</small>
+                    <div class="form-group">
+                        <label for="card_selector">Saved Cards</label>
+                        <div class="address-loader-input">
+                        <select id="card_selector" name="selected_card">
+                            <option value="">-- Use a new card --</option>
+                            {% for card in saved_cards %}
+                            <option value="{{ card.id }}"
+                                {% if card.id == selected_card.id %}selected{% endif %}>
+                                {{ card.nickname }} (•••• {{ card.last_four }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="btn-load-address" 
+                                formaction="{% url 'wallet' %}" formmethod="GET" formnovalidate>Update</button>
+                        </div>
+                    </div>
+                    <a href="{% url 'add_card' %}?next=wallet" class="btn-add-address">+ Add New Card</a>
+                    <br><br>
+
+                    {% if not selected_card %}
+                    <div id="new-card-form">
+                        <div class="form-group">
+                            <label for="cardholder_name">Cardholder Name</label>
+                            <input type="text" id="cardholder_name" name="cardholder_name" 
+                                   value="{{ card_form.cardholder_name.value|default:'' }}"
+                                   placeholder="John M. Doe">
+                            {% if card_form.cardholder_name.errors %}<div class="error-message">{{ card_form.cardholder_name.errors|first }}</div>{% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="card_number">Card Number</label>
+                            <input type="text" id="card_number" name="card_number" placeholder="1234 5678 9012 3456">
+                            {% if card_form.card_number.errors %}<div class="error-message">{{ card_form.card_number.errors|first }}</div>{% endif %}
+                        </div>
+
+                        <div class="form-grid-3">
+                            <div class="form-group">
+                                <label for="expiry_month">Expiry Month</label>
+                                <input type="text" id="expiry_month" name="expiry_month" 
+                                       value="{{ card_form.expiry_month.value|default:'' }}"
+                                       placeholder="MM">
+                                {% if card_form.expiry_month.errors %}<div class="error-message">{{ card_form.expiry_month.errors|first }}</div>{% endif %}
+                            </div>
+                            <div class="form-group">
+                                <label for="expiry_year">Expiry Year</label>
+                                <input type="text" id="expiry_year" name="expiry_year" 
+                                       value="{{ card_form.expiry_year.value|default:'' }}"
+                                       placeholder="YYYY">
+                                {% if card_form.expiry_year.errors %}<div class="error-message">{{ card_form.expiry_year.errors|first }}</div>{% endif %}
+                            </div>
+                            <div class="form-group">
+                                <label for="cvv">CVV</label>
+                                <input type="password" id="cvv" name="cvv" placeholder="123">
+                                {% if card_form.cvv.errors %}<div class="error-message">{{ card_form.cvv.errors|first }}</div>{% endif %}
+                            </div>
+                        </div>
+                        {% if card_form.non_field_errors %}
+                            <div class="error-message">{{ card_form.non_field_errors|first }}</div>
                         {% endif %}
-                    </span>
-                    <span style="color: {% if entry.amount > 0 %}#28a745{% else %}#dc3545{% endif %};">
-                        ${{ entry.amount }}
-                    </span>
+                    </div>
+                    {% else %}
+                    <p>Using saved card: <strong>{{ selected_card.nickname }} (•••• {{ selected_card.last_four }})</strong></p>
+                    {% endif %}
+
+
+                    <button type="submit" class="complete-payment-btn">Add Funds</button>
+                    <br><br>
+                    <a href="{% url 'profile' %}" class="cancel-link">Back to Profile</a>
                 </div>
-                {% empty %}
-                <p>No wallet history yet.</p>
-                {% endfor %}
+            </form>
+
+            <div class="order-summary-card">
+                <h2>Wallet History</h2>
+                <div class="summary-items">
+                    {% for entry in history %}
+                    <div class="summary-line">
+                        <span>
+                            {{ entry.get_transaction_type_display }} on {{ entry.timestamp|date:"d M Y, H:i" }}
+                            {% if entry.related_transaction %}
+                                <small>(Order #{{ entry.related_transaction.id }})</small>
+                            {% endif %}
+                        </span>
+                        <span style="color: {% if entry.amount > 0 %}#28a745{% else %}#dc3545{% endif %};">
+                            ${{ entry.amount }}
+                        </span>
+                    </div>
+                    {% empty %}
+                    <p>No wallet history yet.</p>
+                    {% endfor %}
+                </div>
             </div>
         </div>
     </div>
