@@ -29,10 +29,10 @@ class ChatThreadView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         thread_id = self.kwargs.get('thread_id')
         thread = get_object_or_404(ChatThread, pk=thread_id, customer=request.user)
-        messages = thread.messages.all()
+        # messages = thread.messages.all()
         context = {
             'thread': thread,
-            'messages': messages
+            # 'messages': messages
         }
         return render(request, self.template_name, context)
 

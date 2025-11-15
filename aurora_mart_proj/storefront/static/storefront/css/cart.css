@@ -9,12 +9,12 @@ body {
     padding: 0 20px;
 }
 
-.messages-container {
+/* .messages-container {
     margin-bottom: 20px;
     display: flex;
     flex-direction: column;
     gap: 10px;
-}
+} */
 
 .message {
     padding: 15px 20px;
@@ -25,7 +25,7 @@ body {
     border: 1px solid;
 }
 
-.message.success {
+/* .message.success {
     color: #155724;
     background-color: #d4edda;
     border-color: #c3e6cb;
@@ -35,7 +35,7 @@ body {
     color: #721c24;
     background-color: #f8d7da;
     border-color: #f5c6cb;
-}
+} */
 
 .message.info {
     color: #004085;
