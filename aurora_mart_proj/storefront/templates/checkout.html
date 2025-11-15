@@ -50,7 +50,7 @@
                                 {% endfor %}
                             </select>
                             <button type="submit" class="btn-load-address" 
-                                    formaction="{% url 'checkout' %}" formmethod="GET" formnovalidate>Load</button>
+                                    formaction="{% url 'checkout' %}" formmethod="GET" formnovalidate>Update</button>
                         </div>
                     </div>
                     
@@ -124,17 +124,58 @@
                     <div id="credit-card-form" class="payment-details">
                         <hr class="form-divider">
                         <div class="form-group">
-                            <label for="card_number">Card Number</label>
-                            <input type="text" id="card_number" name="card_number" placeholder="1234 5678 9012 3456">
+                            <label for="card_selector">Saved Cards</label>
+                            <div class="address-loader-input">
+                            <select id="card_selector" name="selected_card">
+                                <option value="">-- Use a new card --</option>
+                                {% for card in saved_cards %}
+                                <option value="{{ card.id }}"
+                                    {% if card.id == selected_card.id %}selected{% endif %}>
+                                    {{ card.nickname }} (•••• {{ card.last_four }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn-load-address" 
+                                    formaction="{% url 'checkout' %}" formmethod="GET" formnovalidate>Update</button>
+                            </div>
                         </div>
-                        <div class="form-grid-2">
+                        <a href="{% url 'add_card' %}?next=checkout" class="btn-add-address">+ Add New Card</a>
+                        <br><br>
+
+                        <div class="form-group">
+                            <label for="cardholder_name">Cardholder Name</label>
+                            <input type="text" id="cardholder_name" name="cardholder_name" 
+                                   value="{{ selected_card.cardholder_name|default:'' }}"
+                                   placeholder="John M. Doe">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="card_number">Card Number</label>
+                                <input type="text" id="card_number" name="card_number" 
+                                   placeholder="{% if selected_card %}•••• •••• •••• {{ selected_card.last_four }}{% else %}1234 5678 9012 3456{% endif %}"
+                                   {% if selected_card %}disabled{% endif %}>
+                            {% if selected_card %}
+                                <small>To use a different card, select "-- Use a new card --" and click Update.</small>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-grid-3">
                             <div class="form-group">
-                                <label for="expiry_date">Expiry Date</label>
-                                <input type="text" id="expiry_date" name="expiry_date" placeholder="MM / YY">
+                                <label for="expiry_month">Expiry Month</label>
+                                <input type="text" id="expiry_month" name="expiry_month" 
+                                       value="{{ selected_card.expiry_month|default:'' }}"
+                                       placeholder="MM">
+                            </div>
+                            <div class="form-group">
+                                <label for="expiry_year">Expiry Year</label>
+                                <input type="text" id="expiry_year" name="expiry_year" 
+                                       value="{{ selected_card.expiry_year|default:'' }}"
+                                       placeholder="YYYY">
                             </div>
                             <div class="form-group">
                                 <label for="cvv">CVV</label>
-                                <input type="text" id="cvv" name="cvv" placeholder="123">
+                                <input type="text" id="cvv" name="cvv" placeholder="123"
+                                       {% if selected_card %}disabled{% endif %}>
                             </div>
                         </div>
                     </div>
