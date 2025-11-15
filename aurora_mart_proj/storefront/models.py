@@ -34,9 +34,13 @@ class Transactions(models.Model):
         choices=[
             ('Payment Made', 'Payment Made'),
             ('Delivered to Warehouse', 'Delivered to Warehouse'),
-            ('Delivery Completed', 'Delivery Completed')
+            ('Delivery Completed', 'Delivery Completed'),
+            ('Cancelled', 'Cancelled'),
+            ('Request for Refund', 'Request for Refund'),
+            ('Refund Approved', 'Refund Approved'),
+            ('Refund Rejected', 'Refund Rejected'),
         ],
-        default='Delivery Completed',
+        default='Payment Made',
     )
     voucher_value = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     payment_method = models.CharField(
@@ -47,6 +51,7 @@ class Transactions(models.Model):
         ],
         default='Card',
     )
+    notes = models.CharField(max_length=500, blank=True, null=True)
 
     class Meta:
         # in order to sort by latest first

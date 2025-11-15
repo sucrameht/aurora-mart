@@ -1392,3 +1392,94 @@ class TopBuyersChartView(View):
         response['Pragma'] = 'no-cache'
         response['Expires'] = '0'
         return response
+
+@method_decorator(login_required(login_url='/login'), name='dispatch')
+@method_decorator(user_passes_test(is_staff, login_url='/login'), name='dispatch')
+class CancelledTransactionsView(ListView):
+    model = Transactions
+    template_name = 'auroraadmin/cancelled_transactions.html'
+    context_object_name = 'transactions'
+    paginate_by = 20
+
+    def get_queryset(self):
+        queryset = Transactions.objects.filter(status='Cancelled')
+        search_query = self.request.GET.get('q', '').strip()
+        sort_by = self.request.GET.get('sort', '-transaction_datetime')
+
+        if search_query:
+            queryset = queryset.filter(user__username__icontains=search_query)
+
+        valid_sort_fields = ['transaction_datetime', '-transaction_datetime', 'total_spent', '-total_spent']
+        if sort_by in valid_sort_fields:
+            if 'total_spent' in sort_by:
+                queryset = queryset.annotate(
+                    total_spent_calc=Sum(F('items__quantity_purchased') * F('items__price_at_purchase'))
+                ).order_by(sort_by.replace('total_spent', 'total_spent_calc'))
+            else:
+                queryset = queryset.order_by(sort_by)
+        
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['search_query'] = self.request.GET.get('q', '').strip()
+        context['current_sort'] = self.request.GET.get('sort', '-transaction_datetime')
+        return context
+
+@method_decorator(login_required(login_url='/login'), name='dispatch')
+@method_decorator(user_passes_test(is_staff, login_url='/login'), name='dispatch')
+class RefundRequestsView(View):
+    template_name = 'auroraadmin/refund_requests.html'
+
+    def get(self, request, *args, **kwargs):
+        search_query = request.GET.get('q', '').strip()
+        sort_by = request.GET.get('sort', '-transaction_datetime')
+
+        valid_sort_fields = ['transaction_datetime', '-transaction_datetime', 'total_spent', '-total_spent']
+        if sort_by not in valid_sort_fields:
+            sort_by = '-transaction_datetime'
+
+        def get_paginated_transactions(status, page_param):
+            queryset = Transactions.objects.filter(status=status)
+            if search_query:
+                queryset = queryset.filter(user__username__icontains=search_query)
+
+            if 'total_spent' in sort_by:
+                queryset = queryset.annotate(
+                    total_spent_calc=Sum(F('items__quantity_purchased') * F('items__price_at_purchase'))
+                ).order_by(sort_by.replace('total_spent', 'total_spent_calc'))
+            else:
+                queryset = queryset.order_by(sort_by)
+
+            paginator = Paginator(queryset, 10) # Adjust page size if needed
+            page_number = request.GET.get(page_param)
+            return paginator.get_page(page_number)
+
+        pending_page = get_paginated_transactions('Request for Refund', 'pending_page')
+        approved_page = get_paginated_transactions('Refund Approved', 'approved_page')
+        rejected_page = get_paginated_transactions('Refund Rejected', 'rejected_page')
+
+        context = {
+            'pending_page': pending_page,
+            'approved_page': approved_page,
+            'rejected_page': rejected_page,
+            'search_query': search_query,
+            'current_sort': sort_by,
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+        transaction_id = request.POST.get('transaction_id')
+        action = request.POST.get('action')
+        transaction = get_object_or_404(Transactions, pk=transaction_id)
+
+        if action == 'approve':
+            transaction.status = 'Refund Approved'
+            transaction.save()
+            messages.success(request, f"Refund for order #{transaction.pk} has been approved.")
+        elif action == 'reject':
+            transaction.status = 'Refund Rejected'
+            transaction.save()
+            messages.error(request, f"Refund for order #{transaction.pk} has been rejected.")
+        
+        return redirect('auroraadmin:refund_requests')

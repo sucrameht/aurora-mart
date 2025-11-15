@@ -1,0 +1,66 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request Refund</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'storefront/css/storefront.css' %}">
+    <link rel="stylesheet" href="{% static 'storefront/css/forms.css' %}">
+</head>
+<body>
+
+    <div class="header">
+        <div class="logo" onclick="window.location.href='{% url 'storefront_home' %}'">
+            <img src="{% static 'storefront/images/AuroraMartLogo.png' %}" alt="AuroraMart Logo" class="logo-img">
+            <span class="logo-text">AuroraMart</span>
+        </div>
+        <div class="icons">
+            <a href="{% url 'view_cart' %}" class="icon icon-cart">
+                <i class="fas fa-shopping-cart"></i>
+                <span id="cart-count">{{ cart_item_count|default:0 }}</span>
+            </a>
+            <a href="{% url 'chat_list' %}" class="icon">
+                <i class="fas fa-comments"></i>
+            </a>
+            <a href="{% url 'profile' %}" class="icon">
+                <i class="fas fa-user"></i>
+            </a>
+            {% if user.is_superuser %}
+            <a href="{% url 'auroraadmin:admin_dashboard' %}" class="admin-button">Admin</a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if messages %}
+    <div class="message-container">
+        {% for message in messages %}
+            <div class="message {{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="form-container">
+        <h1 class="form-title">Request Refund for Order #{{ transaction.pk }}</h1>
+        <p class="form-description">Please provide a reason for your refund request. This will be sent to the administrator for review.</p>
+        
+        <form method="post" action="{% url 'request_refund' transaction.pk %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="reason">Reason for refund request:</label>
+                <textarea id="reason" name="reason" class="form-control" rows="4" required></textarea>
+            </div>
+            
+            <div class="form-actions">
+                <a href="{% url 'profile' %}" class="btn btn-secondary">Go Back</a>
+                <button type="submit" class="btn btn-warning">Submit Refund Request</button>
+            </div>
+        </form>
+    </div>
+
+</body>
+</html>

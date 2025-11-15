@@ -1,0 +1,81 @@
+{% extends 'auroraadmin/base.html' %}
+{% load static %}
+
+{% block title %}Cancelled Transactions{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'auroraadmin/css/transactions_list.css' %}">
+{% endblock %}
+
+{% block main_content %}
+<div class="transactions-container">
+    <div class="transactions-header">
+        <h2 class="transactions-title">Cancelled Transactions</h2>
+        <form method="GET" action="{% url 'auroraadmin:cancelled_transactions' %}" class="search-form">
+            <input type="hidden" name="sort" value="{{ current_sort }}">
+            <input type="search" name="q" value="{{ search_query }}" placeholder="Search by Username" class="search-input">
+            <button type="submit" class="search-button">Search</button>
+        </form>
+    </div>
+
+    <table class="transactions-table">
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th class="sortable">
+                    <a href="?sort={% if current_sort == 'transaction_datetime' %}-transaction_datetime{% else %}transaction_datetime{% endif %}&q={{ search_query }}">
+                        Date Cancelled
+                        {% if 'transaction_datetime' in current_sort %}<span class="sort-arrow">{% if current_sort == '-transaction_datetime' %}▼{% else %}▲{% endif %}</span>{% endif %}
+                    </a>
+                </th>
+                <th>Reason</th>
+                <th class="sortable">
+                    <a href="?sort={% if current_sort == 'total_spent' %}-total_spent{% else %}total_spent{% endif %}&q={{ search_query }}">
+                        Total Value
+                        {% if 'total_spent' in current_sort %}<span class="sort-arrow">{% if current_sort == '-total_spent' %}▼{% else %}▲{% endif %}</span>{% endif %}
+                    </a>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for transaction in transactions %}
+            <tr>
+                <td><a href="{% url 'auroraadmin:transaction_detail' transaction.pk %}">#{{ transaction.pk }}</a></td>
+                <td>{{ transaction.user.username }}</td>
+                <td>{{ transaction.transaction_datetime|date:"Y-m-d H:i" }}</td>
+                <td>{{ transaction.notes|default:"No reason provided." }}</td>
+                <td>${{ transaction.total_spent|floatformat:2 }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="text-center">No cancelled transactions found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+        <div class="pagination-row">
+        <span class="step-links">
+            {% if page_obj.has_previous %}
+                <a href="?page=1&sort={{ current_sort }}&q={{ search_query }}">&laquo; First</a>
+                <a href="?page={{ page_obj.previous_page_number }}&sort={{ current_sort }}&q={{ search_query }}">&lsaquo; Prev</a>
+            {% else %}
+                <span class="disabled">First</span>
+                <span class="disabled">Prev</span>
+            {% endif %}
+
+            <span class="current_page">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            </span>
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}&sort={{ current_sort }}&q={{ search_query }}">Next &rsaquo;</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}&sort={{ current_sort }}&q={{ search_query }}">Last &raquo;</a>
+            {% else %}
+                <span class="disabled">Next</span>
+                <span class="disabled">Last</span>
+            {% endif %}
+        </span>
+    </div>
+</div>
+{% endblock %}

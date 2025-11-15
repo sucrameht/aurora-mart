@@ -68,3 +68,45 @@ class RateOrderView(LoginRequiredMixin, View):
 
         messages.success(request, "Your review has been submitted successfully!")
         return redirect('profile')
+
+class CancelOrderView(LoginRequiredMixin, View):
+    template_name = 'cancel_order_form.html'
+
+    def get(self, request, *args, **kwargs):
+        transaction = get_object_or_404(Transactions, pk=self.kwargs.get('pk'), user=request.user)
+        if transaction.status != 'Payment Made':
+            messages.error(request, "This order cannot be cancelled at its current stage.")
+            return redirect('profile')
+        return render(request, self.template_name, {'transaction': transaction})
+
+    def post(self, request, *args, **kwargs):
+        transaction = get_object_or_404(Transactions, pk=self.kwargs.get('pk'), user=request.user)
+        if transaction.status == 'Payment Made':
+            transaction.status = 'Cancelled'
+            transaction.notes = request.POST.get('reason', '')
+            transaction.save()
+            messages.success(request, "Your order has been successfully cancelled.")
+        else:
+            messages.error(request, "This order cannot be cancelled at its current stage.")
+        return redirect('profile')
+
+class RequestRefundView(LoginRequiredMixin, View):
+    template_name = 'request_refund_form.html'
+
+    def get(self, request, *args, **kwargs):
+        transaction = get_object_or_404(Transactions, pk=self.kwargs.get('pk'), user=request.user)
+        if transaction.status != 'Delivery Completed':
+            messages.error(request, "A refund can only be requested for completed orders.")
+            return redirect('profile')
+        return render(request, self.template_name, {'transaction': transaction})
+
+    def post(self, request, *args, **kwargs):
+        transaction = get_object_or_404(Transactions, pk=self.kwargs.get('pk'), user=request.user)
+        if transaction.status == 'Delivery Completed':
+            transaction.status = 'Request for Refund'
+            transaction.notes = request.POST.get('reason', '')
+            transaction.save()
+            messages.success(request, "Your refund request has been submitted.")
+        else:
+            messages.error(request, "A refund can only be requested for completed orders.")
+        return redirect('profile')
