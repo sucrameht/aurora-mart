@@ -8,6 +8,7 @@ from datetime import date, datetime
 from django.contrib.auth.mixins import LoginRequiredMixin
 from authentication.models import UserProfile
 from django.db import transaction
+from ..forms import CardForm
 
 class CheckoutView(LoginRequiredMixin, View):
     template_name = 'checkout.html'
@@ -74,6 +75,7 @@ class CheckoutView(LoginRequiredMixin, View):
             profile = None
 
         saved_addresses = ShippingAddress.objects.filter(user=request.user)
+        saved_cards = Card.objects.filter(user=request.user)
 
         selected_address = None
         load_address_id = request.GET.get('load_address_id')
@@ -86,6 +88,15 @@ class CheckoutView(LoginRequiredMixin, View):
         
         selected_payment_method = request.GET.get('payment_method', 'card')
 
+        selected_card = None
+        selected_card_id = request.GET.get('selected_card') 
+
+        if selected_card_id:
+            try:
+                selected_card = Card.objects.get(id=selected_card_id, user=request.user)
+            except Card.DoesNotExist:
+                pass
+
         context = {
             'cart_items': cart_items,
             'subtotal': subtotal,
@@ -94,6 +105,8 @@ class CheckoutView(LoginRequiredMixin, View):
             'profile': profile,
             'user': request.user,
             'saved_addresses': saved_addresses,
+            'saved_cards': saved_cards,
+            'selected_card': selected_card,
             'selected_address': selected_address,
             'selected_payment_method': selected_payment_method,
         }
@@ -189,6 +202,10 @@ class CheckoutView(LoginRequiredMixin, View):
                 profile.save()
             elif payment_method == 'card':
                 print("Processing credit card (simulation)...")
+                selected_card_id = request.POST.get('selected_card')
+                if not selected_card_id:
+                    messages.error(request, "Please select a card for payment.")
+                    return redirect(request.META.get('HTTP_REFERER', 'checkout'))
         except UserProfile.DoesNotExist:
             messages.error(request, "User profile not found.")
             return redirect('checkout')
@@ -241,3 +258,35 @@ class CheckoutView(LoginRequiredMixin, View):
 
         messages.success(request, f"Your order has been placed!")
         return redirect('profile')
+
+class AddCardView(LoginRequiredMixin, View):
+    template_name = 'add_card.html'
+    form_class = CardForm
+
+    def get(self, request, *args, **kwargs):
+        form = self.form_class()
+        return render(request, self.template_name, {'form': form})
+
+    def post(self, request, *args, **kwargs):
+        form = self.form_class(request.POST)
+        if form.is_valid():
+            try:
+                Card.objects.create(
+                    user=request.user,
+                    nickname=form.cleaned_data['nickname'],
+                    cardholder_name=form.cleaned_data['cardholder_name'],
+                    last_four=form.cleaned_data['card_number'][-4:],
+                    expiry_month=form.cleaned_data['expiry_month'],
+                    expiry_year=form.cleaned_data['expiry_year'],
+                )
+                messages.success(request, f"Card '{form.cleaned_data['nickname']}' saved!")
+                
+                next_url = request.GET.get('next')
+                if next_url == 'checkout':
+                    return redirect('checkout')
+                return redirect('profile_settings') # Or wherever you want to redirect
+
+            except Exception as e:
+                messages.error(request, f"Could not save card: {e}")
+        
+        return render(request, self.template_name, {'form': form})

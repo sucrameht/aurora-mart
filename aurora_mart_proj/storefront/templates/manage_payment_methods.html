@@ -1,0 +1,79 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Payment Methods - AuroraMart</title>
+    <link rel="stylesheet" href="{% static 'storefront/css/storefront.css' %}">
+    <link rel="stylesheet" href="{% static 'storefront/css/profile_settings.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+</head>
+<body>
+<div class="header">
+        <div class="logo" onclick="window.location.href='{% url 'storefront_home' %}'">
+            <img src="{% static 'storefront/images/AuroraMartLogo.png' %}" alt="AuroraMart Logo" class="logo-img">
+            <span class="logo-text">AuroraMart</span>
+        </div>
+        <div class="icons">
+            <a href="{% url 'view_cart' %}" class="icon icon-cart">
+                <i class="fas fa-shopping-cart"></i>
+                <span id="cart-count">{{ cart_item_count|default:0 }}</span>
+            </a>
+            <a href="{% url 'chat_list' %}" class="icon">
+                <i class="fas fa-comments"></i>
+            </a>
+            <a href="{% url 'profile' %}" class="icon">
+                <i class="fas fa-user"></i>
+            </a>
+            <form id="logout-form" method="post" action="{% url 'auroraadmin:logout' %}" style="display:inline">
+                {% csrf_token %}
+                <button type="submit" class="logout-button">Logout</button>
+            </form>
+            {% if user.is_superuser %}
+            <a href="{% url 'auroraadmin:admin_dashboard' %}" class="admin-button">Admin</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="settings-container">
+        <a href="{% url 'profile_settings' %}" class="back-link">&larr; Back to Settings</a>
+        <div class="page-header">
+            <h1>Manage Payment Methods</h1>
+            <a href="{% url 'add_card' %}?next=manage_payment_methods" class="btn-add-new">+ Add New Card</a>
+        </div>
+
+        {% if messages %}
+            <div class="messages-container">
+                {% for message in messages %}
+                    <div class="message {{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="address-list">
+            {% for card in cards %}
+                <div class="address-card">
+                    <div class="address-details">
+                        <div class="address-nickname">{{ card.nickname }}</div>
+                        <div class="address-recipient">•••• •••• •••• {{ card.last_four }}</div>
+                        <div class="address-full">
+                            Expires: {{ card.expiry_month }}/{{ card.expiry_year }}
+                        </div>
+                        <div class="address-phone">Cardholder: {{ card.cardholder_name }}</div>
+                    </div>
+                    <div class="address-actions">
+                        <a href="{% url 'edit_card' card.pk %}" class="action-btn edit">Edit</a>
+                        <form action="{% url 'delete_card' card.pk %}" method="POST" onsubmit="return confirm('Are you sure you want to delete this card?');">
+                            {% csrf_token %}
+                            <button type="submit" class="action-btn delete">Delete</button>
+                        </form>
+                    </div>
+                </div>
+            {% empty %}
+                <p>You have no saved cards. Add one to get started!</p>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

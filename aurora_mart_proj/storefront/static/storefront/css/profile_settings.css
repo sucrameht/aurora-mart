@@ -51,6 +51,26 @@ body {
     box-shadow: 0 8px 20px rgba(0,0,0,0.08);
 }
 
+.delete-card {
+    border: 1px solid #dc3545;
+}
+
+.delete-card .card-icon,
+.delete-card .card-title {
+    color: #dc3545;
+}
+
+.delete-card:hover {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+.delete-card:hover .card-icon,
+.delete-card:hover .card-title,
+.delete-card:hover .card-description {
+    color: #fff;
+}
+
 .card-icon {
     font-size: 36px;
     margin-bottom: 15px;
