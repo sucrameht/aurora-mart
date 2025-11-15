@@ -232,6 +232,7 @@ body {
     display: inline-block; 
 }
 
+.refund-button,
 .review-button {
     background-color: #28a745;
     color: white;
@@ -242,6 +243,14 @@ body {
     margin-top: 8px;
     display: inline-block;
     text-align: center;
+}
+
+.refund-button {
+    background-color: #ff7f50;
+}
+
+.refund-button:hover {
+    background-color: #e06c40;
 }
 
 .review-button:hover {
