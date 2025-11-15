@@ -24,7 +24,7 @@ class Transactions(models.Model):
 
     shipping_first_name = models.CharField(max_length=100, blank=True)
     shipping_last_name = models.CharField(max_length=100, blank=True)
-    shipping_phone = models.CharField(max_length=20, blank=True)
+    shipping_phone = models.IntegerField(blank=False, null=False)
     shipping_address = models.CharField(max_length=255, blank=True)
     shipping_city = models.CharField(max_length=100, blank=True)
     shipping_state = models.CharField(max_length=100, blank=True)
@@ -115,7 +115,7 @@ class ShippingAddress(models.Model):
     
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
-    phone = models.CharField(max_length=20)
+    phone = models.IntegerField(blank=False, null=False)
     address = models.CharField(max_length=255)
     city = models.CharField(max_length=100)
     state = models.CharField(max_length=100)
