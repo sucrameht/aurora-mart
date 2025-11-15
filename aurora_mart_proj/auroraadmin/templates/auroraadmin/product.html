@@ -45,12 +45,10 @@
         </a>
     </div>
 
-    <!-- Product Count -->
-    <div style="margin-bottom: 15px;">
-        <h3 style="color: #333; font-size: 1.1em;">All Products ({{ page_obj.paginator.count }})</h3>
-    </div>
-
-    <table class="product-table">
+    <!-- Product List Container with Blue Header -->
+    <div class="product-list-container">
+        <h3 class="list-title">All Products ({{ page_obj.paginator.count }})</h3>
+        <table class="product-table">
         <thead>
             <tr>
                 <th>SKU</th>
@@ -93,7 +91,8 @@
             </tr>
             {% endfor %}
         </tbody>
-    </table>
+        </table>
+    </div>
 
     <!-- Pagination -->
     {% if page_obj.has_other_pages %}

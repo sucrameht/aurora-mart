@@ -7,18 +7,18 @@
 
 {% block main_content %}
 <div class="container">
-    <h2>Manage Admins</h2>
+    <h2>Manage Admin Users</h2>
     
-    <!-- Create admin Form -->
-    <h3>Add New Admin</h3>
+    <!-- Create Superuser Form -->
+    <h3>Add New Superuser Admin</h3>
     <form method="post">
         {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit" name="add" class="btn btn-primary">Add Superuser</button>
+        {{ superuser_form.as_p }}
+        <button type="submit" name="add_superuser" class="btn btn-primary">Add Superuser</button>
     </form>
     
     <!-- Show all admin other than the main admin -->
-    <h3>Existing Admins</h3>
+    <h3>Existing Superuser Admins</h3>
     <table class="table">
         <thead>
             <tr>
@@ -44,7 +44,50 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="4">No other admin found.</td>
+                <td colspan="4">No other superuser admin found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <hr style="margin: 40px 0;">
+
+    <!-- Create Delivery Admin Form -->
+    <h3>Add New Delivery Admin</h3>
+    <form method="post">
+        {% csrf_token %}
+        {{ delivery_admin_form.as_p }}
+        <button type="submit" name="add_delivery_admin" class="btn btn-success">Add Delivery Admin</button>
+    </form>
+    
+    <!-- Show all delivery admins -->
+    <h3>Existing Delivery Admins</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Date Joined</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in delivery_admins %}
+            <tr>
+                <td>{{ user.username }}</td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.date_joined|date }}</td>
+                <td>
+                    <form method="post" style="display:inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="pk" value="{{ user.pk }}">
+                        <button type="submit" name="delete_delivery_admin" class="btn btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4">No delivery admin found.</td>
             </tr>
             {% endfor %}
         </tbody>

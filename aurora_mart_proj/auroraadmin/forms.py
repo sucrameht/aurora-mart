@@ -70,3 +70,50 @@ class SuperUserCreationForm(UserCreationForm):
         if commit:
             user.save()
         return user
+
+class DeliveryAdminCreationForm(UserCreationForm):
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'password1', 'password2']
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.is_staff = True  # Staff but not superuser
+        user.is_superuser = False
+        if commit:
+            user.save()
+            # Create or update UserProfile to mark as delivery admin
+            from authentication.models import UserProfile
+            profile, created = UserProfile.objects.get_or_create(
+                user=user,
+                defaults={
+                    'age': 0,
+                    'gender': 'Not Specified',
+                    'employment_status': 'Delivery Admin',
+                    'occupation': 'Delivery Admin',
+                    'education': 'N/A',
+                    'household_size': 1,
+                    'has_children': False,
+                    'monthly_income_sgd': 0.00,
+                    'is_delivery_admin': True,
+                }
+            )
+            if not created:
+                profile.is_delivery_admin = True
+                profile.save()
+        return user
+
+class BulkStatusUpdateForm(forms.Form):
+    action = forms.ChoiceField(
+        choices=[
+            ('', 'Select Action'),
+            ('to_warehouse', 'Payment Made → Delivered to Warehouse'),
+            ('to_completed', 'Delivered to Warehouse → Delivery Completed'),
+        ],
+        required=True,
+        label='Status Update Action'
+    )
+    transaction_ids = forms.CharField(
+        widget=forms.HiddenInput(),
+        required=True
+    )

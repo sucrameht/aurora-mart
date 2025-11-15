@@ -10,7 +10,11 @@
     <body>
         <div class="header">
             <div class="header-left">
-                <a href="{% url 'auroraadmin:admin_dashboard' %}" class="logo"> <!--Redirects to the analytics page-->
+                {% if request.user.userprofile.is_delivery_admin %}
+                    <a href="{% url 'auroraadmin:transactions_list' %}" class="logo">
+                {% else %}
+                    <a href="{% url 'auroraadmin:admin_dashboard' %}" class="logo">
+                {% endif %}
                     <img src="{% static 'AuroraMartLogo.png' %}" alt="auroramart-logo" class="logo-image"/>
                     <span class="logo-text">AuroraMart Admin</span>
                 </a>
@@ -27,13 +31,19 @@
             {% block sidebar %}
             <nav class="sidebar-nav">
                 <ul>
-                    <li><a href="{% url 'auroraadmin:admin_dashboard' %}">Analytics</a></li>
-                    <li><a href="{% url 'auroraadmin:product' %}">Product Inventory</a></li>
-                    <li><a href="{% url 'auroraadmin:transactions_list' %}">Transactions</a></li>
-                    <li><a href="{% url 'auroraadmin:voucher_list' %}">Voucher Management</a></li>
-                    <li><a href="{% url 'auroraadmin:customers_list' %}">Customer Management</a></li>
-                    <li><a href="{% url 'auroraadmin:admin_users' %}">Admin Management</a></li>
-                    <li><a href="{% url 'auroraadmin:admin_chat_list' %}">Chat Management</a></li>
+                    {% if request.user.userprofile.is_delivery_admin %}
+                        <!-- Delivery Admin: Only show Transactions -->
+                        <li><a href="{% url 'auroraadmin:transactions_list' %}">Transactions</a></li>
+                    {% else %}
+                        <!-- Regular Admin/Superuser: Show all options -->
+                        <li><a href="{% url 'auroraadmin:admin_dashboard' %}">Analytics</a></li>
+                        <li><a href="{% url 'auroraadmin:product' %}">Product Inventory</a></li>
+                        <li><a href="{% url 'auroraadmin:transactions_list' %}">Transactions</a></li>
+                        <li><a href="{% url 'auroraadmin:voucher_list' %}">Voucher Management</a></li>
+                        <li><a href="{% url 'auroraadmin:customers_list' %}">Customer Management</a></li>
+                        <li><a href="{% url 'auroraadmin:admin_users' %}">Admin Management</a></li>
+                        <li><a href="{% url 'auroraadmin:admin_chat_list' %}">Chat Management</a></li>
+                    {% endif %}
                 </ul>
             </nav>
             {% endblock %}

@@ -17,3 +17,4 @@ class UserProfile(models.Model):
     vouchers = models.ManyToManyField(Voucher, blank=True)
     wallet_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     phone_number = models.IntegerField(default=12345678)
+    is_delivery_admin = models.BooleanField(default=False)  # For delivery admin users

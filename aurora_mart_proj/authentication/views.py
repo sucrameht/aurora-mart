@@ -59,7 +59,14 @@ class customLoginView(LoginView):
             return reverse_lazy("onboarding")
         
         if user.is_staff:
-            return reverse_lazy("auroraadmin:admin_dashboard") # for admins - yet to create
+            # Check if delivery admin - redirect to transactions page
+            try:
+                if user.userprofile.is_delivery_admin:
+                    return reverse_lazy("auroraadmin:transactions_list")
+            except:
+                pass
+            # Regular admin/superuser - redirect to dashboard
+            return reverse_lazy("auroraadmin:admin_dashboard")
         
         return reverse_lazy("storefront_home") # for customers - yet to create
 

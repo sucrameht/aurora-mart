@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from storefront.models import Product, Voucher, Transactions, OrderItem
 from django.db.models import Q
 from django.views import View
-from .forms import ProductCreateForm, VoucherForm, CustomerVoucherAssignForm, SuperUserCreationForm
+from .forms import ProductCreateForm, VoucherForm, CustomerVoucherAssignForm, SuperUserCreationForm, DeliveryAdminCreationForm, BulkStatusUpdateForm
 from django.urls import reverse
 from django.contrib import messages
 from django import forms
@@ -167,6 +167,24 @@ SKU_MAPPINGS = {
 def is_staff(user):
     return user.is_staff
 
+def is_delivery_admin(user):
+    """Check if user is a delivery admin"""
+    if not user.is_staff:
+        return False
+    try:
+        return user.userprofile.is_delivery_admin
+    except:
+        return False
+
+def is_not_delivery_admin(user):
+    """Check if user is staff but NOT a delivery admin (regular admin/superuser)"""
+    if not user.is_staff:
+        return False
+    try:
+        return not user.userprofile.is_delivery_admin
+    except:
+        return True  # If no profile, assume they're regular admin
+
 def analytics_view(request):
     return render(request, 'auroraadmin/analytics.html')
 
@@ -193,7 +211,7 @@ def _create_empty_chart(title):
 
 # dispatch is the method that redirects to the right functions after all the checks have been cleared
 @method_decorator(login_required(login_url='/login'), name='dispatch')
-@method_decorator(user_passes_test(is_staff, login_url='/login'), name='dispatch')
+@method_decorator(user_passes_test(is_not_delivery_admin, login_url='/login'), name='dispatch')
 class ProductInventoryView(View):
     template_name = 'auroraadmin/product.html'
     paginate_by = 20
@@ -516,7 +534,112 @@ class TransactionDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView)
         return context
 
 @method_decorator(login_required(login_url='/login'), name='dispatch')
-@method_decorator(user_passes_test(is_staff, login_url='/login'), name='dispatch')
+@method_decorator(user_passes_test(is_delivery_admin, login_url='/login'), name='dispatch')
+class BulkStatusUpdateView(View):
+    template_name = 'auroraadmin/bulk_status_update.html'
+    
+    def get(self, request, *args, **kwargs):
+        # Get all transactions grouped by status
+        payment_made = Transactions.objects.filter(status='Payment Made').select_related('user').annotate(
+            viewcal_num_of_products=Sum('items__quantity_purchased', default=0),
+            viewcal_total_spent=Sum(
+                F('items__quantity_purchased') * F('items__price_at_purchase'),
+                default=Decimal(0.0),
+                output_field=DecimalField()
+            ) + F('voucher_value')
+        ).order_by('-transaction_datetime')
+        
+        delivered_warehouse = Transactions.objects.filter(status='Delivered to Warehouse').select_related('user').annotate(
+            viewcal_num_of_products=Sum('items__quantity_purchased', default=0),
+            viewcal_total_spent=Sum(
+                F('items__quantity_purchased') * F('items__price_at_purchase'),
+                default=Decimal(0.0),
+                output_field=DecimalField()
+            ) + F('voucher_value')
+        ).order_by('-transaction_datetime')
+        
+        form = BulkStatusUpdateForm()
+        
+        context = {
+            'page_title': 'Bulk Status Update',
+            'payment_made': payment_made,
+            'delivered_warehouse': delivered_warehouse,
+            'form': form,
+        }
+        return render(request, self.template_name, context)
+    
+    def post(self, request, *args, **kwargs):
+        form = BulkStatusUpdateForm(request.POST)
+        
+        if form.is_valid():
+            action = form.cleaned_data['action']
+            transaction_ids_str = form.cleaned_data['transaction_ids']
+            
+            # Parse the comma-separated transaction IDs
+            try:
+                transaction_ids = [int(id.strip()) for id in transaction_ids_str.split(',') if id.strip()]
+            except ValueError:
+                messages.error(request, 'Invalid transaction IDs.')
+                return redirect('auroraadmin:bulk_status_update')
+            
+            if not transaction_ids:
+                messages.error(request, 'No transactions selected.')
+                return redirect('auroraadmin:bulk_status_update')
+            
+            # Perform the status update
+            if action == 'to_warehouse':
+                transactions = Transactions.objects.filter(
+                    id__in=transaction_ids, 
+                    status='Payment Made'
+                )
+                updated_count = transactions.update(status='Delivered to Warehouse')
+                messages.success(
+                    request, 
+                    f'Successfully updated {updated_count} transaction(s) to "Delivered to Warehouse".'
+                )
+            
+            elif action == 'to_completed':
+                transactions = Transactions.objects.filter(
+                    id__in=transaction_ids, 
+                    status='Delivered to Warehouse'
+                )
+                updated_count = transactions.update(status='Delivery Completed')
+                messages.success(
+                    request, 
+                    f'Successfully updated {updated_count} transaction(s) to "Delivery Completed".'
+                )
+            
+            return redirect('auroraadmin:bulk_status_update')
+        
+        # If form is invalid, re-render with errors
+        payment_made = Transactions.objects.filter(status='Payment Made').select_related('user').annotate(
+            viewcal_num_of_products=Sum('items__quantity_purchased', default=0),
+            viewcal_total_spent=Sum(
+                F('items__quantity_purchased') * F('items__price_at_purchase'),
+                default=Decimal(0.0),
+                output_field=DecimalField()
+            ) + F('voucher_value')
+        ).order_by('-transaction_datetime')
+        
+        delivered_warehouse = Transactions.objects.filter(status='Delivered to Warehouse').select_related('user').annotate(
+            viewcal_num_of_products=Sum('items__quantity_purchased', default=0),
+            viewcal_total_spent=Sum(
+                F('items__quantity_purchased') * F('items__price_at_purchase'),
+                default=Decimal(0.0),
+                output_field=DecimalField()
+            ) + F('voucher_value')
+        ).order_by('-transaction_datetime')
+        
+        context = {
+            'page_title': 'Bulk Status Update',
+            'payment_made': payment_made,
+            'delivered_warehouse': delivered_warehouse,
+            'form': form,
+        }
+        return render(request, self.template_name, context)
+
+@method_decorator(login_required(login_url='/login'), name='dispatch')
+@method_decorator(user_passes_test(is_not_delivery_admin, login_url='/login'), name='dispatch')
 class VoucherManagementView(View):
     template_name = 'auroraadmin/vouchers.html'
     paginate_by = 10
@@ -587,7 +710,7 @@ class VoucherManagementView(View):
         return redirect('auroraadmin:voucher_list')
 
 @method_decorator(login_required(login_url='/login'), name='dispatch')
-@method_decorator(user_passes_test(is_staff, login_url='/login'), name='dispatch')
+@method_decorator(user_passes_test(is_not_delivery_admin, login_url='/login'), name='dispatch')
 class CustomerListView(View):
     template_name = 'auroraadmin/customer.html'
     paginate_by = 40
@@ -699,42 +822,95 @@ class AdminUserView(View):
 
     def get(self, request, *args, **kwargs):
         admins = User.objects.filter(is_superuser=True).exclude(id=request.user.id)
-        print("Admins in list:", list(admins.values_list('username', flat=True)))
-        form = SuperUserCreationForm()
+        
+        # Get delivery admins (staff but not superuser, with is_delivery_admin=True)
+        delivery_admins = User.objects.filter(
+            is_staff=True, 
+            is_superuser=False,
+            userprofile__is_delivery_admin=True
+        ).select_related('userprofile')
+        
+        superuser_form = SuperUserCreationForm()
+        delivery_admin_form = DeliveryAdminCreationForm()
+        
         context = {
-            'form': form,
+            'superuser_form': superuser_form,
+            'delivery_admin_form': delivery_admin_form,
             'admins': admins,
+            'delivery_admins': delivery_admins,
         }
         return render(request, self.template_name, context)
     
     def post(self, request, *args, **kwargs):
-        if 'add' in request.POST:
+        if 'add_superuser' in request.POST:
             form = SuperUserCreationForm(request.POST)
             
             if form.is_valid():
                 form.save()
                 messages.success(request, 'New admin user created successfully.')
                 return redirect('auroraadmin:admin_users')
-            
             else:
                 admins = User.objects.filter(is_superuser=True).exclude(username='admin')
+                delivery_admins = User.objects.filter(
+                    is_staff=True, 
+                    is_superuser=False,
+                    userprofile__is_delivery_admin=True
+                ).select_related('userprofile')
+                delivery_admin_form = DeliveryAdminCreationForm()
                 context = {
-                    'form': form,
+                    'superuser_form': form,
+                    'delivery_admin_form': delivery_admin_form,
                     'admins': admins,
+                    'delivery_admins': delivery_admins,
                 }
-            return render(request, self.template_name, context)
+                return render(request, self.template_name, context)
         
-        elif 'delete' in request.POST: # since the main user will not be in the list
+        elif 'add_delivery_admin' in request.POST:
+            form = DeliveryAdminCreationForm(request.POST)
+            
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'New delivery admin user created successfully.')
+                return redirect('auroraadmin:admin_users')
+            else:
+                admins = User.objects.filter(is_superuser=True).exclude(username='admin')
+                delivery_admins = User.objects.filter(
+                    is_staff=True, 
+                    is_superuser=False,
+                    userprofile__is_delivery_admin=True
+                ).select_related('userprofile')
+                superuser_form = SuperUserCreationForm()
+                context = {
+                    'superuser_form': superuser_form,
+                    'delivery_admin_form': form,
+                    'admins': admins,
+                    'delivery_admins': delivery_admins,
+                }
+                return render(request, self.template_name, context)
+        
+        elif 'delete' in request.POST:
             admin_id = request.POST.get('pk')
             admin_user = get_object_or_404(User, id=admin_id, is_superuser=True)
             admin_user.delete()
             messages.success(request, 'Admin user deleted successfully.')
             return redirect('auroraadmin:admin_users')
         
+        elif 'delete_delivery_admin' in request.POST:
+            admin_id = request.POST.get('pk')
+            delivery_user = get_object_or_404(
+                User, 
+                id=admin_id, 
+                is_staff=True, 
+                is_superuser=False
+            )
+            delivery_user.delete()
+            messages.success(request, 'Delivery admin user deleted successfully.')
+            return redirect('auroraadmin:admin_users')
+        
         return self.get(request)
 
 @method_decorator(login_required(login_url='/login'), name='dispatch')
-@method_decorator(user_passes_test(is_staff, login_url='/login'), name='dispatch')
+@method_decorator(user_passes_test(is_not_delivery_admin, login_url='/login'), name='dispatch')
 class DashboardView(View):
     template_name = 'auroraadmin/dashboard.html'
     def get(self, request):
@@ -1137,7 +1313,6 @@ class RevenueByCategoryChartView(View):
         response['Pragma'] = 'no-cache'
         response['Expires'] = '0'
         return response
-
 
 class TopBuyersChartView(View):
     """Horizontal bar chart showing top 5 buyers by total transaction amount for the time frame."""

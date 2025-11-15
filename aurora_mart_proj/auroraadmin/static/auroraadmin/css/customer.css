@@ -44,9 +44,10 @@
 .list-title {
     font-size: 1.3rem;
     font-weight: 600;
-    color: #333;
+    color: #ffffff;
+    background-color: #007ca5;
     padding: 15px 20px;
-    border-bottom: 1px solid #eee;
+    border-bottom: none;
 }
 
 /* Table Styles */

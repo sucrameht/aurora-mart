@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import analytics_view, ProductInventoryView, AddProductView, DeleteProductView, TransactionListView, TransactionDetailView, VoucherManagementView, CustomerListView, CustomerVoucherAssignView, ProductActionsView, AdminUserView, AdminChatListView, AdminChatThreadView, DashboardView, GenderChartView, SalesTrendChartView, RevenueByCategoryChartView, TopBuyersChartView
+from .views import analytics_view, ProductInventoryView, AddProductView, DeleteProductView, TransactionListView, TransactionDetailView, VoucherManagementView, CustomerListView, CustomerVoucherAssignView, ProductActionsView, AdminUserView, AdminChatListView, AdminChatThreadView, DashboardView, GenderChartView, SalesTrendChartView, RevenueByCategoryChartView, TopBuyersChartView, BulkStatusUpdateView
 from django.contrib.auth.views import LogoutView
 
 app_name = 'auroraadmin'
@@ -12,6 +12,7 @@ urlpatterns = [
     path('product/<str:sku_code>/delete/', DeleteProductView.as_view(), name='product_delete'),
     path('transactions/', TransactionListView.as_view(), name='transactions_list'),
     path('transactions/<int:pk>/', TransactionDetailView.as_view(), name='transaction_detail'),
+    path('transactions/bulk-update/', BulkStatusUpdateView.as_view(), name='bulk_status_update'),
     path('vouchers/', VoucherManagementView.as_view(), name='voucher_list'),
     path('customers/', CustomerListView.as_view(), name='customers_list'),
     path('customer/<int:user_id>/add-vouchers/', CustomerVoucherAssignView.as_view(), name="customer_add_vouchers"),

@@ -21,6 +21,16 @@
         </form>
     </div>
 
+    <!-- Bulk Status Update Button for Delivery Admins -->
+    {% if request.user.userprofile.is_delivery_admin %}
+    <div style="margin-bottom: 20px; padding: 15px; background-color: #e3f2fd; border-radius: 8px; border-left: 4px solid #2196F3;">
+        <a href="{% url 'auroraadmin:bulk_status_update' %}" class="btn btn-primary" style="text-decoration: none; padding: 10px 20px; background-color: #2196F3; color: white; border-radius: 4px; display: inline-block; font-weight: 600;">
+            📦 Bulk Status Update
+        </a>
+        <span style="margin-left: 15px; color: #1976D2;">Update multiple transaction statuses at once</span>
+    </div>
+    {% endif %}
+
     <!-- Payment Made Transactions Table -->
     <h3>Payment Made Transactions</h3>
     <table class="transactions-table">
@@ -162,7 +172,7 @@
                 <td class="text-center">{{ delivered_payment.viewcal_num_of_products }}</td>
                 <td class="text-right">${{ delivered_payment.viewcal_total_spent|floatformat:2 }}</td>
                 <td>
-                    <a href="{% url 'auroraadmin:transaction_detail' transaction.pk %}" class="details-link">
+                    <a href="{% url 'auroraadmin:transaction_detail' delivered_payment.id %}" class="details-link">
                         View Details
                     </a>
                 </td>

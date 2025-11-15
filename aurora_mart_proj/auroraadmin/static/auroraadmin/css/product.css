@@ -18,7 +18,7 @@
 .inventory-title {
     font-size: 1.8rem;
     font-weight: 600;
-    color: #333;
+    color: #007ca5;
 }
 
 .row-control {
@@ -56,6 +56,25 @@
     background-color: #eee;
 }
 
+/* List Container with Blue Header */
+.product-list-container {
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    margin-top: 20px;
+}
+
+.list-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #ffffff;
+    background-color: #007ca5;
+    padding: 15px 20px;
+    margin: 0;
+    border-bottom: none;
+}
+
 /* Table Styles */
 .product-table {
     width: 100%;
@@ -71,7 +90,7 @@
 
 .product-table thead th {
     background-color: #f7f9fc;
-    color: #555;
+    color: #007ca5;
     font-weight: 600;
     font-size: 0.95rem;
 }
