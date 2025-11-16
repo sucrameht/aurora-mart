@@ -106,6 +106,29 @@ class OnboardingView(LoginRequiredMixin, FormView):
         profile = UserProfile.objects.get(user=self.request.user)
         profile.preferred_category = "General"
         profile.save()
+
+        # Merge session cart with DB cart
+        user = self.request.user
+        session_cart = self.request.session.get('cart', {})
+        if session_cart:
+            for sku_code, quantity in session_cart.items():
+                try:
+                    product = Product.objects.get(sku_code=sku_code)
+                    cart_item, created = CartItem.objects.get_or_create(
+                        user=user,
+                        product=product,
+                        defaults={'quantity': quantity}
+                    )
+                    if not created:
+                        cart_item.quantity += quantity
+                        cart_item.save()
+                except Product.DoesNotExist:
+                    continue
+            # Clear the session cart
+            del self.request.session['cart']
+            if 'cart_item_count' in self.request.session:
+                del self.request.session['cart_item_count']
+
         return super().form_valid(form)
     
 class ChangePasswordView(LoginRequiredMixin, FormView):
