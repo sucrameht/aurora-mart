@@ -3,6 +3,15 @@
 
 {% block title %}AuroraMart Storefront{% endblock %}
 
+{% block header_search_bar %}
+<form action="" method="GET" class="search-form">
+    <input type="search" name="query" class="search-bar" placeholder="Search products..." value="{{ request.GET.query }}">
+    {% if sort %}<input type="hidden" name="sort" value="{{ sort }}">{% endif %} 
+
+    <input type="hidden" name="category" value="{{ active_category|default:'All' }}">
+</form>
+{% endblock %}
+
 {% block content %}
     <div class="banner">
         <p>Personalised for you.</p>

@@ -45,6 +45,7 @@
             <img src="{% static 'storefront/images/AuroraMartLogo.png' %}" alt="AuroraMart Logo" class="logo-img">
             <span class="logo-text">AuroraMart</span>
         </div>
+        {% block header_search_bar %}{% endblock %}
         <div class="icons">
             <a href="{% url 'view_cart' %}" class="icon icon-cart">
                 <i class="fas fa-shopping-cart"></i>
