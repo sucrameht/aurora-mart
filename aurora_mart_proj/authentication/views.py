@@ -7,7 +7,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.conf import settings
 from .models import UserProfile
 from .forms import RegistrationForm, onboardingForm, ChangePasswordForm
-from storefront.models import Product, CartItem
+from storefront.models import Product, CartItem, Voucher
 from django.urls import reverse_lazy
 import os
 from joblib import load
@@ -106,6 +106,17 @@ class OnboardingView(LoginRequiredMixin, FormView):
         profile = UserProfile.objects.get(user=self.request.user)
         profile.preferred_category = "General"
         profile.save()
+
+        # Assign welcome voucher to new user (only if they don't have it already)
+        try:
+            welcome_voucher = Voucher.objects.get(code='WELCOME10%', is_active=True)
+            # Check if user already has this voucher
+            if not profile.vouchers.filter(id=welcome_voucher.id).exists():
+                profile.vouchers.add(welcome_voucher)
+                welcome_voucher.issued_count += 1
+                welcome_voucher.save()
+        except Voucher.DoesNotExist:
+            logger.warning(f"WELCOME voucher not found for user {self.request.user.username}")
 
         # Merge session cart with DB cart
         user = self.request.user
