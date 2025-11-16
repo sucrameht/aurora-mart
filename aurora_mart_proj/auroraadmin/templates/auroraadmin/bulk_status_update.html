@@ -58,7 +58,7 @@
         padding: 25px;
         border-radius: 8px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        margin-bottom: 30px;
+        margin-top: 20px;
     }
     
     .form-group {
@@ -99,23 +99,12 @@
         background-color: #2980b9;
     }
     
-    .btn-primary:disabled {
-        background-color: #95a5a6;
-        cursor: not-allowed;
-    }
-    
-    .select-all-btn {
-        padding: 8px 16px;
-        margin-bottom: 15px;
+    .btn-success {
         background-color: #27ae60;
         color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 13px;
     }
     
-    .select-all-btn:hover {
+    .btn-success:hover {
         background-color: #229954;
     }
     
@@ -143,71 +132,106 @@
         background-color: #cfe2ff;
         color: #084298;
     }
+
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .info-text {
+        color: #7f8c8d;
+        font-size: 14px;
+        margin-top: 10px;
+    }
+
+    .message {
+        padding: 12px;
+        margin: 15px 0;
+        border-radius: 4px;
+    }
+
+    .message-success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .message-error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .message-warning {
+        background-color: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+    }
+
+    .message-info {
+        background-color: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+    }
 </style>
 {% endblock %}
 
 {% block main_content %}
 <div class="container">
     <h2>Bulk Transaction Status Update</h2>
-    <p>Select one or more transactions below and choose an action to update their status.</p>
+    <p>Select transactions below by checking the boxes, then click the appropriate update button.</p>
     
-    <!-- Update Form -->
-    <div class="update-form">
-        <form method="post" id="bulkUpdateForm">
-            {% csrf_token %}
-            <div class="form-group">
-                {{ form.action.label_tag }}
-                {{ form.action }}
-                {% if form.action.errors %}
-                    <div style="color: red; margin-top: 5px;">{{ form.action.errors }}</div>
-                {% endif %}
+    {% if messages %}
+        {% for message in messages %}
+            <div class="message message-{{ message.tags }}">
+                {{ message }}
             </div>
-            
-            {{ form.transaction_ids }}
-            
-            <button type="submit" class="btn btn-primary" id="submitBtn" disabled>
-                Update Selected Transactions
-            </button>
-            <span id="selectedCount" style="margin-left: 15px; color: #7f8c8d;">No transactions selected</span>
-        </form>
-    </div>
+        {% endfor %}
+    {% endif %}
     
     <!-- Payment Made Section -->
     <div class="section">
-        <h3>Payment Made ({{ payment_made.count }})</h3>
+        <h3>Payment Made → Delivered to Warehouse ({{ payment_made.count }})</h3>
         {% if payment_made %}
-            <button type="button" class="select-all-btn" onclick="toggleSelectAll('payment')">Select All</button>
-            <table class="transactions-table">
-                <thead>
-                    <tr>
-                        <th>
-                            <input type="checkbox" id="selectAllPayment" onchange="toggleGroupSelect('payment', this.checked)">
-                        </th>
-                        <th>Transaction ID</th>
-                        <th>Customer</th>
-                        <th>Date</th>
-                        <th>Items</th>
-                        <th>Total Spent</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for transaction in payment_made %}
-                    <tr>
-                        <td>
-                            <input type="checkbox" class="transaction-checkbox payment-checkbox" 
-                                   value="{{ transaction.id }}" onchange="updateSelection()">
-                        </td>
-                        <td>#{{ transaction.id }}</td>
-                        <td>{{ transaction.user.username }}</td>
-                        <td>{{ transaction.transaction_datetime|date:"Y-m-d H:i" }}</td>
-                        <td>{{ transaction.viewcal_num_of_products }}</td>
-                        <td>S${{ transaction.viewcal_total_spent|floatformat:2 }}</td>
-                        <td><span class="status-badge status-payment">{{ transaction.status }}</span></td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="to_warehouse">
+                <table class="transactions-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;">Select</th>
+                            <th>Transaction ID</th>
+                            <th>Customer</th>
+                            <th>Date</th>
+                            <th>Items</th>
+                            <th>Total Spent</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transaction in payment_made %}
+                        <tr>
+                            <td>
+                                <input type="checkbox" name="transaction_ids" value="{{ transaction.id }}">
+                            </td>
+                            <td>#{{ transaction.id }}</td>
+                            <td>{{ transaction.user.username }}</td>
+                            <td>{{ transaction.transaction_datetime|date:"Y-m-d H:i" }}</td>
+                            <td>{{ transaction.viewcal_num_of_products }}</td>
+                            <td>S${{ transaction.viewcal_total_spent|floatformat:2 }}</td>
+                            <td><span class="status-badge status-payment">{{ transaction.status }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <div class="update-form">
+                    <p class="info-text">Click the button below to move all selected transactions to "Delivered to Warehouse" status.</p>
+                    <button type="submit" class="btn btn-success">
+                        ✓ Update to: Delivered to Warehouse
+                    </button>
+                </div>
+            </form>
         {% else %}
             <div class="empty-message">No transactions with "Payment Made" status.</div>
         {% endif %}
@@ -215,104 +239,49 @@
     
     <!-- Delivered to Warehouse Section -->
     <div class="section">
-        <h3>Delivered to Warehouse ({{ delivered_warehouse.count }})</h3>
+        <h3>Delivered to Warehouse → Delivery Completed ({{ delivered_warehouse.count }})</h3>
         {% if delivered_warehouse %}
-            <button type="button" class="select-all-btn" onclick="toggleSelectAll('warehouse')">Select All</button>
-            <table class="transactions-table">
-                <thead>
-                    <tr>
-                        <th>
-                            <input type="checkbox" id="selectAllWarehouse" onchange="toggleGroupSelect('warehouse', this.checked)">
-                        </th>
-                        <th>Transaction ID</th>
-                        <th>Customer</th>
-                        <th>Date</th>
-                        <th>Items</th>
-                        <th>Total Spent</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for transaction in delivered_warehouse %}
-                    <tr>
-                        <td>
-                            <input type="checkbox" class="transaction-checkbox warehouse-checkbox" 
-                                   value="{{ transaction.id }}" onchange="updateSelection()">
-                        </td>
-                        <td>#{{ transaction.id }}</td>
-                        <td>{{ transaction.user.username }}</td>
-                        <td>{{ transaction.transaction_datetime|date:"Y-m-d H:i" }}</td>
-                        <td>{{ transaction.viewcal_num_of_products }}</td>
-                        <td>S${{ transaction.viewcal_total_spent|floatformat:2 }}</td>
-                        <td><span class="status-badge status-warehouse">{{ transaction.status }}</span></td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="to_completed">
+                <table class="transactions-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;">Select</th>
+                            <th>Transaction ID</th>
+                            <th>Customer</th>
+                            <th>Date</th>
+                            <th>Items</th>
+                            <th>Total Spent</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transaction in delivered_warehouse %}
+                        <tr>
+                            <td>
+                                <input type="checkbox" name="transaction_ids" value="{{ transaction.id }}">
+                            </td>
+                            <td>#{{ transaction.id }}</td>
+                            <td>{{ transaction.user.username }}</td>
+                            <td>{{ transaction.transaction_datetime|date:"Y-m-d H:i" }}</td>
+                            <td>{{ transaction.viewcal_num_of_products }}</td>
+                            <td>S${{ transaction.viewcal_total_spent|floatformat:2 }}</td>
+                            <td><span class="status-badge status-warehouse">{{ transaction.status }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <div class="update-form">
+                    <p class="info-text">Click the button below to move all selected transactions to "Delivery Completed" status.</p>
+                    <button type="submit" class="btn btn-primary">
+                        ✓ Update to: Delivery Completed
+                    </button>
+                </div>
+            </form>
         {% else %}
             <div class="empty-message">No transactions with "Delivered to Warehouse" status.</div>
         {% endif %}
     </div>
 </div>
-
-<script>
-function updateSelection() {
-    const checkboxes = document.querySelectorAll('.transaction-checkbox:checked');
-    const count = checkboxes.length;
-    const submitBtn = document.getElementById('submitBtn');
-    const selectedCount = document.getElementById('selectedCount');
-    const transactionIdsInput = document.getElementById('id_transaction_ids');
-    
-    if (count > 0) {
-        submitBtn.disabled = false;
-        selectedCount.textContent = `${count} transaction(s) selected`;
-        selectedCount.style.color = '#27ae60';
-        
-        // Update hidden input with selected IDs
-        const ids = Array.from(checkboxes).map(cb => cb.value);
-        transactionIdsInput.value = ids.join(',');
-    } else {
-        submitBtn.disabled = true;
-        selectedCount.textContent = 'No transactions selected';
-        selectedCount.style.color = '#7f8c8d';
-        transactionIdsInput.value = '';
-    }
-}
-
-function toggleGroupSelect(group, checked) {
-    const checkboxes = document.querySelectorAll(`.${group}-checkbox`);
-    checkboxes.forEach(cb => cb.checked = checked);
-    updateSelection();
-}
-
-function toggleSelectAll(group) {
-    const selectAllCheckbox = document.getElementById(`selectAll${group.charAt(0).toUpperCase() + group.slice(1)}`);
-    const isCurrentlyChecked = selectAllCheckbox.checked;
-    selectAllCheckbox.checked = !isCurrentlyChecked;
-    toggleGroupSelect(group, !isCurrentlyChecked);
-}
-
-// Form validation
-document.getElementById('bulkUpdateForm').addEventListener('submit', function(e) {
-    const action = document.getElementById('id_action').value;
-    const transactionIds = document.getElementById('id_transaction_ids').value;
-    
-    if (!action) {
-        e.preventDefault();
-        alert('Please select an action.');
-        return false;
-    }
-    
-    if (!transactionIds) {
-        e.preventDefault();
-        alert('Please select at least one transaction.');
-        return false;
-    }
-    
-    if (!confirm(`Are you sure you want to update ${document.querySelectorAll('.transaction-checkbox:checked').length} transaction(s)?`)) {
-        e.preventDefault();
-        return false;
-    }
-});
-</script>
 {% endblock %}

@@ -2,6 +2,7 @@ from django import forms
 from storefront.models import Product, Voucher
 from django.contrib.auth.forms import UserCreationForm
 from  django.contrib.auth.models import User
+
 class ProductCreateForm(forms.ModelForm):
     class Meta:
         model = Product
@@ -13,7 +14,29 @@ class ProductCreateForm(forms.ModelForm):
             'quantity_on_hand',
             'reorder_quantity',
             'unit_price',
+            'unit_cost',
         ]
+
+class ReorderForm(forms.Form):
+    unit_cost = forms.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        min_value=0.01,
+        label="Unit Cost for Reorder",
+        help_text="Cost per unit for this reorder (default is current unit cost)",
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'step': '0.01',
+            'placeholder': 'Enter unit cost'
+        })
+    )
+    
+    def __init__(self, *args, **kwargs):
+        product = kwargs.pop('product', None)
+        super().__init__(*args, **kwargs)
+        if product:
+            # Set initial value to current unit_cost
+            self.fields['unit_cost'].initial = product.unit_cost
 
 class VoucherForm(forms.ModelForm):
     expiry_date = forms.DateField(

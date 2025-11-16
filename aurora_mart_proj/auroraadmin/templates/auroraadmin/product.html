@@ -26,6 +26,7 @@
         <form method="GET" action="{% url 'auroraadmin:product' %}" style="display:inline-block">
             <!-- preserve existing search query -->
             <input type="hidden" name="q" value="{{ search_query|default:'' }}">
+            <input type="hidden" name="stock" value="{{ stock_filter|default:'' }}">
             <label for="category-select" style="font-weight:600; margin-right:8px;">Category:</label>
             <select id="category-filter" name="category" onchange="this.form.submit()" style="padding:6px 10px; border-radius:6px; border:1px solid #ddd;">
                 <option value="All">All Categories</option>
@@ -35,7 +36,19 @@
             </select>
         </form>
 
-        {% if selected_category and selected_category != 'All' %}
+        <form method="GET" action="{% url 'auroraadmin:product' %}" style="display:inline-block; margin-left:15px;">
+            <!-- preserve existing filters -->
+            <input type="hidden" name="q" value="{{ search_query|default:'' }}">
+            <input type="hidden" name="category" value="{{ category_filter|default:'' }}">
+            <label for="stock-filter" style="font-weight:600; margin-right:8px;">Stock Status:</label>
+            <select id="stock-filter" name="stock" onchange="this.form.submit()" style="padding:6px 10px; border-radius:6px; border:1px solid #ddd;">
+                <option value="All">All</option>
+                <option value="In Stock" {% if stock_filter == 'In Stock' %}selected{% endif %}>In Stock</option>
+                <option value="Low Stock" {% if stock_filter == 'Low Stock' %}selected{% endif %}>Low Stock</option>
+            </select>
+        </form>
+
+        {% if selected_category and selected_category != 'All' or stock_filter and stock_filter != 'All' %}
             <a href="{% url 'auroraadmin:product' %}" class="filter-button" style="text-decoration: none; margin-left: 10px;">Clear Filters</a>
         {% endif %}
 

@@ -14,7 +14,10 @@
                 View on Storefront
             </a>
         </div>
-        <p><strong>SKU:</strong> {{ product.sku_code }}</p>
+        <div class="product-details">
+            <p><strong>Unit Cost :</strong> S${{ product.unit_cost|floatformat:2 }}</p>
+            <p><strong>Total Cost :</strong> S${{ product.total_cost|floatformat:2 }}</p>
+        </div>
     </div>
 
     <div class="actions-form">

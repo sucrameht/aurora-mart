@@ -17,6 +17,21 @@
     margin: 5px 0; 
 }
 
+.product-details {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px 30px;
+    margin-top: 15px;
+    padding: 15px;
+    background: #8bbbeb;
+    border-radius: 6px;
+}
+
+.product-details p {
+    margin: 5px 0;
+    font-size: 14px;
+}
+
 .actions-form { 
     margin-bottom: 15px; 
     display: flex;

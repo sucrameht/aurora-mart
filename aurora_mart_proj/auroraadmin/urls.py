@@ -8,6 +8,7 @@ urlpatterns = [
     path('analytics/', analytics_view, name='admin_dashboard'),
     path('product/', ProductInventoryView.as_view(), name='product'),
     path('product/add', AddProductView.as_view(), name='product_add'),
+    path('product/<str:sku_code>/reorder/', ReorderView.as_view(), name='product_reorder'),
     path('product/<str:sku_code>/actions/', ProductActionsView.as_view(), name='product_actions'),
     path('product/<str:sku_code>/delete/', DeleteProductView.as_view(), name='product_delete'),
     path('transactions/', TransactionListView.as_view(), name='transactions_list'),

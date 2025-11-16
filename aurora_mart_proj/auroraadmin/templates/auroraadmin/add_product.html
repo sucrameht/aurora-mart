@@ -25,7 +25,6 @@
                         {% if field.name == 'product_category' %}
                             <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:8px;">
                                 <!-- In-form category buttons: clicking one issues a GET with product_category=value -->
-                                <button type="submit" formmethod="get" name="load_category" value="" class="category-button {% if not selected_category %}selected{% endif %}">All</button>
                                 {% for c in categories %}
                                     <button type="submit" formmethod="get" name="load_category" value="{{ c }}" class="category-button {% if selected_category == c %}selected{% endif %}">
                                         {{ c }}

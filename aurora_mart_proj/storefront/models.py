@@ -11,7 +11,9 @@ class Product(models.Model):
     product_subcategory = models.CharField(max_length=100)
     quantity_on_hand = models.IntegerField()
     reorder_quantity = models.IntegerField()
-    unit_price = models.DecimalField(max_digits=10, decimal_places=2)
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2)  # Selling price
+    unit_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  # Cost to purchase
+    total_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)  # Total inventory cost
     product_rating = models.FloatField()
     num_sold = models.IntegerField(default=0)
 

@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from storefront.models import Product, Voucher, Transactions, OrderItem
 from django.db.models import Q
 from django.views import View
-from .forms import ProductCreateForm, VoucherForm, CustomerVoucherAssignForm, SuperUserCreationForm, DeliveryAdminCreationForm, BulkStatusUpdateForm
+from .forms import ProductCreateForm, VoucherForm, CustomerVoucherAssignForm, SuperUserCreationForm, DeliveryAdminCreationForm, BulkStatusUpdateForm, ReorderForm
 from django.urls import reverse
 from django.contrib import messages
 from django import forms
@@ -223,11 +223,18 @@ class ProductInventoryView(View):
         # search parameters (received from URL)
         search_query = request.GET.get('q')
         category_filter = request.GET.get('category')
+        stock_filter = request.GET.get('stock')
         itemChange_pk = request.GET.get('edit')
 
         # filtering logic
         if category_filter and category_filter != 'All':
             productsSet = productsSet.filter(product_category=category_filter)
+        
+        if stock_filter and stock_filter != 'All':
+            if stock_filter == 'In Stock':
+                productsSet = productsSet.filter(quantity_on_hand__gt=50)
+            elif stock_filter == 'Low Stock':
+                productsSet = productsSet.filter(quantity_on_hand__lte=50)
 
         if search_query:
             # search by Name or Code
@@ -252,6 +259,7 @@ class ProductInventoryView(View):
             'search_query': search_query,
             'category_filter': category_filter,
             'selected_category': category_filter,
+            'stock_filter': stock_filter,
             'itemChange_pk': itemChange_pk,
         }
 
@@ -264,6 +272,7 @@ class ProductInventoryView(View):
         # preserve the filter/search for redirect
         search_query = request.POST.get('q', '').strip()
         category_filter = request.POST.get('category', '').strip()
+        stock_filter = request.POST.get('stock', '').strip()
         redirect_url = reverse('auroraadmin:product')
 
         # to update the different search parameters
@@ -272,6 +281,8 @@ class ProductInventoryView(View):
             params.append(f'q={search_query}')
         if category_filter:
             params.append(f'category={category_filter}')
+        if stock_filter:
+            params.append(f'stock={stock_filter}')
         if params:
             redirect_url += '?' + '&'.join(params)
 
@@ -279,16 +290,8 @@ class ProductInventoryView(View):
         if action == "reorder":
             if pk == None:
                 return redirect(redirect_url)
-            product = get_object_or_404(Product, sku_code=pk)
-            try:
-                product.quantity_on_hand += product.reorder_quantity
-                product.save()
-                messages.success(request, f'Order Successful: Reordered {product.reorder_quantity} units of {product.product_name}.')
-            except Exception as e:
-                print(e)
-                messages.error(request, f'Order Failed: {e}')
-                pass
-            return redirect(redirect_url)
+            # Redirect to reorder page with product SKU
+            return redirect('auroraadmin:product_reorder', sku_code=pk)
         
 @method_decorator(login_required(login_url='/login'), name='dispatch')
 @method_decorator(user_passes_test(is_staff, login_url='/login'), name='dispatch')
@@ -361,6 +364,10 @@ class AddProductView(View):
             product = form.save(commit=False)
             if hasattr(product, "product_rating"):
                 product.product_rating = 0.0
+            
+            # Calculate total_cost based on unit_cost and quantity_on_hand
+            product.total_cost = product.unit_cost * product.quantity_on_hand
+            
             try:
                 product.sku_code = AddProductView.generate_unique_sku(product.product_category, product.product_subcategory)
             except ValueError as e:
@@ -381,6 +388,80 @@ class AddProductView(View):
             'selected_category': selected_cat
         }
         # if there are errors
+        return render(request, self.template_name, context)
+
+@method_decorator(login_required(login_url='/login'), name='dispatch')
+@method_decorator(user_passes_test(is_staff, login_url='/login'), name='dispatch')
+class ReorderView(View):
+    template_name = 'auroraadmin/product_reorder.html'
+
+    def get(self, request, sku_code, *args, **kwargs):
+        product = get_object_or_404(Product, sku_code=sku_code)
+        form = ReorderForm(product=product)
+        
+        # Preserve filters for redirect
+        search_query = request.GET.get('q', '').strip()
+        category_filter = request.GET.get('category', '').strip()
+        
+        context = {
+            'product': product,
+            'form': form,
+            'search_query': search_query,
+            'category_filter': category_filter,
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request, sku_code, *args, **kwargs):
+        product = get_object_or_404(Product, sku_code=sku_code)
+        form = ReorderForm(request.POST, product=product)
+        
+        # Preserve filters for redirect
+        search_query = request.POST.get('q', '').strip()
+        category_filter = request.POST.get('category', '').strip()
+        redirect_url = reverse('auroraadmin:product')
+        
+        params = []
+        if search_query:
+            params.append(f'q={search_query}')
+        if category_filter:
+            params.append(f'category={category_filter}')
+        if params:
+            redirect_url += '?' + '&'.join(params)
+        
+        if form.is_valid():
+            try:
+                unit_cost = form.cleaned_data['unit_cost']
+                reorder_qty = product.reorder_quantity
+                
+                # Update product unit_cost to the new purchase price
+                product.unit_cost = unit_cost
+                
+                # Add reordered quantity to stock
+                product.quantity_on_hand += reorder_qty
+                
+                # Update total_cost: (existing cost) + (new purchase cost)
+                reorder_cost = unit_cost * reorder_qty
+                product.total_cost += reorder_cost
+                
+                product.save()
+                
+                messages.success(
+                    request, 
+                    f'Order Successful: Reordered {reorder_qty} units of {product.product_name} '
+                    f'at ${unit_cost:.2f} per unit. Total reorder cost: ${reorder_cost:.2f}'
+                )
+                return redirect(redirect_url)
+                
+            except Exception as e:
+                messages.error(request, f'Order Failed: {str(e)}')
+        
+        # If form is invalid, re-render with errors
+        context = {
+            'product': product,
+            'form': form,
+            'search_query': search_query,
+            'category_filter': category_filter,
+        }
         return render(request, self.template_name, context)
     
 @method_decorator(login_required(login_url='/login'), name='dispatch')
@@ -415,12 +496,8 @@ class ProductActionsView(View):
             redirect_url += '?' + '&'.join(params)
 
         if action == "reorder":
-            try:
-                product.quantity_on_hand += product.reorder_quantity
-                product.save()
-                messages.success(request, f'Order Successful: Reordered {product.reorder_quantity} units of {product.product_name}.')
-            except Exception as e:
-                messages.error(request, f'Order Failed: {e}')
+            # Redirect to reorder page with product SKU
+            return redirect('auroraadmin:product_reorder', sku_code=sku_code)
         
         elif action == "change_price":
             new_price = request.POST.get('new_price')
@@ -569,47 +646,56 @@ class BulkStatusUpdateView(View):
         return render(request, self.template_name, context)
     
     def post(self, request, *args, **kwargs):
-        form = BulkStatusUpdateForm(request.POST)
+        action = request.POST.get('action')
+        transaction_ids = request.POST.getlist('transaction_ids')
         
-        if form.is_valid():
-            action = form.cleaned_data['action']
-            transaction_ids_str = form.cleaned_data['transaction_ids']
-            
-            # Parse the comma-separated transaction IDs
-            try:
-                transaction_ids = [int(id.strip()) for id in transaction_ids_str.split(',') if id.strip()]
-            except ValueError:
-                messages.error(request, 'Invalid transaction IDs.')
-                return redirect('auroraadmin:bulk_status_update')
-            
-            if not transaction_ids:
-                messages.error(request, 'No transactions selected.')
-                return redirect('auroraadmin:bulk_status_update')
-            
-            # Perform the status update
-            if action == 'to_warehouse':
-                transactions = Transactions.objects.filter(
-                    id__in=transaction_ids, 
-                    status='Payment Made'
-                )
-                updated_count = transactions.update(status='Delivered to Warehouse')
+        # Validate action
+        if action not in ['to_warehouse', 'to_completed']:
+            messages.error(request, 'Invalid action.')
+            return redirect('auroraadmin:bulk_status_update')
+        
+        # Validate transaction IDs
+        if not transaction_ids:
+            messages.error(request, 'No transactions selected. Please check at least one transaction.')
+            return redirect('auroraadmin:bulk_status_update')
+        
+        # Convert to integers
+        try:
+            transaction_ids = [int(tid) for tid in transaction_ids]
+        except ValueError:
+            messages.error(request, 'Invalid transaction IDs.')
+            return redirect('auroraadmin:bulk_status_update')
+        
+        # Perform the status update
+        if action == 'to_warehouse':
+            transactions = Transactions.objects.filter(
+                id__in=transaction_ids, 
+                status='Payment Made'
+            )
+            updated_count = transactions.update(status='Delivered to Warehouse')
+            if updated_count > 0:
                 messages.success(
                     request, 
                     f'Successfully updated {updated_count} transaction(s) to "Delivered to Warehouse".'
                 )
-            
-            elif action == 'to_completed':
-                transactions = Transactions.objects.filter(
-                    id__in=transaction_ids, 
-                    status='Delivered to Warehouse'
-                )
-                updated_count = transactions.update(status='Delivery Completed')
+            else:
+                messages.warning(request, 'No transactions were updated. They may have already been processed.')
+        
+        elif action == 'to_completed':
+            transactions = Transactions.objects.filter(
+                id__in=transaction_ids, 
+                status='Delivered to Warehouse'
+            )
+            updated_count = transactions.update(status='Delivery Completed')
+            if updated_count > 0:
                 messages.success(
                     request, 
                     f'Successfully updated {updated_count} transaction(s) to "Delivery Completed".'
                 )
-            
-            return redirect('auroraadmin:bulk_status_update')
+            else:
+                messages.warning(request, 'No transactions were updated. They may have already been processed.')
+        
+        return redirect('auroraadmin:bulk_status_update')
         
         # If form is invalid, re-render with errors
         payment_made = Transactions.objects.filter(status='Payment Made').select_related('user').annotate(
