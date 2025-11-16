@@ -1211,7 +1211,7 @@ class SalesTrendChartView(View):
         ax.spines['top'].set_color('white')
         ax.spines['left'].set_color('white')
         ax.spines['right'].set_color('white')
-        plt.xticks(rotation=45, ha='right')
+        plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
         plt.tight_layout(pad=0.5)
 
         buffer = BytesIO()
@@ -1314,7 +1314,8 @@ class RevenueByCategoryChartView(View):
         ax.spines['top'].set_color('white')
         ax.spines['left'].set_color('white')
         ax.spines['right'].set_color('white')
-        plt.xticks(rotation=45, ha='right')
+        # rotating the axis labels (more explicit, less overriding chance)
+        plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
         plt.tight_layout(pad=0.5)
 
         buffer = BytesIO()

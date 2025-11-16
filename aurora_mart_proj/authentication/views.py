@@ -23,7 +23,7 @@ class customLoginView(LoginView):
     redirect_authenticated_user = False
 
     def form_invalid(self, form):
-        messages.error(self.request, "Invalid username or password.")
+        #messages.error(self.request, "Invalid username or password.")
         return super().form_invalid(form)
 
     def get_success_url(self):
