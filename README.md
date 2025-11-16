@@ -1,21 +1,26 @@
-# auroraMart
-IS2108 Project
+================================================================================
+IS2108 - AY2526S1 - Pair Project
+Aurora Mart - E-Commerce Management System
+================================================================================
 
-# Set up virtual environment
-To move out of aurora-mart and create virtual environment : cd ..
-Rationale : prevent pushing of virtual environment onto github
+GROUP NUMBER: PP18
 
-Windows: venv\Scripts\Activate.ps1
+GROUP MEMBERS:
+--------------
 
-# Install Dependencies
-cd aurora-mart
-pip install -r requirements.txt
+[GROUP LEADER]
+Full Name: Lim Wei Lun, Marcus
+Student Number: A0306757W
+Email: e1384322@u.nus.edu
+Contact Number: 97852912
 
-# Create the aurora-mart django project
-django-admin startproject aurora_mart_proj
+[MEMBER 2]
+Full Name: Tan Woon Kin
+Student Number: A0307834B
+Email: e1398274@u.nus.edu
+Contact Number: 88969735
 
-# Creating the storefront, admin and AImodels app
-python manage.py startapp storefront, admin AImodels
 
-# Add project apps to installed app
-add app to project level settings.py
+DEMO VIDEO:
+-----------
+YouTube Link: https://youtu.be/-4yauto-9vs
