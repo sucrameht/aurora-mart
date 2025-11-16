@@ -1,0 +1,157 @@
+/* Product Reorder Page Styles */
+
+.reorder-container {
+    max-width: 800px;
+    margin: 40px auto;
+    background: white;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.reorder-header {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #007ca5;
+}
+
+.reorder-header h1 {
+    color: #007ca5;
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+.product-info {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+}
+
+.product-info .info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.product-info .info-row:last-child {
+    border-bottom: none;
+}
+
+.product-info .label {
+    font-weight: 600;
+    color: #555;
+}
+
+.product-info .value {
+    color: #333;
+    text-align: right;
+}
+
+.form-section {
+    margin-bottom: 30px;
+}
+
+.form-section label {
+    display: block;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.form-section input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 1rem;
+}
+
+.form-section input:focus {
+    outline: none;
+    border-color: #007ca5;
+    box-shadow: 0 0 0 3px rgba(0, 124, 165, 0.1);
+}
+
+.form-section .help-text {
+    font-size: 0.875rem;
+    color: #666;
+    margin-top: 5px;
+}
+
+.cost-summary {
+    background: #e7f5ff;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+}
+
+.cost-summary h3 {
+    color: #007ca5;
+    margin-bottom: 15px;
+    font-size: 1.2rem;
+}
+
+.cost-summary .summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    font-size: 1rem;
+}
+
+.cost-summary .summary-row.total {
+    border-top: 2px solid #007ca5;
+    margin-top: 10px;
+    padding-top: 15px;
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: #007ca5;
+}
+
+.button-group {
+    display: flex;
+    gap: 15px;
+    justify-content: flex-end;
+}
+
+.btn {
+    padding: 12px 30px;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-primary {
+    background: #007ca5;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #005f7f;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 124, 165, 0.3);
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+}
+
+.error-message {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    border: 1px solid #f5c6cb;
+}
