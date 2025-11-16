@@ -20,7 +20,7 @@ class onboardingForm(forms.ModelForm):
 
     class Meta:
         model = UserProfile
-        fields = ["user", "age", "gender","employment_status", "phone_number", "occupation", "education", "household_size", "has_children", "monthly_income_sgd"]
+        fields = ["age", "gender","employment_status", "phone_number", "occupation", "education", "household_size", "has_children", "monthly_income_sgd"]
 
         GENDER = [
             ('Male', 'Male'),
