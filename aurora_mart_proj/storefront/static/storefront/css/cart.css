@@ -9,6 +9,27 @@ body {
     padding: 0 20px;
 }
 
+.message {
+    padding: 15px 20px;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: 500;
+    list-style: none;
+    border: 1px solid;
+}
+
+.message.info {
+    color: #004085;
+    background-color: #cce5ff;
+    border-color: #b8daff;
+}
+
+.message.warning {
+    color: #856404;
+    background-color: #fff3cd;
+    border-color: #ffeeba;
+}
+
 .cart-empty {
     text-align: center;
     padding: 60px 20px;
@@ -45,20 +66,23 @@ body {
     border-radius: 6px;
     font-weight: 600;
     transition: background-color 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .continue-shopping-btn:hover {
     background-color: #0056b3;
 }
 
-
-/* --- Filled Cart Styles --- */
 .continue-shopping-link {
     text-decoration: none;
     color: #007ca5;
     font-weight: 600;
     font-size: 15px;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     margin-bottom: 15px;
 }
 
@@ -218,6 +242,23 @@ body {
     cursor: pointer;
 }
 
+.my-vouchers-link {
+    text-align: right;
+    margin-top: -12px;
+    margin-bottom: 20px;
+}
+
+.my-vouchers-link a {
+    font-size: 13px;
+    color: #007ca5;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.my-vouchers-link a:hover {
+    text-decoration: underline;
+}
+
 .summary-line {
     display: flex;
     justify-content: space-between;
@@ -253,4 +294,133 @@ body {
     color: #888;
     text-align: center;
     margin-top: 15px;
+}
+
+.applied-voucher {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #def8e4; /* A light green to show success */
+    border: 1px solid #b3e0ff;
+    padding: 10px 15px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+.applied-voucher span {
+    color: #28a745;
+    font-weight: 600;
+}
+
+.applied-voucher form {
+    margin: 0;
+}
+
+.remove-voucher-btn {
+    background: none;
+    border: 1px solid #ff4d4d;
+    color: #ff4d4d;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.remove-voucher-btn:hover {
+    background-color: #ff4d4d;
+    color: white;
+}
+
+/* --- New wrapper for left column --- */
+.cart-main-column {
+    display: flex;
+    flex-direction: column;
+    gap: 24px; /* Adds space between the cart list and the recommendations */
+}
+
+/* --- Recommendations Panel --- */
+.recommendations-panel {
+    background: #f9f9f9;
+    border-radius: 8px;
+    padding: 20px 24px;
+    border: 1px solid #eee;
+}
+
+.recommendations-panel h2 {
+    font-size: 18px;
+    color: #333;
+    margin-top: 0;
+    margin-bottom: 16px;
+}
+
+.recommendations-list {
+    display: grid;
+    /* Show 2 or 3 items per row, or just let them wrap */
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.recommendation-card {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 12px;
+    gap: 12px;
+}
+
+.recommendation-img {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.recommendation-details {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.recommendation-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #444;
+}
+
+.recommendation-price {
+    font-size: 13px;
+    color: #007ca5;
+}
+
+.btn-add-recommendation {
+    background-color: #007ca5;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    flex-shrink: 0;
+    line-height: 30px; /* Aligns the '+' sign */
+}
+
+.btn-add-recommendation:hover {
+    background-color: #005f7f;
+}
+
+.cart-item-link {
+    text-decoration: none;
+    color: inherit; /* This will make it use the surrounding text color */
+}
+
+.cart-item-link:hover .cart-item-name {
+    text-decoration: underline; /* Optional: add a hover effect */
 }

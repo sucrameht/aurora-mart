@@ -7,6 +7,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.conf import settings
 from .models import UserProfile
 from .forms import RegistrationForm, onboardingForm, ChangePasswordForm
+from storefront.models import Product, CartItem
 from django.urls import reverse_lazy
 import os
 from joblib import load
@@ -27,6 +28,27 @@ class customLoginView(LoginView):
 
     def get_success_url(self):
         user = self.request.user
+        session_cart = self.request.session.get('cart', {})
+        if session_cart:
+            for sku_code, quantity in session_cart.items():
+                try:
+                    product = Product.objects.get(sku_code=sku_code)
+                    cart_item, created = CartItem.objects.get_or_create(
+                        user=user,
+                        product=product,
+                        defaults={'quantity': quantity}
+                    )
+                    if not created:
+                        # If item already exists, add quantities
+                        cart_item.quantity += quantity
+                        cart_item.save()
+                except Product.DoesNotExist:
+                    continue
+            # Clear the session cart after merging
+            del self.request.session['cart']
+            if 'cart_item_count' in self.request.session:
+                del self.request.session['cart_item_count']
+
         try:
             user_profile =  UserProfile.objects.get(user=user)
             if user_profile.is_initial_password:
@@ -37,7 +59,14 @@ class customLoginView(LoginView):
             return reverse_lazy("onboarding")
         
         if user.is_staff:
-            return reverse_lazy("admin_dashboard") # for admins - yet to create
+            # Check if delivery admin - redirect to transactions page
+            try:
+                if user.userprofile.is_delivery_admin:
+                    return reverse_lazy("auroraadmin:transactions_list")
+            except:
+                pass
+            # Regular admin/superuser - redirect to dashboard
+            return reverse_lazy("auroraadmin:admin_dashboard")
         
         return reverse_lazy("storefront_home") # for customers - yet to create
 
@@ -75,31 +104,8 @@ class OnboardingView(LoginRequiredMixin, FormView):
     def form_valid(self, form):
         form.save(commit=True, user=self.request.user)
         profile = UserProfile.objects.get(user=self.request.user)
-
-        try:
-            model_path = os.path.join(settings.BASE_DIR, 'models', 'b2c_customers_100.joblib')
-            model = load(model_path)
-            gender_code = 0 if profile.gender == 'Male' else 1 if profile.gender == 'Female' else 2
-            employment_status_code = {
-                'Full-time': 1,
-                'Part-time': 1,
-                'Self-employed': 1,
-                'Unemployed': 0,
-                'Student': 1,
-                'Retired': 0,
-                'Others': 0
-            }.get(profile.employment_status, 0)
-            input_df = pd.DataFrame([
-                [profile.age, gender_code, employment_status_code, profile.monthly_income_sgd]
-            ])
-            predicted_category = model.predict(input_df)[0]
-            profile.preferred_category = predicted_category
-            profile.save()
-        except Exception as e:
-            logger.error(f"ML prediction failed for user {profile.user.username}: {str(e)}")
-            # create a fall back for the category
-            profile.preferred_category = "General"
-            profile.save()
+        profile.preferred_category = "General"
+        profile.save()
         return super().form_valid(form)
     
 class ChangePasswordView(LoginRequiredMixin, FormView):
@@ -125,6 +131,6 @@ class ChangePasswordView(LoginRequiredMixin, FormView):
         update_session_auth_hash(self.request, self.request.user)
         # check if the user is a staff, redirect to the admin page
         if self.request.user.is_staff:
-            return_url = reverse_lazy("admin_dashboard")
+            return_url = reverse_lazy("auroraadmin:admin_dashboard")
             return redirect(return_url)
         return super().form_valid(form)

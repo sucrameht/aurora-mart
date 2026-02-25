@@ -1,0 +1,48 @@
+{% extends 'storefront/base.html' %}
+{% load static %}
+
+{% block title %}Settings - AuroraMart{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'storefront/css/profile_settings.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="settings-container">
+        <a href="{% url 'profile' %}" class="back-link"><i class="fas fa-arrow-left"></i> Back to Profile</a>
+        <br/>
+        <h1>Settings</h1>
+        <div class="settings-grid">
+            <a href="{% url 'edit_profile' %}" class="settings-card">
+                <div class="card-icon"><i class="fas fa-user-edit"></i></div>
+                <div class="card-title">Edit Profile</div>
+                <div class="card-description">Update your personal details, contact information, and preferences.</div>
+            </a>
+            <a href="{% url 'manage_addresses' %}" class="settings-card">
+                <div class="card-icon"><i class="fas fa-map-marker-alt"></i></div>
+                <div class="card-title">Manage Addresses</div>
+                <div class="card-description">Add, edit, or remove your saved shipping addresses.</div>
+            </a>
+            <a href="{% url 'manage_cards' %}" class="settings-card">
+                <div class="card-icon"><i class="fas fa-credit-card"></i></div>
+                <div class="card-title">Manage Cards</div>
+                <div class="card-description">Add, edit, or remove your saved payment methods.</div>
+            </a>
+            <a href="{% url 'change_password' %}" class="settings-card">
+                <div class="card-icon"><i class="fas fa-lock"></i></div>
+                <div class="card-title">Change Password</div>
+                <div class="card-description">Update your account password for security.</div>
+            </a>
+            <a href="{% url 'my_vouchers' %}" class="settings-card">
+                <div class="card-icon"><i class="fas fa-ticket-alt"></i></div>
+                <div class="card-title">My Vouchers</div>
+                <div class="card-description">View all your available and expired vouchers.</div>
+            </a>
+            <a href="{% url 'delete_account' %}" class="settings-card delete-card">
+                <div class="card-icon"><i class="fas fa-user-slash"></i></div>
+                <div class="card-title">Delete Account</div>
+                <div class="card-description">Permanently delete your account and all associated data.</div>
+            </a>
+        </div>
+    </div>
+{% endblock %}

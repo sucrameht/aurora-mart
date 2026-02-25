@@ -1,0 +1,28 @@
+{% extends 'storefront/base.html' %}
+{% load static %}
+
+{% block title %}Cancel Order{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'storefront/css/forms.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="form-container">
+        <h1 class="form-title">Cancel Order</h1>
+        <p class="form-description">Please provide a reason for cancelling this order. This will be sent to the administrator.</p>
+        
+        <form method="post" action="{% url 'cancel_order' transaction.pk %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="reason">Reason for cancellation:</label>
+                <textarea id="reason" name="reason" class="form-control" rows="4" required></textarea>
+            </div>
+            
+            <div class="form-actions">
+                <a href="{% url 'profile' %}" class="btn btn-secondary">Go Back</a>
+                <button type="submit" class="btn btn-danger">Confirm Cancellation</button>
+            </div>
+        </form>
+    </div>
+{% endblock %}

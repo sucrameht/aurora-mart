@@ -1,0 +1,60 @@
+{% extends 'auroraadmin/base.html' %}
+{% load static %}
+{% block title %}Add Product{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'auroraadmin/css/add_product.css' %}">
+{% endblock %}
+{% block main_content %}
+    <h1 style="margin-bottom:12px;">Add Product</h1>
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+        <!--use req method to only show validation errors after a POST so that rendering to obtain the subcats will not throw up the errors-->
+        {% if request.mehod == "POST" and form.non_field_errors %}
+            <div class="field-error-text">
+            {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        <table class="form-table" role="presentation">
+            <tbody>
+            {% for field in form %}
+                <tr class="{% if request.method == 'POST' and field.errors %}field-error{% endif %}">
+                    <th>{{ field.label_tag }}</th>
+                    <td>
+                        {% if field.name == 'product_category' %}
+                            <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:8px;">
+                                <!-- In-form category buttons: clicking one issues a GET with product_category=value -->
+                                <button type="submit" formmethod="get" name="load_category" value="" class="category-button {% if not selected_category %}selected{% endif %}">All</button>
+                                {% for c in categories %}
+                                    <button type="submit" formmethod="get" name="load_category" value="{{ c }}" class="category-button {% if selected_category == c %}selected{% endif %}">
+                                        {{ c }}
+                                    </button>
+                                {% endfor %}
+                            </div>
+                            <!-- Keep the actual form field (hidden) so POST still binds if user does the final Add (server will set choices as needed) -->
+                            <input type="hidden" name="product_category" value="{{ selected_category|default:'' }}">
+                        {% else %}
+                            {{ field }}
+                        {% endif %}
+
+                        {% if field.help_text %}
+                            <div class="help-text">{{ field.help_text }}</div>
+                        {% endif %}
+                        {% if request.method == 'POST' %}
+                            {% for err in field.errors %}
+                                <div class="field-error-text">{{ err }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="form-actions">
+            <button type="submit" class="primary-btn">Add Product</button>
+            <a href="{% url 'auroraadmin:product' %}" class="secondary-btn">Cancel</a>
+        </div>
+    </form>
+{% endblock %}

@@ -1,0 +1,117 @@
+{% extends 'auroraadmin/base.html' %}
+{% load static %}
+{% block title %}Product Inventory{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'auroraadmin/css/product.css' %}">
+{% endblock %}
+{% block main_content %}
+
+<div class="inventory-container">
+    <div class="inventory-header">
+        <h1 class="inventory-title">Product Inventory</h1>
+        <div class="row-control">
+            <form method="GET" action="{% url 'auroraadmin:product' %}" class="search-filter-group">
+                <input type="text" name="q" class="search-input" placeholder="Search products..." value="{{ search_query|default:'' }}">
+                <button type="submit" class="filter-button">Check</button>
+            </form>
+            {% if search_query %}
+                <form method="GET" action="{% url 'auroraadmin:product' %}" >
+                    <button type="submit" class="filter-button">Clear</button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <div style="margin-bottom: 20px;">
+        <form method="GET" action="{% url 'auroraadmin:product' %}" style="display:inline-block">
+            <!-- preserve existing search query -->
+            <input type="hidden" name="q" value="{{ search_query|default:'' }}">
+            <label for="category-select" style="font-weight:600; margin-right:8px;">Category:</label>
+            <select id="category-filter" name="category" onchange="this.form.submit()" style="padding:6px 10px; border-radius:6px; border:1px solid #ddd;">
+                <option value="All">All Categories</option>
+                {% for category in categories %}
+                    <option value="{{ category }}" {% if selected_category == category %}selected{% endif %}>{{ category }}</option>
+                {% endfor %}
+            </select>
+        </form>
+
+        {% if selected_category and selected_category != 'All' %}
+            <a href="{% url 'auroraadmin:product' %}" class="filter-button" style="text-decoration: none; margin-left: 10px;">Clear Filters</a>
+        {% endif %}
+
+        <!--Add Product Button-->
+        <a href="{% url 'auroraadmin:product_add' %}" class="filter-button" style="float:right; background-color:#007ca5; color:white; border:none; text-decoration:none;">
+            + Add Product
+        </a>
+    </div>
+
+    <!-- Product List Container with Blue Header -->
+    <div class="product-list-container">
+        <h3 class="list-title">All Products ({{ page_obj.paginator.count }})</h3>
+        <table class="product-table">
+        <thead>
+            <tr>
+                <th>SKU</th>
+                <th>Product Name</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Stock</th>
+                <th>Status</th>
+                <th>Volume Sold</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in page_obj %}
+            <tr>
+                <td>
+                    <a href="{% url 'product_detail' product.sku_code %}" class="table-product-link" target="_blank">
+                        {{ product.sku_code }}
+                    </a>
+                </td>
+                <td><a href="{% url 'auroraadmin:product_actions' product.sku_code %}" style="color:#007ca5; text-decoration:none;">{{ product.product_name }}</a></td>
+                <td><span class="category-badge">{{ product.product_category }}</span></td>
+                <td>${{ product.unit_price|floatformat:2 }}</td>
+                <td>{{ product.quantity_on_hand }}</td>
+                <td>
+                    {% if product.quantity_on_hand > 50  %}
+                        <span class="status-badge status-active">
+                            <span class="status-icon">✓</span> In Stock
+                        </span>
+                    {% elif product.quantity_on_hand <= 50 %}
+                        <span class="status-badge status-low">
+                            <span class="status-icon">!</span> Low Stock
+                        </span>
+                    {% endif %}
+                </td>
+                <td>{{ product.num_sold }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" style="text-align:center; padding: 40px;">No products found in the inventory.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="pagination" style="margin-top: 30px; text-align: center;">
+        {% if page_obj.has_previous %}
+            <a href="?page=1&q={{ search_query|default:'' }}&category={{ selected_category|default:'All' }}" class="filter-button" style="text-decoration: none; margin: 0 5px;">&laquo; First</a>
+            <a href="?page={{ page_obj.previous_page_number }}&q={{ search_query|default:'' }}&category={{ selected_category|default:'All' }}" class="filter-button" style="text-decoration: none; margin: 0 5px;">Previous</a>
+        {% endif %}
+        
+        <span style="margin: 0 15px; font-weight: 600;">
+            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+        </span>
+        
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}&q={{ search_query|default:'' }}&category={{ selected_category|default:'All' }}" class="filter-button" style="text-decoration: none; margin: 0 5px;">Next</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}&q={{ search_query|default:'' }}&category={{ selected_category|default:'All' }}" class="filter-button" style="text-decoration: none; margin: 0 5px;">Last &raquo;</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+{% endblock main_content %}

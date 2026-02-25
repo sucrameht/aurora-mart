@@ -1,0 +1,99 @@
+{% extends 'storefront/base.html' %}
+{% load static %}
+
+{% block title %}Add New Card - AuroraMart{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'storefront/css/checkout.css' %}">
+    <style>
+        .form-error-summary {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1.5rem;
+        }
+        .form-error-summary ul {
+            margin: 0;
+            padding-left: 1.5rem;
+        }
+        .field-error {
+            color: #721c24;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="checkout-container">
+        <form class="checkout-forms" method="POST" action="{% url 'add_card' %}?next={{ request.GET.next }}">
+            {% csrf_token %}
+            
+            <div class="form-card">
+                <h2>Add New Credit/Debit Card</h2>
+                <p>Save a card for faster checkout next time.</p>
+                
+                {% if form.errors %}
+                    <div class="form-error-summary">
+                        <strong>Please correct the errors below:</strong>
+                        
+                        {{ form.non_field_errors }}
+
+                        <ul>
+                        {% for field in form %}
+                            {% if field.errors %}
+                                <li>{{ field.label }}: {{ field.errors|striptags }}</li>
+                            {% endif %}
+                        {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+
+                <div class="form-group">
+                    <label for="{{ form.nickname.id_for_label }}">{{ form.nickname.label }}</label>
+                    {{ form.nickname }}
+                    <small>{{ form.nickname.help_text }}</small>
+                    <div class="field-error">{{ form.nickname.errors }}</div>
+                </div>
+                <hr>
+                
+                <div class="form-group">
+                    <label for="{{ form.cardholder_name.id_for_label }}">{{ form.cardholder_name.label }}</label>
+                    {{ form.cardholder_name }}
+                    <div class="field-error">{{ form.cardholder_name.errors }}</div>
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.card_number.id_for_label }}">{{ form.card_number.label }}</label>
+                    {{ form.card_number }}
+                    <div class="field-error">{{ form.card_number.errors }}</div>
+                </div>
+                <div class="form-grid-3">
+                    <div class="form-group">
+                        <label for="{{ form.expiry_month.id_for_label }}">{{ form.expiry_month.label }}</label>
+                        {{ form.expiry_month }}
+                        <div class="field-error">{{ form.expiry_month.errors }}</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.expiry_year.id_for_label }}">{{ form.expiry_year.label }}</label>
+                        {{ form.expiry_year }}
+                        <div class="field-error">{{ form.expiry_year.errors }}</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.cvv.id_for_label }}">{{ form.cvv.label }}</label>
+                        {{ form.cvv }}
+                        <div class="field-error">{{ form.cvv.errors }}</div>
+                    </div>
+                </div>
+
+                <button type="submit" class="complete-payment-btn">Save Card</button>
+                <br><br>
+                <a href="{% if request.GET.next == 'checkout' %}{% url 'checkout' %}{% else %}{% url 'profile_settings' %}{% endif %}" class="cancel-link">
+                    Cancel and go back
+                </a>
+            </div>
+        </form>
+    </div>
+{% endblock %}

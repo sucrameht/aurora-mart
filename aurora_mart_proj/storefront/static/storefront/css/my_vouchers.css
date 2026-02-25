@@ -1,0 +1,68 @@
+.voucher-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+.voucher-card {
+    background-color: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+    border-left: 8px solid #ff7f50;
+}
+.voucher-card.expired {
+    border-left-color: #ccc;
+    opacity: 0.7;
+}
+.voucher-card.expired::after {
+    content: 'EXPIRED';
+    position: absolute;
+    top: 10px;
+    right: -30px;
+    background-color: #6c757d;
+    color: white;
+    padding: 5px 30px;
+    font-weight: bold;
+    transform: rotate(45deg);
+    font-size: 12px;
+}
+.voucher-title {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+.voucher-code {
+    background-color: #e9ecef;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-family: monospace;
+    font-weight: bold;
+    color: #495057;
+    margin-bottom: 15px;
+    align-self: flex-start;
+}
+.voucher-description {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 15px;
+    flex-grow: 1;
+}
+.voucher-expiry {
+    font-size: 13px;
+    color: #dc3545;
+    font-weight: 500;
+}
+.voucher-card.expired .voucher-expiry {
+    color: #6c757d;
+}
+.no-vouchers {
+    text-align: center;
+    padding: 40px;
+    background-color: #fff;
+    border-radius: 12px;
+}

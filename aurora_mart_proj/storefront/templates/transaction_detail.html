@@ -1,0 +1,74 @@
+{% extends 'storefront/base.html' %}
+{% load static %}
+
+{% block title %}Order Details - AuroraMart{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'storefront/css/transaction.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="detail-container">
+    <a href="{% url 'profile' %}" class="back-link"><i class="fas fa-arrow-left"></i> Back</a>
+    <div class="detail-card">
+        <div class="detail-header">
+            <h1 class="detail-title">Order Details</h1>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <span class="summary-label">Customer</span>
+                    <span class="summary-value username">{{ transaction.user.username }}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Date</span>
+                    <span class="summary-value">{{ transaction.transaction_datetime|date:"d M Y, P" }}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Total Items</span>
+                    <span class="summary-value">{{ transaction.num_of_products }}</span>
+                </div>
+            </div>
+        </div>
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th>Product SKU</th>
+                    <th>Product Name</th>
+                    <th class="text-center">Quantity</th>
+                    <th class="text-right">Unit Price</th>
+                    <th class="text-right">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in transaction.items.all %}
+                <tr>
+                    <td>{{ item.product.sku_code }}</td>
+                    <td class="product-name">
+                        <a href="{% url 'product_detail' item.product.sku_code %}" class="table-product-link">
+                            {{ item.product.product_name }}
+                        </a>
+                    </td>
+                    <td class="text-center">{{ item.quantity_purchased }}</td>
+                    <td class="text-right">S${{ item.price_at_purchase|floatformat:2 }}</td>
+                    <td class="text-right">S${{ item.subtotal_products_bought|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Footer with Grand Total -->
+        <div class="items-footer">
+            <span class="total-label">Total:</span>
+            <span class="total-value">S${{ total|floatformat:2 }}</span>
+            <br/>
+            <br/>
+            <span class="total-label">Voucher Value:</span>
+            <span class="total-value">S${{ voucher_value|floatformat:2 }}</span>
+            <br/>
+            <br/>
+            <span class="total-label">Grand Total:</span>
+            <span class="total-value">S${{ grand_total|floatformat:2 }}</span>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

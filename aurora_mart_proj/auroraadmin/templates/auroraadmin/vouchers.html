@@ -1,0 +1,160 @@
+{% extends 'auroraadmin/base.html' %}
+{% block title %} Voucher Management {% endblock %}
+{% load static %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'auroraadmin/css/vouchers.css' %}">
+{% endblock %}
+{% block main_content %}
+
+<div class="voucher-container">
+    <div class="voucher-header">
+        <h1 class="voucher-title">Voucher Management</h1>
+    </div>
+
+    <div class="voucher-form-container">
+        <h2 class="form-title">Create New Voucher</h2>
+        <form method="POST" action="{% url 'auroraadmin:voucher_list' %}" novalidate>
+            {% csrf_token %}
+            <!-- Hidden input to specify action -->
+            <input type="hidden" name="action" value="create">
+            
+            <div class="form-grid">
+                <!-- Render each field manually for styling -->
+                <div class="form-group">
+                    <label for="{{ form.code.id_for_label }}">Voucher Code</label>
+                    {{ form.code }}
+                    {{ form.code.errors }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.discount_type.id_for_label }}">Discount Type</label>
+                    {{ form.discount_type }}
+                    {{ form.discount_type.errors }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.discount_value.id_for_label }}">Value</label>
+                    {{ form.discount_value }}
+                    {{ form.discount_value.errors }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.expiry_date.id_for_label }}">Expiry Date</label>
+                    {{ form.expiry_date }}
+                    {% if form.expiry_date.help_text %}
+                        <small class="helptext">{{ form.expiry_date.help_text }}</small>
+                    {% endif %}
+                    {{ form.expiry_date.errors }}
+                </div>
+                
+                <button type="submit" class="btn-submit">Create Voucher</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="voucher-list-container">
+        <h2 class="list-title">Existing Vouchers ({{ page_obj.paginator.count }})</h2>
+        <table class="inventory-table">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Discount Type</th>
+                    <th>Value</th>
+                    <th>Expiry Date</th>
+                    <th>Status</th>
+                    <th>Usage</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for voucher in vouchers %}
+                <tr>
+                    <td>{{ voucher.code }}</td>
+                    <td class="discount-type">{{ voucher.get_discount_type_display }}</td>
+                    <td>
+                        <!-- Show % or $ based on type -->
+                        {% if voucher.discount_type == 'percent' %}
+                            {{ voucher.discount_value|floatformat:0 }}%
+                        {% else %}
+                            ${{ voucher.discount_value|floatformat:2 }}
+                        {% endif %}
+                    </td>
+                    <td>{{ voucher.expiry_date|date:"d M Y"|default:"No Expiry" }}</td>
+                    <td>
+                        {% if voucher.is_active %}
+                            <span class="status-active">Active</span>
+                        {% else %}
+                            <span class="status-inactive">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if voucher.issued_count > 0 %}
+                            {{ voucher.used_count }} / {{ voucher.issued_count }}
+                        {% else %}
+                            Not issued yet
+                        {% endif %}
+                    </td>
+                    <td>
+                        <!-- build this link next -->
+                        <form method="POST" action="{% url 'auroraadmin:voucher_list' %}" style="display:inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="mass_assign">
+                            <input type="hidden" name="voucher_pk" value="{{ voucher.pk }}">
+                            <button type="submit" class="action-button btn-assign">
+                                Assign to All
+                            </button>
+                        </form>
+                        
+                        <form method="POST" action="{% url 'auroraadmin:voucher_list' %}" style="display:inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="toggle_status">
+                            <input type="hidden" name="voucher_pk" value="{{ voucher.pk }}">
+                            
+                            {% if voucher.is_active %}
+                                <!-- Show Deactivate button if active -->
+                                <button type="submit" class="action-button btn-delete">
+                                    Deactivate
+                                </button>
+                            {% else %}
+                                <!-- Show Activate button if inactive -->
+                                <button type="submit" class="action-button btn-activate">
+                                    Activate
+                                </button>
+                            {% endif %}
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 20px;">No vouchers found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <!-- Pagination -->
+        {% if page_obj.paginator.num_pages > 1 %}
+        <div class="pagination-row">
+            <span class="step-links">
+                {% if page_obj.has_previous %}
+                    <a href="?page=1">&laquo; First</a>
+                    <a href="?page={{ page_obj.previous_page_number }}">&lsaquo; Prev</a>
+                {% else %}
+                    <span class="disabled">First</span>
+                    <span class="disabled">Prev</span>
+                {% endif %}
+
+                <span class="current_page">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                </span>
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}"> Next &rsaquo;</a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}">Last &raquo;</a>
+                {% else %}
+                    <span class="disabled">Next</span>
+                    <span class="disabled">Last</span>
+                {% endif %}
+            </span>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock main_content %}

@@ -1,0 +1,24 @@
+{% extends 'auroraadmin/base.html' %}
+{% load static %}
+{% block title %}Delete Confirmation{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'auroraadmin/css/product_confirm_del.css' %}">
+{% endblock %}
+{% block main_content %}
+
+    <div class="confirm-container">
+        <div class="confirm-header">Confirm Deletion</div>
+        <div class="confirm-message">
+            Are you sure you want to delete the product 
+            "<strong>{{ product.product_name }}</strong>" 
+            (SKU: {{ product.sku_code }})? This action cannot be undone.
+        </div>
+        <div class="action-buttons">
+            <form method="post" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-confirm">Yes, Delete</button>
+            </form>
+            <a href="{% url 'auroraadmin:product' %}" class="btn btn-cancel">Cancel</a>
+        </div>
+    </div>
+{% endblock %}

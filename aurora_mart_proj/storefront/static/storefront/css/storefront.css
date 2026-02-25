@@ -5,7 +5,6 @@ body {
     background-color: #f0f8ff; 
 }
 
-/* Header */
 .header {
     display: flex;
     align-items: center;
@@ -13,6 +12,9 @@ body {
     padding: 10px 40px;
     background-color: #ffffff;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 100;
 }
 
 .logo {
@@ -54,15 +56,21 @@ body {
 
 .icons {
     display: flex;
-    gap: 20px;
+    align-items: center;
+    gap: 25px;
     margin-left: 20px;
 }
 
 .icon {
-    font-size: 22px;
+    font-size: 24px;
     cursor: pointer;
-    color: #333;
+    color: #888;
     text-decoration: none;
+    transition: color 0.2s ease-in-out;
+}
+
+.icon:hover {
+    color: #007ca5;
 }
 
 .banner {
@@ -89,6 +97,9 @@ body {
     gap: 12px;
     padding: 20px 40px;
     background-color: #ffffff;
+    position: sticky;
+    top: 80px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .tab {
@@ -106,9 +117,24 @@ body {
 }
 
 .tab.active {
-    background-color: #00bfff;
+    background-color: #007ca5;
     color: white;
     font-weight: bold;
+}
+
+.tab.recommended {
+    background-color: #fff0e6;
+    color: #ff7f50;
+    font-weight: 600;
+    border: 1px solid #ff7f50;
+}
+
+.tab.recommended.active {
+    background-color: #ff7f50;
+    color: white;
+    font-weight: 700;
+    border: 1px solid #ff7f50;
+    box-shadow: 0 2px 4px rgba(255, 127, 80, 0.3);
 }
 
 .sort-bar {
@@ -154,7 +180,7 @@ body {
     grid-template-columns: repeat(3, 1fr); 
     gap: 25px;
     padding: 20px;
-    max-width: 1100px;
+    max-width: 75%;
     margin: 0 auto;
 }
 
@@ -245,6 +271,8 @@ body {
     text-align: left;
     position: relative;
     animation: fadeIn 0.3s ease;
+    max-height: 80vh;
+    overflow-y: auto;
   }
   
   .css-modal-content img {
@@ -265,6 +293,32 @@ body {
   
   .css-close:hover {
     color: #000;
+  }
+
+  .css-modal-content .buy-now {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px; 
+    
+    text-decoration: none;
+    padding: 10px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    text-align: center;
+    border: 1px solid #ddd;
+    transition: background-color 0.2s;
+  }
+
+  .css-modal-content .buy-now {
+    background-color: #ff7f50;
+    color: white;
+    border-color: #ff7f50;
+    margin-top: 10px;
+  }
+  .css-modal-content .buy-now:hover {
+    background-color: #e86a3c;
   }
   
   @keyframes fadeIn {
@@ -299,7 +353,7 @@ body {
     margin-top: auto;
 }
 
-.buy-now {
+.product-card .buy-now {
     background-color: #ff7f50;
     color: white;
     padding: 10px 16px;
@@ -337,7 +391,7 @@ body {
     position: absolute;
     top: -8px;
     right: -12px;
-    background-color: #ff4d4d; /* Red color for notification */
+    background-color: #ff4d4d; 
     color: white;
     font-size: 11px;
     font-weight: bold;
@@ -348,7 +402,6 @@ body {
     line-height: 1.2;
 }
 
-/* Styles for the "Added to Cart" notification */
 .message-container {
     position: fixed;
     bottom: 10px;
@@ -357,7 +410,7 @@ body {
 }
 
 .message {
-    background-color: #4CAF50; /* green success color */
+    background-color: #4CAF50; 
     color: white;
     padding: 12px 20px;
     border-radius: 8px;
@@ -375,4 +428,75 @@ body {
     0% { opacity: 1; }
     70% { opacity: 1; }
     100% { opacity: 0; transform: translateY(-10px); }
+}
+
+.admin-button, .logout-button {
+    text-decoration: none;
+    color: white;
+    background-color: #007ca5;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+.add-to-cart-form, .buy-now-form {
+    display: contents; /* This makes the form a non-visual wrapper */
+}
+
+.add-to-cart-form-detail, .buy-now-form-detail {
+    display: contents;
+}
+
+.product-actions-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.add-to-cart-form-detail, .buy-now-form-detail {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.add-cart-main, .buy-now-main {
+    flex-grow: 1;
+    padding: 12px;
+    border-radius: 6px;
+    font-weight: 600;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.add-cart-main {
+    background-color: #f0f0f0;
+    color: #333;
+    border: 1px solid #ddd;
+}
+
+.buy-now-main {
+    background-color: #ff7f50;
+    color: white;
+}
+
+.quantity-selector {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.quantity-input-detail {
+    width: 60px;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    text-align: center;
+    font-size: 16px;
 }

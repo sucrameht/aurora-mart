@@ -1,0 +1,239 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to AuroraMart</title>
+    <link rel="stylesheet" href="{% static 'storefront/css/storefront.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+            background-color: #f0f8ff;
+            color: #333;
+        }
+        .landing-container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 40px;
+            background-color: #fff;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-size: 24px;
+            font-weight: bold;
+            color: #007ca5;
+        }
+        .logo-img {
+            height: 70px;
+            margin-right: 10px;
+        }
+        .logo-text {
+            margin-top: 5px;
+        }
+        .nav-buttons .btn {
+            text-decoration: none;
+            padding: 10px 25px;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-login {
+            background-color: transparent;
+            color: #007ca5;
+            border: 2px solid #007ca5;
+            margin-right: 10px;
+        }
+        .btn-login:hover {
+            background-color: #007ca5;
+            color: #fff;
+        }
+        .btn-signup {
+            background-color: #ff7f50;
+            color: #fff;
+            border: 2px solid #ff7f50;
+        }
+        .btn-signup:hover {
+            background-color: #e86a3c;
+            border-color: #e86a3c;
+        }
+        .hero {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 50px;
+            text-align: center;
+            background-image: url("{% static 'storefront/images/landing-bg.svg' %}");
+            background-size: cover;
+            background-position: center;
+        }
+        .hero-content {
+            max-width: 700px;
+        }
+        .hero h1 {
+            font-size: 48px;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 20px;
+        }
+        .hero h1 span {
+            color: #007ca5;
+        }
+        .hero p {
+            font-size: 18px;
+            color: #555;
+            margin-bottom: 30px;
+        }
+        .hero .btn-explore {
+            background-color: #333;
+            color: #fff;
+            padding: 15px 40px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+        }
+        .hero .btn-explore:hover {
+            background-color: #555;
+        }
+        .features {
+            padding: 80px 50px;
+            background-color: #fff;
+        }
+        .features h2 {
+            text-align: center;
+            font-size: 36px;
+            margin-bottom: 50px;
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .feature-card {
+            text-align: center;
+        }
+        .feature-icon {
+            font-size: 48px;
+            color: #007ca5;
+            margin-bottom: 20px;
+        }
+        .feature-card h3 {
+            font-size: 22px;
+            margin-bottom: 10px;
+        }
+        .feature-card p {
+            color: #666;
+        }
+        .cta-section {
+            background-color: #007ca5;
+            color: #fff;
+            padding: 80px 50px;
+            text-align: center;
+        }
+        .cta-section h2 {
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+        .cta-section p {
+            font-size: 18px;
+            margin-bottom: 30px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .cta-section .btn {
+            background-color: #ff7f50;
+            color: #fff;
+            padding: 15px 40px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .cta-section .btn:hover {
+            background-color: #e86a3c;
+            transform: translateY(-2px);
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            background-color: #333;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="landing-container">
+        <div class="header">
+            <div class="logo" onclick="window.location.href='{% url 'landing_page' %}'">
+                <img src="{% static 'storefront/images/AuroraMartLogo.png' %}" alt="AuroraMart Logo" class="logo-img">
+                <span class="logo-text">AuroraMart</span>
+            </div>
+            <div class="nav-buttons">
+                <a href="{% url 'login' %}" class="btn btn-login">Login</a>
+                <a href="{% url 'register' %}" class="btn btn-signup">Sign Up</a>
+            </div>
+        </div>
+
+        <div class="hero">
+            <div class="hero-content">
+                <h1>Your Daily Essentials, <span>Delivered</span>.</h1>
+                <p>Smart, personalised shopping is just a click away. Get fresh groceries, household items, and more, with recommendations just for you.</p>
+                <a href="{% url 'storefront_home' %}" class="btn-explore">Explore as Guest &rarr;</a>
+            </div>
+        </div>
+
+        <div class="features">
+            <h2>Why Shop With Us?</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-brain"></i> </div>
+                    <h3>Smart Recommendations</h3>
+                    <p>Our AI learns your preferences to suggest products you'll love, making your shopping faster and smarter.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-shipping-fast"></i> </div>
+                    <h3>Fast & Free Shipping</h3>
+                    <p>Get your first order delivered for free! Enjoy quick, reliable shipping right to your doorstep.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-ticket-alt"></i> </div>
+                    <h3>Exclusive Vouchers</h3>
+                    <p>Sign up today and receive exclusive vouchers and discounts to make your first purchase even better.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="cta-section">
+            <h2>Ready to Get Started?</h2>
+            <p>Create an account to unlock personalized recommendations, save your favorite items, and enjoy a seamless checkout experience.</p>
+            <a href="{% url 'register' %}" class="btn">Claim Your Vouchers Now</a>
+        </div>
+
+        <div class="footer">
+            <p>&copy; 2025 AuroraMart. All Rights Reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

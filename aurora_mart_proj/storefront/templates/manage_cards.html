@@ -1,0 +1,42 @@
+{% extends 'storefront/base.html' %}
+{% load static %}
+
+{% block title %}Manage Cards - AuroraMart{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'storefront/css/profile_settings.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="settings-container">
+        <a href="{% url 'profile_settings' %}" class="back-link">&larr; Back to Settings</a>
+        <div class="page-header">
+            <h1>Manage Cards</h1>
+            <a href="{% url 'add_card' %}?next=manage_cards" class="btn-add-new">+ Add New Card</a>
+        </div>
+
+        <div class="address-list">
+            {% for card in cards %}
+                <div class="address-card">
+                    <div class="address-details">
+                        <div class="address-nickname">{{ card.nickname }}</div>
+                        <div class="address-recipient">•••• •••• •••• {{ card.last_four }}</div>
+                        <div class="address-full">
+                            Expires: {{ card.expiry_month }}/{{ card.expiry_year }}
+                        </div>
+                        <div class="address-phone">Cardholder: {{ card.cardholder_name }}</div>
+                    </div>
+                    <div class="address-actions">
+                        <a href="{% url 'edit_card' card.pk %}" class="action-btn edit">Edit</a>
+                        <form action="{% url 'delete_card' card.pk %}" method="POST" onsubmit="return confirm('Are you sure you want to delete this card?');">
+                            {% csrf_token %}
+                            <button type="submit" class="action-btn delete">Delete</button>
+                        </form>
+                    </div>
+                </div>
+            {% empty %}
+                <p>You have no saved cards. Add one to get started!</p>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}

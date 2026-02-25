@@ -1,0 +1,30 @@
+{% extends "auroraadmin/base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'storefront/css/chat.css' %}">
+{% endblock %}
+
+{% block main_content %}
+<div class="chat-container">
+    <h1 class="chat-main-title">Customer Inquiries</h1>
+    <div class="chat-list">
+        {% for thread in threads %}
+            <a href="{% url 'auroraadmin:admin_chat_thread' thread.id %}" class="chat-list-item">
+                <div class="chat-item-info">
+                    <p class="chat-item-product">Product: <strong>{{ thread.product.product_name }}</strong></p>
+                    <p class="chat-item-user">Customer: {{ thread.customer.username }}</p>
+                </div>
+                <div class="chat-item-meta">
+                    <span class="chat-item-timestamp">{{ thread.updated_at|timesince }} ago</span>
+                    {% if thread.messages.last and not thread.messages.last.is_read and thread.messages.last.sender != request.user %}
+                        <span class="unread-indicator">New Message</span>
+                    {% endif %}
+                </div>
+            </a>
+        {% empty %}
+            <p>No active chats.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

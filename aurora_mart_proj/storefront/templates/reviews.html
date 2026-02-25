@@ -1,0 +1,38 @@
+{% extends 'storefront/base.html' %}
+{% load static %}
+
+{% block title %}Review Order #{{ order.pk }}{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'storefront/css/reviews.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="review-container">
+        <h1>Review Your Order</h1>
+        <p>Order #{{ order.pk }} - Placed on {{ order.transaction_datetime|date:"F d, Y" }}</p>
+
+        <form method="POST" action="{% url 'rate_order' order.pk %}">
+            {% csrf_token %}
+            <div class="review-items-list">
+                {% for item in order_items %}
+                <div class="review-item-card">
+                    <img src="https://nus.edu.sg/images/default-source/identity-images/NUS_logo_full-horizontal.jpg" alt="{{ item.product.product_name }}" class="item-img">
+                    <div class="item-details">
+                        <h3 class="item-name">{{ item.product.product_name }}</h3>
+                        <div class="rating-stars">
+                            <input type="radio" id="star5_{{item.pk}}" name="rating_{{item.pk}}" value="5" {% if item.rating == 5 %}checked{% endif %} /><label for="star5_{{item.pk}}">★</label>
+                            <input type="radio" id="star4_{{item.pk}}" name="rating_{{item.pk}}" value="4" {% if item.rating == 4 %}checked{% endif %} /><label for="star4_{{item.pk}}">★</label>
+                            <input type="radio" id="star3_{{item.pk}}" name="rating_{{item.pk}}" value="3" {% if item.rating == 3 %}checked{% endif %} /><label for="star3_{{item.pk}}">★</label>
+                            <input type="radio" id="star2_{{item.pk}}" name="rating_{{item.pk}}" value="2" {% if item.rating == 2 %}checked{% endif %} /><label for="star2_{{item.pk}}">★</label>
+                            <input type="radio" id="star1_{{item.pk}}" name="rating_{{item.pk}}" value="1" {% if item.rating == 1 %}checked{% endif %} /><label for="star1_{{item.pk}}">★</label>
+                        </div>
+                        <textarea name="review_{{item.pk}}" class="review-textarea" placeholder="Tell us what you think...">{{ item.text_review|default:'' }}</textarea>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <button type="submit" class="submit-review-btn">Submit Review</button>
+        </form>
+    </div>
+{% endblock %}

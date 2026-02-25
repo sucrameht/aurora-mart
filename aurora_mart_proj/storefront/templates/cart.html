@@ -1,55 +1,50 @@
+{% extends 'storefront/base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Shopping Cart</title>
+
+{% block title %}Your Shopping Cart{% endblock %}
+
+{% block extra_head %}
     <link rel="stylesheet" href="{% static 'storefront/css/cart.css' %}">
-    <link rel="stylesheet" href="{% static 'storefront/css/storefront.css' %}">
-</head>
-<body>
+{% endblock %}
 
-    <div class="header">
-        <div class="logo" onclick="window.location.href='{% url 'storefront_home' %}'">
-            <img src="{% static 'storefront/images/AuroraMartLogo.png' %}" alt="AuroraMart Logo" class="logo-img">
-            <span class="logo-text">AuroraMart</span>
-        </div>
-        <div class="icons">
-            <a href="{% url 'view_cart' %}" class="icon icon-cart">🛒</a>
-            <a href="#" class="icon">👤</a>
-        </div>
-    </div>
-
+{% block content %}
     <div class="cart-page-container">
-
         {% if not cart_items %}
             <div class="cart-empty">
-                <div class="cart-empty-icon">🛒</div>
+                <div class="cart-empty-icon"><i class="fas fa-shopping-cart"></i></div>
                 <h2>Your cart is empty</h2>
                 <p>Add some products to get started!</p>
                 <a href="{% url 'storefront_home' %}" class="continue-shopping-btn">
-                    ← Continue Shopping
+                    <i class="fas fa-arrow-left"></i> Continue Shopping
                 </a>
             </div>
 
         {% else %}
-            <a href="{% url 'storefront_home' %}" class="continue-shopping-link">← Continue Shopping</a>
+            <a href="{% url 'storefront_home' %}" class="continue-shopping-link"><i class="fas fa-arrow-left"></i> Continue Shopping</a>
             <h1 class="cart-title">Shopping Cart</h1>
 
             <div class="cart-layout">
                 <div class="cart-items-list">
                     {% for item in cart_items %}
                     <div class="cart-item-card">
+                        <form action="{% url 'view_cart' %}" method="POST" class="cart-item-select">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="toggle_selection">
+                            <input type="hidden" name="sku_code" value="{{ item.product.sku_code }}">
+                            <input type="checkbox" name="is_selected" {% if item.is_selected %}checked{% endif %} onchange="this.form.submit()">
+                        </form>
                         <img src="https://nus.edu.sg/images/default-source/identity-images/NUS_logo_full-horizontal.jpg" alt="{{ item.product.product_name }}" class="cart-item-img">
                         <div class="cart-item-details">
-                            <span class="cart-item-name">{{ item.product.product_name }}</span>
+                            <a href="{% url 'product_detail' item.product.sku_code %}" class="cart-item-link">
+                                <span class="cart-item-name">{{ item.product.product_name }}</span>
+                            </a>
                             <span class="cart-item-category">{{ item.product.product_category }}</span>
                             <span class="cart-item-price">${{ item.product.unit_price }}</span>
                         </div>
                         
-                        <form action="{% url 'update_cart' %}" method="POST" class="cart-item-quantity">
+                        <form action="{% url 'view_cart' %}" method="POST" class="cart-item-quantity">
                             {% csrf_token %}
+                            <input type="hidden" name="action" value="update">
                             <input type="hidden" name="sku_code" value="{{ item.product.sku_code }}">
                             <button type="submit" name="quantity" value="{{ item.quantity|add:'-1' }}" class="qty-btn">-</button>
                             <span class="qty-value">{{ item.quantity }}</span>
@@ -58,42 +53,87 @@
                         
                         <span class="cart-item-total-price">${{ item.total_price }}</span>
 
-                        <form action="{% url 'remove_from_cart' %}" method="POST" class="cart-item-remove">
+                        <form action="{% url 'view_cart' %}" method="POST" class="cart-item-remove">
                             {% csrf_token %}
+                            <input type="hidden" name="action" value="remove">
                             <input type="hidden" name="sku_code" value="{{ item.product.sku_code }}">
-                            <button type="submit" class="remove-btn">x</button>
+                            <button type="submit" class="remove-btn"><i class="fas fa-times"></i></button>
                         </form>
                     </div>
                     {% endfor %}
+
+                    {% if recommended_products %}
+                        <div class="recommendations-panel">
+                            <h2>Frequently Bought Together</h2>
+                            <div class="recommendations-list">
+                                {% for product in recommended_products %}
+                                <div class="recommendation-card">
+                                    <img src="https://nus.edu.sg/images/default-source/identity-images/NUS_logo_full-horizontal.jpg" alt="{{ product.product_name }}" class="recommendation-img">
+                                    <div class="recommendation-details">
+                                        <span class="recommendation-name">{{ product.product_name }}</span>
+                                        <span class="recommendation-price">${{ product.unit_price }}</span>
+                                    </div>
+                                    <form action="{% url 'storefront_home' %}" method="POST" class="recommendation-add-form">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="add">
+                                        <input type="hidden" name="sku_code" value="{{ product.sku_code }}">
+                                        <button type="submit" class="btn-add-recommendation"><i class="fas fa-plus"></i></button>
+                                    </form>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
                 </div>
+
 
                 <div class="order-summary">
                     <h2>Order Summary</h2>
                     
-                    <form class="voucher-form">
-                        <label for="voucher">Voucher Code</label>
+                    <form class="voucher-form" action = "{% url 'view_cart' %}" method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="apply_voucher">
+                        <label for="voucher_code">Voucher Code</label>
                         <div class="voucher-input">
-                            <input type="text" id="voucher" name="voucher" placeholder="Enter code">
+                            <input type="text" id="voucher_code" name="voucher_code" placeholder="Enter code" value="{{ current_voucher_code|default:'' }}">
                             <button type="submit" class="apply-btn">Apply</button>
                         </div>
+                        <div class="my-vouchers-link">
+                            <a href="{% url 'my_vouchers' %}">View My Vouchers</a>
+                        </div>
                     </form>
+
+                    {% if applied_voucher %}
+                        <div class="applied-voucher">
+                            <span>Applied: {{ applied_voucher.code }} ({{ applied_voucher.discount_type|title }}: {{ applied_voucher.discount_value }}{% if applied_voucher.discount_type == 'percent' %}%{% endif %})</span>
+                            <form action="{% url 'view_cart' %}" method="POST">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="remove_voucher">
+                                <button type="submit" class="remove-btn">Remove</button>
+                            </form>
+                        </div>
+                    {% endif %}
 
                     <div class="summary-line">
                         <span>Subtotal</span>
                         <span>${{ subtotal }}</span>
                     </div>
+                    {% if discount > 0 %}
+                        <div class="summary-line discount">
+                            <span>Discount</span>
+                            <span>-${{ discount }}</span>
+                        </div>
+                    {% endif %}
                     <div class="summary-line total">
                         <span>Total</span>
                         <span>${{ total }}</span>
                     </div>
 
-                    <button class="checkout-btn">Proceed to Checkout</button>
+                    <button class="checkout-btn" onclick="window.location.href='{% url 'checkout' %}'">Proceed to Checkout</button>
                     <p class="voucher-info">Try vouchers: WELCOME10, SAVE20, or FREESHIP</p>
                 </div>
             </div>
         {% endif %}
 
     </div>
-
-</body>
-</html>
+{% endblock %}

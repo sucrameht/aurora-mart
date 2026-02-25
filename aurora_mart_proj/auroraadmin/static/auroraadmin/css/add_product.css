@@ -1,0 +1,83 @@
+.form-table { 
+    width:100%; 
+    max-width:900px; 
+    border-collapse:collapse; 
+    margin:16px 0; 
+    background:#fff; 
+}
+
+.form-table th { 
+    text-align:left; 
+    width:220px; 
+    padding:10px 12px; 
+    vertical-align:top; 
+    color:#333; 
+    font-weight:600; 
+    background:#fafafa; 
+    border-bottom:1px solid #eee; 
+}
+
+.form-table td { 
+    padding:10px 12px; 
+    border-bottom:1px solid #eee; 
+}
+
+.help-text { 
+    color:#666; 
+    font-size:0.9rem; 
+    margin-top:6px; 
+}
+
+.field-error-text { 
+    color:#c0392b; 
+    font-size:0.9rem; 
+    margin-top:6px; 
+}
+
+.field-error th, .field-error td { 
+    background:#fff6f6; 
+}
+
+.form-actions { 
+    margin-top:18px; 
+    display:flex; 
+    gap:10px; 
+    align-items:center; 
+}
+
+.primary-btn { 
+    background:#28a745; 
+    color:#fff; 
+    border:none; 
+    padding:8px 14px; 
+    border-radius:6px; 
+    cursor:pointer; 
+    text-decoration:none; 
+}
+
+.secondary-btn { 
+    background:transparent; 
+    color:#333; 
+    border:1px solid #ccc; 
+    padding:7px 12px; 
+    border-radius:6px; 
+    text-decoration:none; 
+    display:inline-block; 
+}
+
+/*category button styles*/
+
+.category-button { 
+    padding:6px 10px; 
+    border-radius:6px; 
+    border:1px solid #e6e6e6; 
+    background:#f4f4f4; 
+    color:#333; 
+    cursor:pointer; 
+}
+
+.category-button.selected { 
+    background:#007bff; 
+    color:#fff; 
+    border-color:#007bff; 
+}

@@ -1,0 +1,94 @@
+.actions-container { 
+    max-width: 1200px; 
+    margin: 20px auto; 
+    padding: 20px; 
+    background: #fff; 
+    border-radius: 8px; 
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+}
+
+.product-info { 
+    margin-bottom: 20px; 
+}
+.product-info h2 { 
+    margin-bottom: 0px; 
+}
+.product-info p { 
+    margin: 5px 0; 
+}
+
+.actions-form { 
+    margin-bottom: 15px; 
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+.actions-form form { 
+    display: flex; 
+    gap: 10px; 
+    align-items: center; 
+}
+.actions-form input[type="number"] { 
+    width: 100px; 
+    padding: 6px; 
+    border: 1px solid #ddd; 
+    border-radius: 4px; 
+}
+.actions-form button { 
+    padding: 8px 12px;
+    border: none; 
+    border-radius: 4px; 
+    cursor: pointer; 
+    font-size: 14px; 
+}
+
+.reorder-btn { 
+    background: orange; 
+    color: white; 
+}
+.change-btn { 
+    background: #28a745; 
+    color: white; 
+}
+.delete-btn { 
+    background: #d9534f; 
+    color: white; 
+    text-decoration: none; 
+    display: inline-block; 
+    padding: 8px 12px; 
+    border-radius: 4px; 
+    font-size: 14px;
+    align-self: flex-start;
+}
+.back-link { 
+    margin-top: 20px; 
+}
+.back-link a { 
+    color: #007bff; 
+    text-decoration: none; 
+}
+
+.product-info-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.view-storefront-btn {
+    display: inline-block;
+    padding: 8px 12px;
+    background: #007ca5;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background-color 0.2s;
+    flex-shrink: 0;
+    margin-left: 15px;
+}
+
+.view-storefront-btn:hover {
+    background: #005f7f;
+}

@@ -1,0 +1,94 @@
+{% extends 'auroraadmin/base.html' %}
+{% load static %}
+{% block title %} {{ page_title }} {% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'auroraadmin/css/customer_add_voucher.css' %}">{% endblock %}
+
+{% block main_content %}
+
+<div class="assign-container">
+    
+    <!-- Link to go back to the customer list -->
+    <a href="{% url 'auroraadmin:customers_list' %}" class="back-link">
+        &larr; Back to customer list
+    </a>
+
+    <div class="assign-form-container">
+        <h1 class="form-title">{{ page_title }}</h1>
+        <p class="form-subtitle">
+            User ID: {{ customer.id }}
+        </p>
+        
+        <form method="POST">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <!-- This renders the 'vouchers_to_add' field -->
+                {{ form.vouchers_to_add.label_tag }}
+                
+                <!-- Check if there are any vouchers to show -->
+                {% if form.vouchers_to_add.field.queryset.exists %}
+                    <ul class="checkbox-list">
+
+                        {% for checkbox in form.vouchers_to_add %}
+                        <li>
+                            <label for="{{ checkbox.id_for_label }}">
+                                {{ checkbox.tag }}
+                                {{ checkbox.choice_label }}
+                            </label>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% else %} <!--User has all active vouchers-->
+                    <p class="no-vouchers-message">
+                        This user already has all available active vouchers.
+                    </p>
+                {% endif %}
+                
+                {{ form.vouchers_to_add.errors }}
+            </div>
+            
+            <!-- Only show the button if there are vouchers to add -->
+            {% if form.vouchers_to_add.field.queryset.exists %}
+                <button type="submit" class="btn-submit">Assign Selected Vouchers</button>
+            {% endif %}
+            
+        </form>
+    </div>
+
+    <div class="current-vouchers-container">
+        <h2 class="current-vouchers-title">Current Vouchers ({{ current_vouchers.count }})</h2>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Voucher Code</th>
+                    <th class="text-right">Discount</th>
+                    <th>Expiry Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for voucher in current_vouchers %}
+                <tr>
+                    <td>{{ voucher.code }}</td>
+                    <td class="text-right">
+                        {% if voucher.discount_type == 'percent' %}
+                            {{ voucher.discount_value|floatformat:0 }}%
+                        {% else %}
+                            ${{ voucher.discount_value|floatformat:2 }}
+                        {% endif %}
+                    </td>
+                    <td>{{ voucher.expiry_date|date:"d M Y"|default:"No Expiry" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3" style="text-align:center; padding: 20px;">
+                        This user has no vouchers.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock main_content %}

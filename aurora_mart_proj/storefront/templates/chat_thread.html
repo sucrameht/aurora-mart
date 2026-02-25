@@ -1,0 +1,32 @@
+{% extends 'storefront/base.html' %}
+{% load static %}
+
+{% block title %}Chat about {{ thread.product.product_name }}{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'storefront/css/chat.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="chat-container">
+        <h1 class="chat-main-title">Chat about {{ thread.product.product_name }}</h1>
+        
+        <div class="chat-messages" id="chat-messages">
+            {% for message in thread.messages.all %}
+                <div class="chat-message {% if message.sender == request.user %}sent{% else %}received{% endif %}">
+                    <div class="message-bubble">
+                        <p class="message-sender"><strong>{% if message.sender.is_staff %}Seller{% else %}You{% endif %}</strong></p>
+                        <p class="message-content">{{ message.message }}</p>
+                        <p class="message-timestamp">{{ message.timestamp|time:"H:i" }}</p>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <form method="post" class="chat-form">
+            {% csrf_token %}
+            <textarea name="message" placeholder="Type your message..." required></textarea>
+            <button type="submit">Send</button>
+        </form>
+    </div>
+{% endblock %}

@@ -1,43 +1,12 @@
+{% extends 'storefront/base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AuroraMart Storefront</title>
-    <link rel="stylesheet" href="{% static 'storefront/css/storefront.css' %}">
-</head>
-<body>
-    {% if messages %}
-        <div class="message-container">
-            {% for message in messages %}
-                <div class="message {{ message.tags }}">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        </div>
-    {% endif %}
-    <div class="header">
-        <div class="logo" onclick="window.location.href='{% url 'storefront_home' %}?category=All'">
-            <img src="{% static 'storefront/images/AuroraMartLogo.png' %}" alt="AuroraMart Logo" class="logo-img">
-            <span class="logo-text">AuroraMart</span>
-        </div>
-        <form action="" method="GET" class="search-form">
-            <input type="search" name="query" class="search-bar" placeholder="Search products..." value="{{ request.GET.query }}">
-            {% if sort %}<input type="hidden" name="sort" value="{{ sort }}">{% endif %} 
-        </form>
-        <div class="icons">
-            <a href="{% url 'view_cart' %}" class="icon icon-cart">
-                🛒
-                <span id="cart-count">{{ cart_item_count|default:0 }}</span>
-            </a>
-            <a href="#" class="icon">👤</a>
-        </div>
-    </div>
 
+{% block title %}AuroraMart Storefront{% endblock %}
+
+{% block content %}
     <div class="banner">
-        <p>Personalized for you.</p>
-        <h2>Based on your interests, we recommend {{ active_category|default:'Electronics' }}</h2>
+        <p>Personalised for you.</p>
+        <h2>Based on your interests, we recommend {{ recommended_category|default:'Electronics' }}</h2>
     </div>
 
     <div class="nav-tabs">
@@ -47,7 +16,8 @@
         </a>
         {% for category in categories %}
         <a href="{% url 'storefront_home' %}?category={{ category|urlencode }}{% if query %}&query={{ query|urlencode }}{% endif %}{% if sort %}&sort={{ sort|urlencode }}{% endif %}" 
-           class="tab {% if category == active_category %}active{% endif %}">
+           class="tab {% if category == active_category %}active{% endif %}
+           {% if category == recommended_category %}recommended{% endif %}">
             {{ category }}
         </a>
         {% endfor %}
@@ -85,18 +55,23 @@
                 </a>
     
                 <div class="buttons">
-                    <button class="buy-now">⚡️ Buy Now</button>
-                    <form action="{% url 'add_to_cart' %}" method="POST" style="display:inline;">
+                    <form action="{% url 'buy_now' product.sku_code %}" method="GET" class="buy-now-form">
+                        <input type="hidden" name="quantity" id="buy-now-quantity-{{ product.sku_code }}">
+                        <button type="submit" class="buy-now" onclick="document.getElementById('buy-now-quantity-{{ product.sku_code }}').value = document.getElementById('quantity-{{ product.sku_code }}').value;"><i class="fas fa-bolt"></i> Buy Now</button>
+                    </form>
+                    <form action="{% url 'storefront_home' %}" method="POST" class="add-to-cart-form">
                         {% csrf_token %}
+                        <input type="hidden" name="action" value="add">
                         <input type="hidden" name="sku_code" value="{{ product.sku_code }}">
-                        <button type="submit" class="add-cart">🛒 Add</button>
+                        <button type="submit" class="add-cart"><i class="fas fa-cart-plus"></i> Add</button>
+                        <input type="number" name="quantity" value="1" min="1" class="quantity-input-detail" id="quantity-{{ product.sku_code }}">
                     </form>
                 </div>
             </div>
 
             <div id="modal-{{ product.sku_code }}" class="css-modal">
                 <div class="css-modal-content">
-                    <a href="#" class="css-close">&times;</a>
+                    <a href="" class="css-close">&times;</a>
     
                     <img src="https://nus.edu.sg/images/default-source/identity-images/NUS_logo_full-horizontal.jpg" 
                          alt="{{ product.product_name }}" class="modal-img">
@@ -105,19 +80,21 @@
                     <p>{{ product.product_description }}</p>
                     <p>★ {{ product.product_rating }} | {{ product.quantity_on_hand }} left</p>
     
-                    <form action="{% url 'add_to_cart' %}" method="POST">
+                    <form action="{% url 'storefront_home' %}" method="POST">
                         {% csrf_token %}
+                        <input type="hidden" name="action" value="add">
                         <input type="hidden" name="sku_code" value="{{ product.sku_code }}">
-                        <button type="submit" class="add-cart">🛒 Add to Cart</button>
+                        <button type="submit" class="add-cart"><i class="fas fa-cart-plus"></i> Add to Cart</button>
+                        <input type="number" name="quantity" value="1" min="1" class="quantity-input-detail">
                     </form>
+                    <br/>
+                    <a href="{% url 'start_chat' product.sku_code %}" class="buy-now"><i class="fas fa-comments"></i> Chat with Seller</a>
     
-                    {% comment %} <a href="{% url 'product_detail' product.sku_code %}" class="buy-now">🔎 View Full Details</a> {% endcomment %}
+                    <a href="{% url 'product_detail' product.sku_code %}" class="buy-now"><i class="fas fa-search-plus"></i> View Full Details</a>
                 </div>
             </div>
         {% empty %}
             <p>No products found.</p>
         {% endfor %}
     </div>    
-
-</body>
-</html>
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends 'storefront/base.html' %}
+{% load static %}
+
+{% block title %}My Vouchers - AuroraMart{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'storefront/css/profile_settings.css' %}">
+    <link rel="stylesheet" href="{% static 'storefront/css/my_vouchers.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="settings-container">
+    <a href="{% url 'profile_settings' %}" class="back-link">&larr; Back to Settings</a>
+    <h1>My Vouchers</h1>
+
+    {% if vouchers %}
+        <div class="voucher-grid">
+            {% for voucher in vouchers %}
+                {% with is_expired=voucher.is_expired %}
+                <div class="voucher-card {% if is_expired %}expired{% endif %}">
+                    <div>
+                        <div class="voucher-title">{{ voucher.name }}</div>
+                        <div class="voucher-code">{{ voucher.code }}</div>
+                        <p class="voucher-description">{{ voucher.description }}</p>
+                    </div>
+                    <div>
+                        {% if voucher.expiry_date %}
+                            <p class="voucher-expiry">
+                                {% if is_expired %}
+                                    Expired on: {{ voucher.expiry_date|date:"d M Y" }}
+                                {% else %}
+                                    Expires on: {{ voucher.expiry_date|date:"d M Y" }}
+                                {% endif %}
+                            </p>
+                        {% else %}
+                            <p style="font-size: 13px; color: #28a745; font-weight: 500;">No expiry date</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endwith %}
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="no-vouchers">
+            <p>You don't have any vouchers at the moment.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

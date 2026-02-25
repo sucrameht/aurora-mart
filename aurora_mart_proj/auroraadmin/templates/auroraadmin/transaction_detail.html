@@ -1,0 +1,89 @@
+{% extends 'auroraadmin/base.html' %}
+
+{% block title %}
+Transaction {{ transaction.id }}
+{% endblock %}
+{% load static %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'auroraadmin/css/transaction_detail.css' %}">
+{% endblock %}
+
+{% block main_content %}
+
+<div class="detail-container">
+    
+    <!-- Link to go back to the list -->
+    <a href="{% url 'auroraadmin:transactions_list' %}" class="back-link">
+        &larr; Back to all transactions
+    </a>
+
+    <div class="detail-card">
+        
+        <!-- Header with Transaction Info -->
+        <div class="detail-header">
+            <h1 class="detail-title">Transaction #{{ transaction.id }}</h1>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <span class="summary-label">Customer</span>
+                    <span class="summary-value username">{{ transaction.user.username }} (ID: {{ transaction.user.id }})</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Date</span>
+                    <span class="summary-value">{{ transaction.transaction_datetime|date:"d M Y, P" }}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Total Items</span>
+                    <span class="summary-value">{{ transaction.num_of_products }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table of Items -->
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th>Product SKU</th>
+                    <th>Product Name</th>
+                    <th class="text-center">Quantity</th>
+                    <th class="text-right">Unit Price</th>
+                    <th class="text-right">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Loop through all the order items attached to this transaction -->
+                {% for item in transaction.items.all %}
+                <tr>
+                    <td>{{ item.product.sku_code }}</td>
+                    <td class="product-name">
+                        <a href="{% url 'product_detail' item.product.sku_code %}" class="table-product-link" target="_blank">
+                            {{ item.product.product_name }}
+                        </a>
+                    </td>
+                    <td class="text-center">{{ item.quantity_purchased }}</td>
+                    <td class="text-right">S${{ item.product.unit_price|floatformat:2 }}</td>
+                    <!-- Use the subtotal property from the OrderItem model -->
+                    <td class="text-right">S${{ item.subtotal_products_bought|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Footer with Grand Total -->
+        <div class="items-footer">
+            <div class="total-row">
+                <span class="total-label">Total:</span>
+                <span class="total-value">S${{ grand_total|floatformat:2 }}</span>
+            </div>
+            <div class="total-row">
+                <span class="total-label">Voucher Price:</span>
+                <span class="total-value">S${{ voucher_value|floatformat:2 }}</span>
+            </div>
+            <div class="total-row">
+                <span class="total-label">Grand Total:</span>
+                <span class="total-value">S${{ final_total|floatformat:2 }}</span>
+            </div>
+        </div>   
+    </div>
+</div>
+
+{% endblock main_content %}
